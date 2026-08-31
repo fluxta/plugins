@@ -14,9 +14,11 @@ concurrency:
 
 jobs:
   build:
-    name: Build every Plugin Source Package
+    name: Build every changed Plugin Source Package
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    outputs:
+      run: ${{ steps.changes.outputs.run }}
     steps:
       - name: Check out the main branch
         uses: actions/checkout@v4
@@ -35,12 +37,22 @@ jobs:
       - name: Install repository dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build every Plugin Source Package
+      - name: Determine which plugins this push actually changed
+        id: changes
+        run: >
+          node ./scripts/changed-plugins.mjs --root . --json --pretty
+          --before "${{ github.event.before }}" --after "${{ github.sha }}"
+          --github-output "$GITHUB_OUTPUT"
+
+      - name: Build every changed Plugin Source Package
+        if: steps.changes.outputs.run == 'true'
         run: >
           node ./scripts/plugins.mjs build --root . --json --pretty
           --out build-output/build-snapshot.json
+          ${{ steps.changes.outputs.only != '' && format('--only {0}', steps.changes.outputs.only) || '' }}
 
       - name: Upload built Plugin Artifacts and the build snapshot
+        if: steps.changes.outputs.run == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: plugin-build-${{ github.sha }}
@@ -53,6 +65,7 @@ jobs:
   publish:
     name: Publish built Plugin Artifacts and the Publication Index
     needs: build
+    if: needs.build.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

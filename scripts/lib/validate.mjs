@@ -57,7 +57,7 @@ export async function discoverPluginSourcePackages(rootDir) {
  * `validateFromSnapshot` below, which recombines a snapshot with real
  * publication history without running any package code again.
  */
-export async function buildCheckout(rootDir) {
+export async function buildCheckout(rootDir, options = {}) {
   const rootErrors = await rootDirectoryErrors(rootDir);
   if (rootErrors.length > 0) {
     return {
@@ -80,18 +80,54 @@ export async function buildCheckout(rootDir) {
     : [];
 
   const discoveredPackages = await discoverPluginSourcePackages(rootDir);
+  const selected = selectPackages(discoveredPackages, options.only);
   const { packages, errors, publicationStates } = await validatePluginSourcePackages(
     rootDir,
-    discoveredPackages,
+    selected.packages,
     codeowners,
   );
 
-  return { rootErrors: [], codeownersErrors, packages, buildErrors: errors, publicationStates };
+  return {
+    rootErrors: [],
+    codeownersErrors,
+    packages,
+    buildErrors: [...selected.errors, ...errors],
+    publicationStates,
+  };
+}
+
+/**
+ * Narrows discovery down to `--only`'s package IDs, when given. CI uses this
+ * to build and publish just the Plugin Source Packages a push actually
+ * touched instead of every package in the checkout. A package left out is
+ * simply absent from this run's packages list — `buildPublicationIndex`
+ * carries its already-published versions forward from the previous
+ * Publication Index unchanged, so omitting an untouched package here never
+ * drops its published history.
+ */
+function selectPackages(discoveredPackages, only) {
+  if (!only || only.length === 0) {
+    return { packages: discoveredPackages, errors: [] };
+  }
+
+  const discoveredIds = new Set(discoveredPackages.map((pkg) => pkg.id));
+  const errors = only
+    .filter((id) => !discoveredIds.has(id))
+    .map((id) => ({
+      code: "UNKNOWN_ONLY_PACKAGE",
+      message: `--only names package '${id}', which was not found under 'plugins/'.`,
+    }));
+
+  const wanted = new Set(only);
+  return {
+    packages: discoveredPackages.filter((pkg) => wanted.has(pkg.id)),
+    errors,
+  };
 }
 
 export async function validateCheckout(options) {
   const rootDir = path.resolve(options.root);
-  const built = await buildCheckout(rootDir);
+  const built = await buildCheckout(rootDir, { only: options.only });
   if (built.rootErrors.length > 0) {
     return failureResult(rootDir, built.rootErrors);
   }

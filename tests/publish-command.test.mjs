@@ -433,6 +433,84 @@ test("publish reads the previous index from the publisher itself and preserves i
   });
 });
 
+test("publish --only builds and publishes just the named package, leaving other packages' published history untouched", async () => {
+  await withTempDir(async (root) => {
+    await writeBuildablePackage(root, "example.plugin", validManifest(), ["process"]);
+    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    // "other.plugin" exists in the checkout too, but --only leaves it out of
+    // this run entirely -- it must never be built, and its published history
+    // must survive unchanged in the resulting index.
+    await writeBuildablePackage(root, "other.plugin", validManifest({ name: "other.plugin" }), [
+      "process",
+    ]);
+    await writeSourceFiles(root, "other.plugin", ["process/main.js"]);
+    // writeBuildablePackage overwrites CODEOWNERS per call; restore coverage
+    // for both packages now that both have been written.
+    await writeCodeowners(root, "plugins/example.plugin @inferst\nplugins/other.plugin @inferst\n");
+
+    const storeDir = path.join(root, "store");
+    await mkdir(storeDir, { recursive: true });
+    await writeFile(
+      path.join(storeDir, "publication-index.json"),
+      `${JSON.stringify(
+        {
+          schemaVersion: 1,
+          packages: [
+            {
+              name: "other.plugin",
+              versions: [
+                {
+                  version: "1.0.0",
+                  manifest: { name: "other.plugin", version: "1.0.0" },
+                  packageMetadata: {},
+                  artifact: {
+                    objectKey: "artifacts/other.plugin-1.0.0.zip",
+                    checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+                    size: 1,
+                    sourceCommit: "base",
+                    publishedAt: "2026-01-01T00:00:00.000Z",
+                  },
+                  status: "published",
+                  reason: null,
+                },
+              ],
+            },
+          ],
+        },
+        null,
+        2,
+      )}\n`,
+    );
+
+    const result = await runCli(publishArgs(root, ["--only", "example.plugin"]));
+    assert.equal(result.code, 0, `unexpected publish output: ${result.stdout}`);
+    const output = JSON.parse(result.stdout);
+
+    assert.equal(output.ok, true);
+    assert.deepEqual(
+      output.packages.map((pkg) => pkg.id),
+      ["example.plugin"],
+      "only the named package was discovered, validated, and built this run",
+    );
+    assert.deepEqual(
+      output.publication.artifactWrites.map((write) => write.package),
+      ["example.plugin"],
+    );
+
+    const index = await storeIndex(root);
+    assert.deepEqual(
+      index.packages.map((pkg) => pkg.name).sort(),
+      ["example.plugin", "other.plugin"],
+    );
+    const otherPackage = index.packages.find((pkg) => pkg.name === "other.plugin");
+    assert.deepEqual(
+      otherPackage.versions.map((entry) => entry.version),
+      ["1.0.0"],
+      "the untouched package keeps exactly its previously published history",
+    );
+  });
+});
+
 test("publish rejects --previous-index with structured invalid arguments", async () => {
   await withTempDir(async (root) => {
     const result = await runCli(

@@ -15,6 +15,11 @@ const FLAGS = {
     takesValue: true,
     valueDescription: "a directory path",
   },
+  "--only": {
+    key: "only",
+    takesValue: true,
+    valueDescription: "a comma-separated list of plugin IDs",
+  },
   "--previous-index": {
     key: "previousIndexPath",
     takesValue: true,
@@ -54,11 +59,11 @@ const FLAGS = {
 
 function usage() {
   return [
-    "Usage: plugins validate [--root <dir>] [--json] [--pretty]",
+    "Usage: plugins validate [--root <dir>] [--only <ids>] [--json] [--pretty]",
     "                                    [--previous-index <file>] [--source-commit <sha>]",
     "                                    [--published-at <iso-timestamp>]",
     "",
-    "Usage: plugins build [--root <dir>] [--json] [--pretty] --out <file>",
+    "Usage: plugins build [--root <dir>] [--only <ids>] [--json] [--pretty] --out <file>",
     "",
     "Usage: plugins publish [--root <dir>] [--json] [--pretty]",
     "                                 [--source-commit <sha>]",
@@ -83,6 +88,12 @@ function usage() {
     "that snapshot instead of building the checkout itself, so a CI job holding",
     "R2 credentials never has to run code a Plugin Source Package controls.",
     "",
+    "--only <ids> narrows validate/build to a comma-separated list of plugin IDs",
+    "instead of every package under plugins/ — CI uses it to build and publish",
+    "just the packages a push actually touched. A package left out keeps its",
+    "already-published versions untouched in the Publication Index; naming an",
+    "unknown ID is reported as an UNKNOWN_ONLY_PACKAGE error.",
+    "",
     "publish runs the same seam in publish mode: it validates the checkout, then",
     "writes new Plugin Artifact zip objects and the generated Publication Index",
     "through the configured publisher, refusing to overwrite existing artifact",
@@ -106,6 +117,7 @@ function defaultOptions(command) {
   return {
     command,
     root: process.cwd(),
+    only: null,
     json: false,
     pretty: false,
     help: false,
@@ -117,6 +129,18 @@ function defaultOptions(command) {
     out: null,
     fromSnapshotPath: null,
   };
+}
+
+/** Parses `--only`'s raw comma-separated value into a trimmed ID list, or null. */
+function parseOnly(value) {
+  if (typeof value !== "string" || value.trim().length === 0) {
+    return null;
+  }
+  const ids = value
+    .split(",")
+    .map((id) => id.trim())
+    .filter((id) => id.length > 0);
+  return ids.length > 0 ? ids : null;
 }
 
 function printJson(result, pretty) {
@@ -145,7 +169,7 @@ function publishArgumentFailure(options, publisherName, message) {
  */
 async function runBuild(options) {
   const rootDir = path.resolve(options.root);
-  const built = await buildCheckout(rootDir);
+  const built = await buildCheckout(rootDir, { only: options.only });
   const errors =
     built.rootErrors.length > 0 ? built.rootErrors : [...built.codeownersErrors, ...built.buildErrors];
   const ok = errors.length === 0;
@@ -183,6 +207,7 @@ export async function run(argv = process.argv.slice(2)) {
   try {
     const [command, ...rest] = argv;
     options = { ...defaultOptions(command), ...parseCliArgs(rest, FLAGS) };
+    options.only = parseOnly(options.only);
   } catch (error) {
     return argumentFailure("INVALID_ARGUMENTS", error.message);
   }

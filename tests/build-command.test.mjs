@@ -50,6 +50,115 @@ test("build writes a snapshot with every built package, with no publication cred
   });
 });
 
+test("build --only narrows the snapshot to the named packages, leaving the rest undiscovered", async () => {
+  await withTempDir(async (root) => {
+    await writeManifest(root, "example.plugin", validManifest());
+    await writeBuildContract(root, "example.plugin", {
+      buildScript: simpleBuildScript("example.plugin", ["process"]),
+    });
+    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+
+    await writeManifest(root, "other.plugin", validManifest({ name: "other.plugin" }));
+    await writeBuildContract(root, "other.plugin", {
+      buildScript: simpleBuildScript("other.plugin", ["process"]),
+    });
+    await writeSourceFiles(root, "other.plugin", ["process/main.js"]);
+
+    await writeCodeowners(
+      root,
+      "/plugins/example.plugin/ @inferst\n/plugins/other.plugin/ @inferst\n",
+    );
+
+    const outPath = path.join(root, "build-output", "build-snapshot.json");
+    const result = await runCli([
+      "build",
+      "--root",
+      root,
+      "--only",
+      "example.plugin",
+      "--json",
+      "--out",
+      outPath,
+    ]);
+
+    assert.equal(result.code, 0, `unexpected build output: ${result.stdout}`);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.ok, true);
+    assert.deepEqual(
+      output.packages.map((pkg) => pkg.id),
+      ["example.plugin"],
+    );
+  });
+});
+
+test("build --only accepts a comma-separated list of package IDs", async () => {
+  await withTempDir(async (root) => {
+    await writeManifest(root, "example.plugin", validManifest());
+    await writeBuildContract(root, "example.plugin", {
+      buildScript: simpleBuildScript("example.plugin"),
+    });
+    await writeManifest(root, "other.plugin", validManifest({ name: "other.plugin" }));
+    await writeBuildContract(root, "other.plugin", {
+      buildScript: simpleBuildScript("other.plugin"),
+    });
+    await writeManifest(root, "third.plugin", validManifest({ name: "third.plugin" }));
+    await writeBuildContract(root, "third.plugin", {
+      buildScript: simpleBuildScript("third.plugin"),
+    });
+    await writeCodeowners(
+      root,
+      "/plugins/example.plugin/ @inferst\n/plugins/other.plugin/ @inferst\n/plugins/third.plugin/ @inferst\n",
+    );
+
+    const outPath = path.join(root, "build-output", "build-snapshot.json");
+    const result = await runCli([
+      "build",
+      "--root",
+      root,
+      "--only",
+      " example.plugin, third.plugin ",
+      "--json",
+      "--out",
+      outPath,
+    ]);
+
+    assert.equal(result.code, 0, `unexpected build output: ${result.stdout}`);
+    const output = JSON.parse(result.stdout);
+    assert.deepEqual(
+      output.packages.map((pkg) => pkg.id).sort(),
+      ["example.plugin", "third.plugin"],
+    );
+  });
+});
+
+test("build --only naming an unknown package ID fails with a structured error and writes no snapshot", async () => {
+  await withTempDir(async (root) => {
+    await writeManifest(root, "example.plugin", validManifest());
+    await writeBuildContract(root, "example.plugin", {
+      buildScript: simpleBuildScript("example.plugin"),
+    });
+    await writeCodeowners(root, "/plugins/example.plugin/ @inferst\n");
+
+    const outPath = path.join(root, "build-output", "build-snapshot.json");
+    const result = await runCli([
+      "build",
+      "--root",
+      root,
+      "--only",
+      "does-not-exist",
+      "--json",
+      "--out",
+      outPath,
+    ]);
+
+    assert.equal(result.code, 1);
+    const output = JSON.parse(result.stdout);
+    assert.equal(output.ok, false);
+    assert.equal(output.validation.errors[0].code, "UNKNOWN_ONLY_PACKAGE");
+    await assert.rejects(readFile(outPath), { code: "ENOENT" });
+  });
+});
+
 test("build fails and writes no snapshot when a package is invalid", async () => {
   await withTempDir(async (root) => {
     await writeManifest(root, "bad-name!", validManifest({ name: "bad-name!" }));
