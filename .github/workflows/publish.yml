@@ -1,0 +1,96 @@
+name: Publish
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+concurrency:
+  group: publish-main-branch
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: Build every Plugin Source Package
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out the main branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install repository dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Build every Plugin Source Package
+        run: >
+          node ./scripts/plugins.mjs build --root . --json --pretty
+          --out build-output/build-snapshot.json
+
+      - name: Upload built Plugin Artifacts and the build snapshot
+        uses: actions/upload-artifact@v4
+        with:
+          name: plugin-build-${{ github.sha }}
+          path: |
+            artifacts/
+            build-output/build-snapshot.json
+          retention-days: 1
+          if-no-files-found: error
+
+  publish:
+    name: Publish built Plugin Artifacts and the Publication Index
+    needs: build
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Check out the main branch
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+
+      - name: Install repository dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Download built Plugin Artifacts and the build snapshot
+        uses: actions/download-artifact@v4
+        with:
+          name: plugin-build-${{ github.sha }}
+
+      - name: Publish Plugin Artifacts and Publication Index
+        env:
+          R2_ACCOUNT_ID: ${{ secrets.R2_ACCOUNT_ID }}
+          R2_ACCESS_KEY_ID: ${{ secrets.R2_ACCESS_KEY_ID }}
+          R2_SECRET_ACCESS_KEY: ${{ secrets.R2_SECRET_ACCESS_KEY }}
+          R2_BUCKET: ${{ secrets.R2_BUCKET }}
+        run: >
+          node ./scripts/plugins.mjs publish --publisher r2
+          --from-snapshot build-output/build-snapshot.json
+          --source-commit "${{ github.sha }}"
+          --json --pretty --out publish-output/result.json
+
+      - name: Post the Publication Index
+        continue-on-error: true
+        env:
+          REGISTRY_SYNC_URL: ${{ secrets.REGISTRY_SYNC_URL }}
+          REGISTRY_SYNC_TOKEN: ${{ secrets.REGISTRY_SYNC_TOKEN }}
+        run: node ./scripts/registry-sync.mjs --result publish-output/result.json

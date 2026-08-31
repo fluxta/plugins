@@ -1,0 +1,16 @@
+# Package ownership policy
+#
+# Every Plugin Source Package must be covered by an explicit ownership entry
+# naming exactly its declared Package Maintainers, e.g.:
+#
+#   /plugins/example.plugin/ @inferst @fluxta/maintainers
+#
+# Wildcard and repository-default entries never satisfy package ownership.
+# The validation seam rejects packages whose ownership routing is missing or
+# mismatched.
+#
+# The default entry below routes repository-level review to repository
+# maintainers. It does not count as package ownership.
+
+* @inferst
+/plugins/obs/ @inferst
