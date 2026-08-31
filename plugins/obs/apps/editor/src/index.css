@@ -1,0 +1,15 @@
+@import "tailwindcss";
+@import "@fluxta/sdk/ui/theme.css";
+@import "@fluxta/sdk/ui/styles.css";
+
+html,
+body,
+#root {
+  height: 100%;
+  margin: 0;
+}
+
+/* The host paints the surface behind the iframe. */
+body {
+  background-color: transparent;
+}

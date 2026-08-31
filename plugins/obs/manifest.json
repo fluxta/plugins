@@ -1,0 +1,258 @@
+{
+  "actions": [
+    {
+      "name": "Set Current Scene",
+      "type": "set-scene",
+      "icon": "icons/clapperboard.svg",
+      "context": "standalone",
+      "editor": "editor/set-scene.html"
+    },
+    {
+      "name": "Start Stream",
+      "type": "start-stream",
+      "icon": "icons/radio-tower.svg",
+      "context": "standalone",
+      "editor": "editor/start-stream.html"
+    },
+    {
+      "name": "Stop Stream",
+      "type": "stop-stream",
+      "icon": "icons/square.svg",
+      "context": "standalone",
+      "editor": "editor/stop-stream.html"
+    },
+    {
+      "name": "Start Record",
+      "type": "start-record",
+      "icon": "icons/circle-dot.svg",
+      "context": "standalone",
+      "editor": "editor/start-record.html"
+    },
+    {
+      "name": "Stop Record",
+      "type": "stop-record",
+      "icon": "icons/octagon.svg",
+      "context": "standalone",
+      "editor": "editor/stop-record.html"
+    },
+    {
+      "name": "Pause Record",
+      "type": "pause-record",
+      "icon": "icons/pause.svg",
+      "context": "standalone",
+      "editor": "editor/pause-record.html"
+    },
+    {
+      "name": "Resume Record",
+      "type": "resume-record",
+      "icon": "icons/play.svg",
+      "context": "standalone",
+      "editor": "editor/resume-record.html"
+    },
+    {
+      "name": "Set Source Visibility",
+      "type": "set-source-visibility",
+      "icon": "icons/eye.svg",
+      "context": "standalone",
+      "editor": "editor/set-source-visibility.html"
+    },
+    {
+      "name": "Mute Input",
+      "type": "mute-input",
+      "icon": "icons/mic-off.svg",
+      "context": "standalone",
+      "editor": "editor/mute-input.html"
+    },
+    {
+      "name": "Unmute Input",
+      "type": "unmute-input",
+      "icon": "icons/mic.svg",
+      "context": "standalone",
+      "editor": "editor/unmute-input.html"
+    },
+    {
+      "name": "Set Input Volume",
+      "type": "set-input-volume",
+      "icon": "icons/volume-2.svg",
+      "context": "standalone",
+      "editor": "editor/set-input-volume.html"
+    },
+    {
+      "name": "Set Source Filter",
+      "type": "set-source-filter",
+      "icon": "icons/filter.svg",
+      "context": "standalone",
+      "editor": "editor/set-source-filter.html"
+    }
+  ],
+  "sources": [
+    {
+      "key": "is-streaming",
+      "name": "Is Streaming",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+      ]
+    },
+    {
+      "key": "is-recording",
+      "name": "Is Recording",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+      ]
+    },
+    {
+      "key": "is-recording-paused",
+      "name": "Is Recording Paused",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+      ]
+    },
+    {
+      "key": "current-scene",
+      "name": "Current Scene",
+      "type": "string",
+      "resolve": "query",
+      "params": [
+        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+      ],
+      "operand": { "editor": "select", "options": "scenes" }
+    }
+  ],
+  "apiVersion": 1,
+  "author": "Mikhail Morozov",
+  "description": "Control OBS Studio",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "settings",
+  "homepage": "https://github.com/inferst/fluxdeck-obs",
+  "icon": "icons/video.svg",
+  "license": "MIT",
+  "main": "index.mjs",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.1.0",
+  "name": "obs",
+  "repository": "https://github.com/inferst/fluxta-obs",
+  "title": "OBS",
+  "version": "0.1.2",
+  "events": [
+    {
+      "type": "scene-changed",
+      "name": "Scene Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        {
+          "key": "scene_name",
+          "name": "Scene Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "scenes" }
+        }
+      ]
+    },
+    {
+      "type": "stream-state-changed",
+      "name": "Stream State Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        { "key": "is_streaming", "name": "Is Streaming", "type": "boolean" }
+      ]
+    },
+    {
+      "type": "record-state-changed",
+      "name": "Record State Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        { "key": "is_recording", "name": "Is Recording", "type": "boolean" },
+        { "key": "is_recording_paused", "name": "Is Recording Paused", "type": "boolean" }
+      ]
+    },
+    {
+      "type": "source-visibility-changed",
+      "name": "Source Visibility Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        {
+          "key": "scene_name",
+          "name": "Scene Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "scenes" }
+        },
+        {
+          "key": "source_name",
+          "name": "Source Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "scene-sources" }
+        },
+        { "key": "visible", "name": "Visible", "type": "boolean" }
+      ]
+    },
+    {
+      "type": "input-mute-changed",
+      "name": "Input Mute Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        {
+          "key": "input_name",
+          "name": "Input Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "inputs" }
+        },
+        { "key": "muted", "name": "Muted", "type": "boolean" }
+      ]
+    },
+    {
+      "type": "source-filter-enabled-changed",
+      "name": "Source Filter Enabled Changed",
+      "fields": [
+        {
+          "key": "connection",
+          "name": "Connection",
+          "type": "string",
+          "operand": { "editor": "select", "options": "connections" }
+        },
+        {
+          "key": "source_name",
+          "name": "Source Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "inputs" }
+        },
+        {
+          "key": "filter_name",
+          "name": "Filter Name",
+          "type": "string",
+          "operand": { "editor": "select", "options": "filters" }
+        },
+        { "key": "enabled", "name": "Enabled", "type": "boolean" }
+      ]
+    }
+  ]
+}

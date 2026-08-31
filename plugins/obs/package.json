@@ -1,0 +1,23 @@
+{
+  "description": "Control OBS Studio from Fluxta: scenes, streaming, recording, sources and filters, over obs-websocket",
+  "devDependencies": {
+    "@fluxta/cli": "catalog:",
+    "shx": "catalog:",
+    "turbo": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  },
+  "name": "fluxta-obs",
+  "packageManager": "pnpm@11.23.0+sha512.f00082e5b283a199b74e079da28d155c008fe232f44c8a06ea7ddfa014ecf719fc362f790ecc67b28106ddac2afb24c49a9a079159da560b2ce7d1e98efd11af",
+  "private": true,
+  "scripts": {
+    "build": "shx rm -rf dist && turbo run build --force",
+    "dev": "pnpm --filter obs-editor build && turbo run dev",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

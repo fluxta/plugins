@@ -1,0 +1,2 @@
+minimumReleaseAgeExclude:
+  - '@fluxta/cli@0.1.2'
