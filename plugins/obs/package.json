@@ -1,5 +1,4 @@
 {
-  "description": "Control OBS Studio from Fluxta: scenes, streaming, recording, sources and filters, over obs-websocket",
   "devDependencies": {
     "@fluxta/cli": "catalog:",
     "shx": "catalog:",
