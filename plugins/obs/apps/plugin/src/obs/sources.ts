@@ -16,9 +16,9 @@ export async function listInputs(obs: OBSWebSocket): Promise<PickerOption[]> {
 
 /**
  * OBS addresses "this Source, placed in this Scene" by a numeric Scene Item
- * id, not by the Source's name — see docs/adr/0002 on why this plugin never
- * names that concept itself. This resolves the id each call rather than
- * caching it: an id is only stable for as long as the placement exists.
+ * id, not by the Source's name — this plugin never names that concept
+ * itself. This resolves the id each call rather than caching it: an id is
+ * only stable for as long as the placement exists.
  */
 async function sceneItemId(obs: OBSWebSocket, scene: string, source: string): Promise<number> {
   const { sceneItemId } = await obs.call("GetSceneItemId", {

@@ -3,8 +3,7 @@ import type { FilterMode, VisibilityMode } from "./picker";
 /**
  * Every Action's settings carry the Connection they act on. Optional because
  * an Action saved while exactly one Connection was configured stores no
- * explicit choice — the plugin fills in the sole Connection itself; see
- * ADR-0001.
+ * explicit choice — the plugin fills in the sole Connection itself.
  */
 type WithConnection = { connection?: string };
 

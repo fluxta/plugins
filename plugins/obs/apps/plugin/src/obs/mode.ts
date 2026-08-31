@@ -3,8 +3,8 @@ import type { FilterMode, VisibilityMode } from "obs-protocol";
 /**
  * Resolves a show/hide/toggle (or enable/disable/toggle) mode to the boolean
  * OBS should be set to. `getCurrent` is only called for "toggle" — the other
- * two modes are idempotent and never need to know the current value (ADR
- * 0003: Source/Filter visibility takes a mode, unlike Stream/Record/Mute).
+ * two modes are idempotent and never need to know the current value
+ * (Source/Filter visibility takes a mode, unlike Stream/Record/Mute).
  */
 export async function resolveMode(
   mode: VisibilityMode | FilterMode | undefined,

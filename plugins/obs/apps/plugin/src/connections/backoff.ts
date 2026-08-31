@@ -5,8 +5,7 @@ const MAX_DELAY_MS = 30_000;
  * The retry delay for one Connection's reconnect loop: doubles on every
  * failed attempt, capped at {@link MAX_DELAY_MS}, and resets once a connect
  * actually succeeds. OBS being closed is an expected, indefinite state, not
- * a fault to give up over — see docs/adr for the "auto-retry forever"
- * decision.
+ * a fault to give up over.
  */
 export class Backoff {
   private delayMs = INITIAL_DELAY_MS;

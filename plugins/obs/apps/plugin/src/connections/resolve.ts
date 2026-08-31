@@ -5,7 +5,7 @@ import type { ConnectionsService } from "./service";
 /**
  * Settings carrying a `connection` field resolve against the sole configured
  * Connection when unset — an Action saved before a second Connection existed
- * keeps working without ever having named one (ADR-0001).
+ * keeps working without ever having named one.
  */
 export function resolveConnectionId(
   connections: ConnectionsService,

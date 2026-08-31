@@ -3,8 +3,8 @@ import type { ConnectionEntry } from "obs-protocol";
 /**
  * The Connection id to actually query live pickers (Scene/Source/Input/
  * Filter) against: the one explicitly chosen, or — when the field is
- * hidden because exactly one Connection is configured (ADR-0001's
- * auto-default) — that sole one.
+ * hidden because exactly one Connection is configured (the auto-default) —
+ * that sole one.
  *
  * Deliberately never written back into settings: what gets saved stays
  * whatever the author explicitly picked (or nothing), matching the

@@ -10,8 +10,8 @@ export const SET_SOURCE_VISIBILITY_ACTION = "set-source-visibility";
 
 /**
  * Shows, hides, or flips a Source's visibility within one Scene. Unlike
- * Stream/Record/Mute, this ships a "toggle" mode alongside show/hide — see
- * docs/adr/0003 for why the two groups are inconsistent on purpose.
+ * Stream/Record/Mute, this ships a "toggle" mode alongside show/hide — the
+ * two groups are inconsistent on purpose.
  */
 export class SetSourceVisibilityAction extends StandaloneAction<SetSourceVisibilitySettings> {
   name = SET_SOURCE_VISIBILITY_ACTION;

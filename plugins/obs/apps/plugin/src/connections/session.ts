@@ -144,8 +144,8 @@ export class ObsSession {
 
   /**
    * `SceneItemEnableStateChanged` names its Scene Item only by id — resolve
-   * it back to a Source name before this plugin's own Event fires (ADR-0002:
-   * this plugin never surfaces a Scene Item id itself). If the lookup fails
+   * it back to a Source name before this plugin's own Event fires (this
+   * plugin never surfaces a Scene Item id itself). If the lookup fails
    * (the Source or Scene vanished in the same instant), the OBS event is
    * dropped rather than emitted half-populated.
    */

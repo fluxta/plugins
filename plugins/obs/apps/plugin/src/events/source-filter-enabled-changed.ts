@@ -6,7 +6,7 @@ export const SOURCE_FILTER_ENABLED_CHANGED_EVENT = "source-filter-enabled-change
  * `filter_name`'s `select` operand resolves against the `filters` Options
  * Source, which reads the *sibling* `source_name` filter row's value out of
  * its own `args` to narrow the list to that Source's Filters — a host
- * capability this plugin depends on before it has shipped; see docs/adr/0004.
+ * capability this plugin depends on before it has shipped.
  */
 export type SourceFilterEnabledChangedPayload = {
   connection: string;

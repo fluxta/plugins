@@ -19,8 +19,8 @@ type Props = {
  *
  * Hidden entirely when at most one Connection is configured: with none,
  * there is nothing to pick from yet; with exactly one, the plugin fills it
- * in itself (ADR-0001's auto-default), so asking would be a choice with only
- * one answer.
+ * in itself (the auto-default), so asking would be a choice with only one
+ * answer.
  */
 export function ConnectionSelect({ connections, value, onChange }: Props) {
   if (connections.length <= 1) {

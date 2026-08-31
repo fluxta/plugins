@@ -38,9 +38,9 @@ function labelOf(connection: StoredConnection): string {
 
 /**
  * Owns one {@link ObsSession} per configured Connection id, and keeps that
- * set in sync with whatever `reconcile` is next given — the settings-driven
- * connection lifecycle from ADR (reactive to Plugin Settings, no explicit
- * Connect button).
+ * set in sync with whatever `reconcile` is next given — a settings-driven
+ * connection lifecycle (reactive to Plugin Settings, no explicit Connect
+ * button).
  */
 export class ConnectionsService {
   private readonly sessions = new Map<string, ObsSession>();
@@ -124,7 +124,7 @@ export class ConnectionsService {
     return this.sessions.get(id)?.obs;
   }
 
-  /** The sole configured Connection's id, when there is exactly one (ADR-0001's auto-default). */
+  /** The sole configured Connection's id, when there is exactly one (the auto-default). */
   soleId(): string | undefined {
     return this.sessions.size === 1 ? [...this.sessions.keys()][0] : undefined;
   }

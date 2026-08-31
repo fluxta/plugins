@@ -10,8 +10,8 @@ export const SET_SOURCE_FILTER_ACTION = "set-source-filter";
 
 /**
  * Enables, disables, or flips a Filter on a Source. Ships a "toggle" mode
- * alongside enable/disable — see docs/adr/0003 for why Source/Filter
- * visibility diverges from Stream/Record/Mute on this.
+ * alongside enable/disable — Source/Filter visibility diverges from
+ * Stream/Record/Mute on this.
  */
 export class SetSourceFilterAction extends StandaloneAction<SetSourceFilterSettings> {
   name = SET_SOURCE_FILTER_ACTION;

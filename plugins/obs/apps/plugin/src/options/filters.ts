@@ -10,8 +10,8 @@ export const FILTERS_OPTIONS = "filters";
  * The chosen Source's live Filters — backs the `filter_name` Event Field
  * operand on `source-filter-enabled-changed`. Reads `source_name` out of its
  * own `args`, which the host only populates once that sibling Field is
- * itself filtered in the same Event Filter row (docs/adr/0004); until then
- * this resolves to an empty list, same as an offline Connection would.
+ * itself filtered in the same Event Filter row; until then this resolves to
+ * an empty list, same as an offline Connection would.
  */
 export function createFiltersOptions(connections: ConnectionsService): Options {
   return {
