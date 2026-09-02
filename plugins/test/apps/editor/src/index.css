@@ -1,0 +1,10 @@
+@import "tailwindcss";
+@import "@fluxta/sdk/ui/theme.css";
+@import "@fluxta/sdk/ui/styles.css";
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
