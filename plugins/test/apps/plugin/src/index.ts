@@ -12,11 +12,12 @@ type HelloSettings = {
 class HelloAction extends ItemAction<HelloSettings> {
   name = "test.hello";
 
-  onTrigger(ctx: ItemTriggerContext<HelloSettings>) {
+  onTrigger(_: ItemTriggerContext<HelloSettings>) {
     // stdout and stderr are captured to logs/test.log inside the
     // plugin folder, so console is how a sidecar reports what it did.
+
     console.log(
-      `[${ctx.trigger}] item ${ctx.itemId}: ${ctx.settings.message ?? "Hello from Fluxta!"}`,
+      `[${_.trigger}] item ${_.itemId}: ${_.settings.message ?? "Hello from Fluxta!"}`,
     );
   }
 }

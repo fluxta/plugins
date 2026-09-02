@@ -1,0 +1,5 @@
+dist/
+pnpm-lock.yaml
+# pnpm rewrites this itself (e.g. minimumReleaseAgeExclude on install) in a
+# quoting style Prettier doesn't match — not the author's formatting to keep.
+pnpm-workspace.yaml
