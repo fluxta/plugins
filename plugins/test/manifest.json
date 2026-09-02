@@ -1,0 +1,24 @@
+{
+  "name": "test",
+  "title": "Test",
+  "description": "Test",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "",
+  "repository": "",
+  "maintainers": [
+    "inferst"
+  ],
+  "minAppVersion": "0.1.0",
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "actions": [
+    {
+      "context": "item",
+      "editor": "editor/index.html",
+      "name": "Hello",
+      "type": "test.hello"
+    }
+  ]
+}
