@@ -113,7 +113,7 @@ test("main-branch publication posts the Publication Index to the Plugin Registry
   // condition of its own, so a failed R2 publish stops the job before the
   // sync step is ever reached — the Registry is only ever posted to once R2
   // has already succeeded.
-  const r2StepIndex = publishJob.indexOf("Publish Plugin Artifacts and Publication Index to Cloudflare R2");
+  const r2StepIndex = publishJob.indexOf("Publish Plugin Artifacts and Publication Index");
   const syncStepIndex = publishJob.indexOf("registry-sync.mjs");
   assert.ok(r2StepIndex >= 0 && syncStepIndex > r2StepIndex);
   const syncStep = publishJob.slice(publishJob.lastIndexOf("- name:", syncStepIndex));
