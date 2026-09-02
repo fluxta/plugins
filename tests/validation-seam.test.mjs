@@ -187,11 +187,6 @@ test("validate reports package-scoped identity and Package Metadata failures", a
       {
         code: "MISSING_PACKAGE_METADATA",
         package: "missing-metadata",
-        field: "manifest.json.repository|homepage",
-      },
-      {
-        code: "MISSING_PACKAGE_METADATA",
-        package: "missing-metadata",
         field: "manifest.json.minAppVersion",
       },
       {

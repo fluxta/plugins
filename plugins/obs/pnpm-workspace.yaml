@@ -6,7 +6,7 @@ allowBuilds:
   esbuild: true
 
 catalog:
-  "@fluxta/cli": "^0.1.2"
+  "@fluxta/cli": "^0.2.0"
   "@fluxta/sdk": "^0.1.2"
   "@tailwindcss/vite": "^4.1.18"
   "@types/node": "^22.18.12"
@@ -26,5 +26,5 @@ catalog:
   zod: "^4.4.3"
 
 minimumReleaseAgeExclude:
-  - '@fluxta/cli@0.1.2'
+  - '@fluxta/cli@0.2.0'
   - '@fluxta/sdk@0.1.2'
