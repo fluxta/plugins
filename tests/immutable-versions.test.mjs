@@ -301,6 +301,65 @@ test("a version bump with changed artifacts plans a new publication and preserve
   });
 });
 
+test("a version lower than the highest published version is rejected before upload", async () => {
+  await withTempDir(async (root) => {
+    const manifest = validManifest();
+    await writeBuildablePackage(
+      root,
+      "example.plugin",
+      manifest,
+      simpleBuildScript("example.plugin", ["process"]),
+      ["process/main.js"],
+    );
+
+    const { output: baseline } = await runValidate(root);
+    const artifact = baseline.packages[0].build.artifact;
+    await writePreviousIndex(
+      root,
+      previousIndex([
+        publishedEntry(manifest, artifact),
+        publishedEntry(validManifest({ version: "1.3.0" }), artifact),
+      ]),
+    );
+
+    await writeManifest(root, "example.plugin", validManifest({ version: "1.2.4" }));
+
+    const { result, output } = await runValidate(root, [
+      "--previous-index",
+      path.join(root, "previous-index.json"),
+    ]);
+
+    assert.equal(result.code, 1);
+    assert.equal(output.ok, false);
+    assert.deepEqual(
+      output.validation.errors.map((error) => error.code),
+      ["NON_MONOTONIC_VERSION"],
+    );
+    assert.equal(output.validation.errors[0].package, "example.plugin");
+    assert.equal(output.validation.errors[0].field, "version");
+    assert.match(
+      output.validation.errors[0].message,
+      /lower than the highest published version '1\.3\.0'/,
+    );
+    assert.match(
+      output.validation.errors[0].message,
+      /rejected before upload/,
+    );
+
+    assert.equal(output.packages[0].change.kind, "non-monotonic-version");
+    assert.match(
+      output.packages[0].change.reason,
+      /must be greater than every version already published/,
+    );
+
+    assert.deepEqual(
+      output.publicationPlan.artifactWrites,
+      [],
+      "a non-monotonic version is not planned for upload",
+    );
+  });
+});
+
 test("docs-only changes pass without a new publication when the built artifact is unchanged", async () => {
   await withTempDir(async (root) => {
     const manifest = validManifest();

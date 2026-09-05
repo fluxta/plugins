@@ -75,6 +75,21 @@ function latestRecommendedVersion(versions) {
   );
 }
 
+/**
+ * The highest version ever published for a package, across every status —
+ * including `yanked`/`unlisted`. A version number, once used, stays retired
+ * regardless of status, so this is the floor a new `manifest.version` must
+ * clear. Returns null when the package has no published history.
+ */
+export function highestPublishedVersion(versions) {
+  if (versions.length === 0) {
+    return null;
+  }
+  return versions.reduce((highest, entry) =>
+    compareSemVer(entry.version, highest.version) > 0 ? entry : highest,
+  ).version;
+}
+
 export function deriveRecommendations(index) {
   return index.packages.flatMap((pkg) => {
     const latest = latestRecommendedVersion(pkg.versions);

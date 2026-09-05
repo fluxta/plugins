@@ -3,6 +3,7 @@ import { readFile, readdir } from "node:fs/promises";
 import path from "node:path";
 import { PACKAGE_METADATA_FIELDS } from "@fluxta/cli/validation/package-metadata";
 import { parsePublicationIndex } from "@fluxta/cli/previous-index";
+import { compareSemVer } from "@fluxta/cli/semver";
 import { validateSourcePackageWithCli } from "../cli-validation.mjs";
 import { runProcess } from "../process.mjs";
 import { loadCodeowners, validatePackageOwnership } from "./codeowners.mjs";
@@ -13,6 +14,7 @@ import {
   buildPublicationIndex,
   deriveRecommendations,
   emptyPublicationIndex,
+  highestPublishedVersion,
   indexPublishedVersionsByPackage,
   serializePublicationIndex,
 } from "./publication-index.mjs";
@@ -337,6 +339,20 @@ function analyzePublishedChange(pkg, publishedVersions, effectiveStatus) {
   const published = publishedVersions.find((entry) => entry.version === version) ?? null;
 
   if (!published) {
+    const highest = highestPublishedVersion(publishedVersions);
+    if (highest && compareSemVer(version, highest) < 0) {
+      const source = { id: pkg.id, path: pkg.path };
+      const reason =
+        `Version '${version}' of '${pkg.id}' is lower than the highest published version ` +
+        `'${highest}'. manifest.version must be greater than every version already ` +
+        "published for this package, so the publication attempt is rejected before upload.";
+      return {
+        pkg,
+        change: { kind: "non-monotonic-version", reason },
+        changeError: packageError(source, "NON_MONOTONIC_VERSION", "version", reason),
+      };
+    }
+
     const reason =
       publishedVersions.length === 0
         ? `Version '${version}' of '${pkg.id}' has no published history; the built ` +
