@@ -395,7 +395,6 @@ test("publish reads the previous index from the publisher itself and preserves i
                 {
                   version: "1.0.0",
                   manifest: { name: "example.plugin", version: "1.0.0" },
-                  packageMetadata: {},
                   artifact: {
                     objectKey: "artifacts/example.plugin-1.0.0.zip",
                     checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -462,7 +461,6 @@ test("publish --only builds and publishes just the named package, leaving other 
                 {
                   version: "1.0.0",
                   manifest: { name: "other.plugin", version: "1.0.0" },
-                  packageMetadata: {},
                   artifact: {
                     objectKey: "artifacts/other.plugin-1.0.0.zip",
                     checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",

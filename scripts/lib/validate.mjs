@@ -307,6 +307,9 @@ async function readSourceManifest(sourcePackage) {
   }
 }
 
+// Runtime manifest fields and Package Metadata both live as top-level fields
+// of manifest.json, so this summary carries them as one `manifest` object —
+// matching the shape the Publication Index now uses (see publication-index.mjs).
 function packageSummary(sourcePackage, manifest, isValid, ownership, build) {
   return {
     id: sourcePackage.id,
@@ -318,8 +321,6 @@ function packageSummary(sourcePackage, manifest, isValid, ownership, build) {
       apiVersion: Number.isInteger(manifest.apiVersion) ? manifest.apiVersion : null,
       title: stringOrNull(manifest.title),
       description: stringOrNull(manifest.description),
-    },
-    packageMetadata: {
       author: stringOrNull(manifest.author),
       license: stringOrNull(manifest.license),
       repository: stringOrNull(manifest.repository),
@@ -363,7 +364,10 @@ function analyzePublishedChange(pkg, publishedVersions, effectiveStatus) {
   }
 
   const artifactChanged = pkg.build.artifact.checksum !== published.artifact?.checksum;
-  const metadataChanged = !packageMetadataEqual(pkg.packageMetadata, published.packageMetadata);
+  // Both pkg.manifest and the published version's manifest fold Package
+  // Metadata into the same `manifest` object; packageMetadataEqual only
+  // reads PACKAGE_METADATA_FIELDS off each side.
+  const metadataChanged = !packageMetadataEqual(pkg.manifest, published.manifest);
   const statusNote =
     effectiveStatus !== "published"
       ? ` The published version stays ${effectiveStatus}; its status, reason, and artifact remain untouched.`

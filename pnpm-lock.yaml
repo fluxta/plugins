@@ -9,13 +9,13 @@ importers:
   .:
     dependencies:
       '@fluxta/cli':
-        specifier: ^0.2.0
-        version: 0.2.0
+        specifier: ^0.3.0
+        version: 0.3.0
 
 packages:
 
-  '@fluxta/cli@0.2.0':
-    resolution: {integrity: sha512-fh4u8q7kHoT1I81GeEfeqxfyR0QUshxHMmZeyFBcDQeLCQ6dCwQpRofyGx6KEfcUkc9mfuxfS0f2Mdwa4yzmLQ==}
+  '@fluxta/cli@0.3.0':
+    resolution: {integrity: sha512-a8GKMT8ZI8s+mgZmwND88YZlCM3WfnYayEXkYttptwF1IxIhCQ4xt3MXQ76h0mKuxC41SIPruZUy9z+bsr6/LQ==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -601,7 +601,7 @@ packages:
 
 snapshots:
 
-  '@fluxta/cli@0.2.0':
+  '@fluxta/cli@0.3.0':
     dependencies:
       '@inquirer/prompts': 7.10.1
       '@oclif/core': 4.14.0

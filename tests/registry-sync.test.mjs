@@ -20,7 +20,6 @@ const SAMPLE_INDEX = {
         {
           version: "1.2.3",
           manifest: { name: "example.plugin", version: "1.2.3" },
-          packageMetadata: {},
           artifact: {
             objectKey: "artifacts/example.plugin-1.2.3.zip",
             checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",

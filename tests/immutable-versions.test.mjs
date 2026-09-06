@@ -33,8 +33,6 @@ function publishedEntry(manifest, artifact, overrides = {}) {
       apiVersion: manifest.apiVersion,
       title: manifest.title,
       description: manifest.description,
-    },
-    packageMetadata: {
       author: manifest.author,
       license: manifest.license,
       minAppVersion: manifest.minAppVersion,

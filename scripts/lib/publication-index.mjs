@@ -8,7 +8,12 @@ export const INDEX_OBJECT_KEY = "publication-index.json";
 const ARTIFACTS_OUTPUT_DIR = "artifacts";
 // Canonical field order for the nested objects of a Publication Index entry.
 // The index is compared by checksum, so its key order is part of its contract.
+// Runtime manifest fields and Package Metadata both live as top-level fields
+// of manifest.json, so the index carries them as one `manifest` object too —
+// matching the `Record<string, unknown>` shape `@fluxta/cli/previous-index`
+// parses back (`PublishedVersion.manifest`, no separate `packageMetadata`).
 const INDEX_MANIFEST_FIELDS = ["name", "version", "apiVersion", "title", "description"];
+const INDEX_ENTRY_MANIFEST_FIELDS = [...INDEX_MANIFEST_FIELDS, ...PACKAGE_METADATA_FIELDS];
 const INDEX_ARTIFACT_FIELDS = [
   "objectKey",
   "checksum",
@@ -40,8 +45,7 @@ function normalizeVersionEntry(entry) {
     entry.yanked === true ? "yanked" : entry.unlisted === true ? "unlisted" : null;
   return {
     version: entry.version,
-    manifest: pickFields(entry.manifest, INDEX_MANIFEST_FIELDS),
-    packageMetadata: pickFields(entry.packageMetadata, PACKAGE_METADATA_FIELDS),
+    manifest: pickFields(entry.manifest, INDEX_ENTRY_MANIFEST_FIELDS),
     artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
     status: VERSION_STATUSES.has(entry.status) ? entry.status : (legacyStatus ?? "published"),
     reason: stringOrNull(entry.reason),
@@ -140,7 +144,6 @@ export function buildPublicationIndex(
         normalizeVersionEntry({
           version,
           manifest: { ...pkg.manifest },
-          packageMetadata: { ...pkg.packageMetadata },
           artifact: {
             objectKey: artifactObjectKey(pkg.id, version),
             checksum: pkg.build.artifact.checksum,

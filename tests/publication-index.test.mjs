@@ -27,8 +27,6 @@ function indexVersion(version, overrides = {}) {
       apiVersion: 1,
       title: "Example Plugin",
       description: "An example trusted package.",
-    },
-    packageMetadata: {
       author: "Example Author",
       license: "MIT",
       minAppVersion: "0.1.0",
@@ -121,8 +119,6 @@ test("validate generates a dry-run Publication Index with schema version, identi
       apiVersion: 1,
       title: "Example Plugin",
       description: "An example trusted package.",
-    });
-    assert.deepEqual(entry.packageMetadata, {
       author: "Example Author",
       license: "MIT",
       minAppVersion: "0.1.0",

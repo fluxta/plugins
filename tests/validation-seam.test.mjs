@@ -68,8 +68,6 @@ test("validate accepts a Plugin Source Package with identity, Package Metadata, 
         apiVersion: 1,
         title: "Example Plugin",
         description: "An example trusted package.",
-      },
-      packageMetadata: {
         author: "Example Author",
         license: "MIT",
         repository: "https://github.com/example/example.plugin",

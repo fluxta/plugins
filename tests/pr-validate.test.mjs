@@ -33,7 +33,6 @@ test("pr-validate resolves the previous publication index from the base git ref"
             {
               version: "1.0.0",
               manifest: { name: "example.plugin", version: "1.0.0" },
-              packageMetadata: {},
               artifact: {
                 objectKey: "artifacts/example.plugin-1.0.0.zip",
                 checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
@@ -108,8 +107,9 @@ test("pr-validate rejects a duplicate publication against the previous index wit
           versions: [
             {
               version: "1.2.3",
-              manifest: { name: "example.plugin", version: "1.2.3" },
-              packageMetadata: {
+              manifest: {
+                name: "example.plugin",
+                version: "1.2.3",
                 author: "Example Author",
                 license: "MIT",
                 repository: "https://github.com/example/example.plugin",
