@@ -1,0 +1,8 @@
+{
+  "description": "A test plugin",
+  "name": "pkg",
+  "scripts": {
+    "build": "node apps/plugin/build.mjs"
+  },
+  "version": "0.1.0"
+}

@@ -1,0 +1,22 @@
+{
+  "actions": [
+    {
+      "name": "Test Action",
+      "type": "test.plugin-action"
+    }
+  ],
+  "apiVersion": 1,
+  "author": "Test Author",
+  "description": "A test plugin",
+  "homepage": "https://example.com",
+  "license": "MIT",
+  "main": "index.js",
+  "maintainers": [
+    "test-author"
+  ],
+  "minAppVersion": "0.1.0",
+  "name": "other.name",
+  "repository": "https://example.com/repo",
+  "title": "Test Plugin",
+  "version": "0.1.0"
+}
