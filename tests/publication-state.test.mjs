@@ -21,20 +21,20 @@ function indexVersion(version, overrides = {}) {
   return {
     version,
     manifest: {
-      name: "example.plugin",
+      name: "example-plugin",
       version,
       apiVersion: 1,
       title: "Example Plugin",
       description: "An example trusted package.",
       author: "Example Author",
       license: "MIT",
-      repository: "https://github.com/example/example.plugin",
+      repository: "https://github.com/example/example-plugin",
       homepage: null,
       minAppVersion: "0.1.0",
       maintainers: ["inferst"],
     },
     artifact: {
-      objectKey: `artifacts/example.plugin-${version}.zip`,
+      objectKey: `artifacts/example-plugin-${version}.zip`,
       checksum: `sha256:${"a".repeat(64)}`,
       size: 1024,
       sourceCommit: "p".repeat(40),
@@ -46,7 +46,7 @@ function indexVersion(version, overrides = {}) {
   };
 }
 
-function previousIndex(versions, packageName = "example.plugin") {
+function previousIndex(versions, packageName = "example-plugin") {
   return {
     schemaVersion: 1,
     packages: [{ name: packageName, versions }],
@@ -80,7 +80,7 @@ async function writePublicationState(root, packageId, state) {
 }
 
 function stateFile(versions) {
-  return { package: "example.plugin", versions };
+  return { package: "example-plugin", versions };
 }
 
 async function baselineArtifact(root) {
@@ -106,11 +106,11 @@ test("a maintainer can mark a published version yanked with a reason; the latest
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.1.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const artifact = await baselineArtifact(root);
 
     await writePreviousIndex(
@@ -123,7 +123,7 @@ test("a maintainer can mark a published version yanked with a reason; the latest
     );
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "1.2.0": { status: "yanked", reason: "Causes a crash on startup" },
       }),
@@ -159,7 +159,7 @@ test("a maintainer can mark a published version yanked with a reason; the latest
 
     assert.deepEqual(
       output.publicationPlan.recommendations,
-      [{ package: "example.plugin", latestVersion: "1.1.0" }],
+      [{ package: "example-plugin", latestVersion: "1.1.0" }],
       "the latest recommended version skips the state-yanked version",
     );
     assert.deepEqual(
@@ -174,11 +174,11 @@ test("an unlisted version is excluded from the latest recommendation while stayi
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.0.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const artifact = await baselineArtifact(root);
 
     await writePreviousIndex(
@@ -190,7 +190,7 @@ test("an unlisted version is excluded from the latest recommendation while stayi
     );
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "1.1.0": { status: "unlisted", reason: "Superseded by the rewrite" },
       }),
@@ -219,7 +219,7 @@ test("an unlisted version is excluded from the latest recommendation while stayi
 
     assert.deepEqual(
       output.publicationPlan.recommendations,
-      [{ package: "example.plugin", latestVersion: "1.0.0" }],
+      [{ package: "example-plugin", latestVersion: "1.0.0" }],
       "the latest version is unlisted, so the older published version is recommended",
     );
   });
@@ -229,11 +229,11 @@ test("publication state overrides supplied status while untouched entries keep t
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.0.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const artifact = await baselineArtifact(root);
 
     await writePreviousIndex(
@@ -245,7 +245,7 @@ test("publication state overrides supplied status while untouched entries keep t
     );
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "1.0.0": { status: "yanked", reason: "Crashes on startup" },
       }),
@@ -268,7 +268,7 @@ test("publication state overrides supplied status while untouched entries keep t
     assert.equal(versions[0].reason, "Crashes on startup");
     assert.equal(versions[1].status, "yanked", "status without state is preserved");
     assert.equal(versions[1].reason, "Yanked earlier");
-    assert.equal(versions[1].artifact.objectKey, "artifacts/example.plugin-1.1.0.zip");
+    assert.equal(versions[1].artifact.objectKey, "artifacts/example-plugin-1.1.0.zip");
 
     assert.deepEqual(output.publicationPlan.recommendations, []);
   });
@@ -284,13 +284,13 @@ test("a state file that cannot be interpreted fails validation with a package-sc
     {
       name: "package mismatch",
       state: stateFile({ "1.2.0": { status: "yanked" } }),
-      override: { package: "other.plugin" },
+      override: { package: "other-plugin" },
       expectedCode: "PUBLICATION_STATE_PACKAGE_MISMATCH",
       expectedField: "package",
     },
     {
       name: "versions missing",
-      state: { package: "example.plugin" },
+      state: { package: "example-plugin" },
       expectedField: "versions",
     },
     {
@@ -322,20 +322,20 @@ test("a state file that cannot be interpreted fails validation with a package-sc
 
   for (const invalid of invalidStates) {
     await withTempDir(async (root) => {
-      await writeBuildablePackage(root, "example.plugin", validManifest());
+      await writeBuildablePackage(root, "example-plugin", validManifest());
       const previous = previousIndex([indexVersion("1.2.0")]);
       await writePreviousIndex(root, previous);
 
       if (invalid.contents !== undefined) {
         const { writeFile } = await import("node:fs/promises");
         await writeFile(
-          path.join(root, "plugins", "example.plugin", "publication-state.json"),
+          path.join(root, "plugins", "example-plugin", "publication-state.json"),
           invalid.contents,
         );
       } else {
         await writePublicationState(
           root,
-          "example.plugin",
+          "example-plugin",
           invalid.override ? { ...invalid.state, ...invalid.override } : invalid.state,
         );
       }
@@ -353,7 +353,7 @@ test("a state file that cannot be interpreted fails validation with a package-sc
       const output = JSON.parse(result.stdout);
       assert.equal(output.ok, false, invalid.name);
       const stateError = output.validation.errors.find(
-        (error) => error.package === "example.plugin",
+        (error) => error.package === "example-plugin",
       );
       assert.ok(stateError, `${invalid.name}: expected a package-scoped error`);
       assert.equal(
@@ -368,11 +368,11 @@ test("a state file that cannot be interpreted fails validation with a package-sc
 
 test("publication state for a version with no published history fails when a previous index is supplied", async () => {
   await withTempDir(async (root) => {
-    await writeBuildablePackage(root, "example.plugin", validManifest());
+    await writeBuildablePackage(root, "example-plugin", validManifest());
     await writePreviousIndex(root, previousIndex([indexVersion("1.0.0")]));
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "2.0.0": { status: "yanked", reason: "Never shipped" },
       }),
@@ -394,7 +394,7 @@ test("publication state for a version with no published history fails when a pre
       (entry) => entry.code === "PUBLICATION_STATE_UNPUBLISHED_VERSION",
     );
     assert.ok(error, JSON.stringify(output.validation.errors));
-    assert.equal(error.package, "example.plugin");
+    assert.equal(error.package, "example-plugin");
     assert.match(error.message, /version '2\.0\.0'/);
     assert.match(error.message, /no published history/);
     assert.equal(
@@ -407,10 +407,10 @@ test("publication state for a version with no published history fails when a pre
 
 test("publication state is inert when no previous index is supplied", async () => {
   await withTempDir(async (root) => {
-    await writeBuildablePackage(root, "example.plugin", validManifest());
+    await writeBuildablePackage(root, "example-plugin", validManifest());
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "1.2.3": { status: "yanked", reason: "Cannot be verified without history" },
       }),
@@ -436,7 +436,7 @@ test("publication state is inert when no previous index is supplied", async () =
     assert.equal(entry.version, "1.2.3");
     assert.equal(entry.status, "published", "without history the state cannot be applied");
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.2.3" },
+      { package: "example-plugin", latestVersion: "1.2.3" },
     ]);
   });
 });
@@ -445,11 +445,11 @@ test("a docs-only rebuild of a yanked version keeps it yanked and plans no artif
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.0.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const artifact = await baselineArtifact(root);
 
     await writePreviousIndex(
@@ -489,11 +489,11 @@ test("a changed rebuild of a yanked version is rejected without overwriting the 
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest(),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const baseline = JSON.parse(
       (
         await runCli([
@@ -519,7 +519,7 @@ test("a changed rebuild of a yanked version is rejected without overwriting the 
         }),
       ]),
     );
-    await writeSourceFiles(root, "example.plugin", [
+    await writeSourceFiles(root, "example-plugin", [
       "process/main.js",
       "process/extra.js",
     ]);
@@ -556,11 +556,11 @@ test("a maintainer can re-list a yanked version by setting its status back to pu
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.0.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const artifact = await baselineArtifact(root);
 
     await writePreviousIndex(
@@ -575,7 +575,7 @@ test("a maintainer can re-list a yanked version by setting its status back to pu
     );
     await writePublicationState(
       root,
-      "example.plugin",
+      "example-plugin",
       stateFile({
         "1.0.0": { status: "published", reason: "Restored after the fix" },
       }),
@@ -598,7 +598,7 @@ test("a maintainer can re-list a yanked version by setting its status back to pu
     assert.equal(versions[0].reason, "Restored after the fix");
     assert.equal(versions[1].status, "yanked", "the still-yanked version is unaffected");
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.0.0" },
+      { package: "example-plugin", latestVersion: "1.0.0" },
     ]);
   });
 });

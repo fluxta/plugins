@@ -87,7 +87,7 @@ test("decideChangeScope: a lockfile or workflow change also forces a full rebuil
   assert.equal(decideChangeScope(["package.json"], ["obs"]).mode, "full");
 });
 
-test("decideChangeScope: unrelated root files (docs, ADRs) neither force nor block a plugin change", () => {
+test("decideChangeScope: unrelated root files (docs)gneither force nor block a plugin change", () => {
   const scope = decideChangeScope(["README.md", "plugins/obs/manifest.json"], ["obs"]);
   assert.equal(scope.mode, "only");
   assert.deepEqual(scope.only, ["obs"]);
