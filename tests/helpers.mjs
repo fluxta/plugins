@@ -12,6 +12,7 @@ export const cliPath = path.join(repoRoot, "scripts", "plugins.mjs");
 export const prValidatePath = path.join(repoRoot, "scripts", "pr-validate.mjs");
 export const registrySyncPath = path.join(repoRoot, "scripts", "registry-sync.mjs");
 export const changedPluginsPath = path.join(repoRoot, "scripts", "changed-plugins.mjs");
+export const migratePath = path.join(repoRoot, "scripts", "migrate.mjs");
 
 export const EMPTY_PNPM_LOCKFILE = [
   "lockfileVersion: '9.0'",
@@ -77,6 +78,23 @@ export function runChangedPlugins(args, options = {}) {
     execFile(
       process.execPath,
       [changedPluginsPath, ...args],
+      { cwd: repoRoot, ...options },
+      (error, stdout, stderr) => {
+        resolve({
+          code: error?.code ?? 0,
+          stdout,
+          stderr,
+        });
+      },
+    );
+  });
+}
+
+export function runMigrate(args, options = {}) {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      [migratePath, ...args],
       { cwd: repoRoot, ...options },
       (error, stdout, stderr) => {
         resolve({
