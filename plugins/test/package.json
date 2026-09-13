@@ -1,8 +1,16 @@
 {
   "devDependencies": {
+    "@eslint/js": "catalog:",
     "@fluxta/cli": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
     "shx": "catalog:",
-    "turbo": "catalog:"
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:"
   },
   "engines": {
     "node": ">=22.0.0"
@@ -13,6 +21,9 @@
   "scripts": {
     "build": "shx rm -rf dist && turbo run build --force",
     "dev": "pnpm --filter test-editor build && turbo run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
     "typecheck": "turbo run typecheck"
   },
   "type": "module",

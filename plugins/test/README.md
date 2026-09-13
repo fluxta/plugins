@@ -6,6 +6,8 @@ A Fluxta plugin scaffolded with `fluxta create`.
 
 - `pnpm install` — install dependencies
 - `pnpm typecheck` — type-check the Plugin sidecar and Action Editor
+- `pnpm lint` — lint both apps with ESLint
+- `pnpm format` / `pnpm format:check` — format (or check formatting of) the whole package with Prettier
 - `pnpm build` — build the plugin into `dist/test/`
 - `pnpm dev` — watch both apps; successful Plugin sidecar builds run `fluxta restart`
 - `fluxta validate` — validate the existing build output
@@ -20,6 +22,10 @@ your GitHub login and the package's `origin` remote. `author` (and
 `homepage`, if you'd rather set it by hand instead of relying on
 `repository`) still need a real value in `manifest.json` before `fluxta
 validate` passes in strict publishable mode.
+
+`fluxta publish` also runs `lint` and `format:check` itself before it
+authenticates or touches GitHub, and stops if either fails — fix them (or
+run `pnpm lint`/`pnpm format` yourself first) and retry.
 
 ## Releasing on GitHub
 
