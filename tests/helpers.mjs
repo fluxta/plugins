@@ -100,7 +100,7 @@ export async function withTempDir(callback) {
 
 export function validManifest(overrides = {}) {
   return {
-    name: "example.plugin",
+    name: "example-plugin",
     apiVersion: 1,
     version: "1.2.3",
     title: "Example Plugin",
@@ -108,7 +108,7 @@ export function validManifest(overrides = {}) {
     actions: [],
     author: "Example Author",
     license: "MIT",
-    repository: "https://github.com/example/example.plugin",
+    repository: "https://github.com/example/example-plugin",
     minAppVersion: "0.1.0",
     maintainers: ["inferst"],
     ...overrides,

@@ -17,7 +17,7 @@ import {
 
 const PREVIOUS_SOURCE_COMMIT = "p".repeat(40);
 
-function previousIndex(versions, packageName = "example.plugin") {
+function previousIndex(versions, packageName = "example-plugin") {
   return {
     schemaVersion: 1,
     packages: [{ name: packageName, versions }],
@@ -74,9 +74,9 @@ test("a duplicate publication attempt for an existing version is rejected before
     const manifest = validManifest();
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       manifest,
-      simpleBuildScript("example.plugin", ["process"]),
+      simpleBuildScript("example-plugin", ["process"]),
       ["process/main.js"],
     );
 
@@ -87,7 +87,7 @@ test("a duplicate publication attempt for an existing version is rejected before
     const artifact = baseline.packages[0].build.artifact;
     await writePreviousIndex(root, previousIndex([publishedEntry(manifest, artifact)]));
 
-    await writeSourceFiles(root, "example.plugin", [
+    await writeSourceFiles(root, "example-plugin", [
       "process/main.js",
       "process/extra.js",
     ]);
@@ -103,7 +103,7 @@ test("a duplicate publication attempt for an existing version is rejected before
       output.validation.errors.map((error) => error.code),
       ["DUPLICATE_PUBLICATION"],
     );
-    assert.equal(output.validation.errors[0].package, "example.plugin");
+    assert.equal(output.validation.errors[0].package, "example-plugin");
     assert.equal(output.validation.errors[0].field, "version");
     assert.match(output.validation.errors[0].message, /already published/);
     assert.match(output.validation.errors[0].message, /rejected before upload/);
@@ -125,7 +125,7 @@ test("a duplicate publication attempt for an existing version is rejected before
     assert.equal(versions[0].artifact.sourceCommit, PREVIOUS_SOURCE_COMMIT);
     assert.equal(
       versions[0].artifact.objectKey,
-      "artifacts/example.plugin-1.2.3.zip",
+      "artifacts/example-plugin-1.2.3.zip",
       "the published entry is kept, not replaced by the rejected rebuild",
     );
   });
@@ -135,15 +135,15 @@ test("trusted Package Metadata changes are artifact-affecting and require a vers
   await withTempDir(async (root) => {
     const manifest = validManifest();
     const staticBuildScript =
-      "mkdir -p dist/example.plugin && cp built-manifest.json dist/example.plugin/manifest.json";
-    await writeBuildablePackage(root, "example.plugin", manifest, staticBuildScript, []);
+      "mkdir -p dist/example-plugin && cp built-manifest.json dist/example-plugin/manifest.json";
+    await writeBuildablePackage(root, "example-plugin", manifest, staticBuildScript, []);
     await writePackageFile(
       root,
-      "example.plugin",
+      "example-plugin",
       "built-manifest.json",
       `${JSON.stringify(
         {
-          name: "example.plugin",
+          name: "example-plugin",
           apiVersion: 1,
           version: "1.2.3",
           title: "Example Plugin",
@@ -160,7 +160,7 @@ test("trusted Package Metadata changes are artifact-affecting and require a vers
     const artifact = baseline.packages[0].build.artifact;
     await writePreviousIndex(root, previousIndex([publishedEntry(manifest, artifact)]));
 
-    await writeManifest(root, "example.plugin", validManifest({ license: "Apache-2.0" }));
+    await writeManifest(root, "example-plugin", validManifest({ author: "Another Example Author" }));
 
     const { result, output } = await runValidate(root, [
       "--previous-index",
@@ -195,9 +195,9 @@ test("source changes without a version bump require a new manifest.version", asy
     const manifest = validManifest();
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       manifest,
-      simpleBuildScript("example.plugin", ["process"]),
+      simpleBuildScript("example-plugin", ["process"]),
       ["process/main.js"],
     );
 
@@ -205,7 +205,7 @@ test("source changes without a version bump require a new manifest.version", asy
     const artifact = baseline.packages[0].build.artifact;
     await writePreviousIndex(root, previousIndex([publishedEntry(manifest, artifact)]));
 
-    await writePackageFile(root, "example.plugin", "process/main.js", "changed source code\n");
+    await writePackageFile(root, "example-plugin", "process/main.js", "changed source code\n");
 
     const { result, output } = await runValidate(root, [
       "--previous-index",
@@ -237,9 +237,9 @@ test("a version bump with changed artifacts plans a new publication and preserve
     const manifest = validManifest();
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       manifest,
-      simpleBuildScript("example.plugin", ["process"]),
+      simpleBuildScript("example-plugin", ["process"]),
       ["process/main.js"],
     );
 
@@ -247,11 +247,11 @@ test("a version bump with changed artifacts plans a new publication and preserve
     const artifact = baseline.packages[0].build.artifact;
     await writePreviousIndex(root, previousIndex([publishedEntry(manifest, artifact)]));
 
-    await writeSourceFiles(root, "example.plugin", [
+    await writeSourceFiles(root, "example-plugin", [
       "process/main.js",
       "process/extra.js",
     ]);
-    await writeManifest(root, "example.plugin", validManifest({ version: "1.2.4" }));
+    await writeManifest(root, "example-plugin", validManifest({ version: "1.2.4" }));
 
     const { result, output } = await runValidate(root, [
       "--previous-index",
@@ -270,11 +270,11 @@ test("a version bump with changed artifacts plans a new publication and preserve
 
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
-        package: "example.plugin",
+        package: "example-plugin",
         version: "1.2.4",
-        pluginFolder: "example.plugin",
-        artifact: "artifacts/example.plugin-1.2.4.zip",
-        objectKey: "artifacts/example.plugin-1.2.4.zip",
+        pluginFolder: "example-plugin",
+        artifact: "artifacts/example-plugin-1.2.4.zip",
+        objectKey: "artifacts/example-plugin-1.2.4.zip",
         size: output.packages[0].build.artifact.size,
         checksum: output.packages[0].build.artifact.checksum,
       },
@@ -294,7 +294,7 @@ test("a version bump with changed artifacts plans a new publication and preserve
     assert.equal(versions[1].status, "published");
 
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.2.4" },
+      { package: "example-plugin", latestVersion: "1.2.4" },
     ]);
   });
 });
@@ -304,9 +304,9 @@ test("a version lower than the highest published version is rejected before uplo
     const manifest = validManifest();
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       manifest,
-      simpleBuildScript("example.plugin", ["process"]),
+      simpleBuildScript("example-plugin", ["process"]),
       ["process/main.js"],
     );
 
@@ -320,7 +320,7 @@ test("a version lower than the highest published version is rejected before uplo
       ]),
     );
 
-    await writeManifest(root, "example.plugin", validManifest({ version: "1.2.4" }));
+    await writeManifest(root, "example-plugin", validManifest({ version: "1.2.4" }));
 
     const { result, output } = await runValidate(root, [
       "--previous-index",
@@ -333,7 +333,7 @@ test("a version lower than the highest published version is rejected before uplo
       output.validation.errors.map((error) => error.code),
       ["NON_MONOTONIC_VERSION"],
     );
-    assert.equal(output.validation.errors[0].package, "example.plugin");
+    assert.equal(output.validation.errors[0].package, "example-plugin");
     assert.equal(output.validation.errors[0].field, "version");
     assert.match(
       output.validation.errors[0].message,
@@ -363,9 +363,9 @@ test("docs-only changes pass without a new publication when the built artifact i
     const manifest = validManifest();
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       manifest,
-      simpleBuildScript("example.plugin", ["process"]),
+      simpleBuildScript("example-plugin", ["process"]),
       ["process/main.js"],
     );
 
@@ -373,7 +373,7 @@ test("docs-only changes pass without a new publication when the built artifact i
     const artifact = baseline.packages[0].build.artifact;
     await writePreviousIndex(root, previousIndex([publishedEntry(manifest, artifact)]));
 
-    await writeSourceFiles(root, "example.plugin", ["README.md"]);
+    await writeSourceFiles(root, "example-plugin", ["README.md"]);
 
     const { result, output } = await runValidate(root, [
       "--previous-index",

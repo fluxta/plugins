@@ -72,11 +72,11 @@ test("a successful package build produces a valid zip Plugin Artifact with check
   await withTempDir(async (root) => {
     await writeOwnedPackage(
       root,
-      "example.plugin",
+      "example-plugin",
       buildableManifest(),
-      simpleBuildScript("example.plugin", ["icons", "editor", "process"]),
+      simpleBuildScript("example-plugin", ["icons", "editor", "process"]),
     );
-    await writeSourceFiles(root, "example.plugin", [
+    await writeSourceFiles(root, "example-plugin", [
       "icons/app.svg",
       "icons/run.svg",
       "editor/config.js",
@@ -105,8 +105,8 @@ test("a successful package build produces a valid zip Plugin Artifact with check
 
     const build = output.packages[0].build;
     assert.equal(build.status, "built");
-    assert.equal(build.outputDir, "plugins/example.plugin/dist");
-    assert.equal(build.pluginFolder, "example.plugin");
+    assert.equal(build.outputDir, "plugins/example-plugin/dist");
+    assert.equal(build.pluginFolder, "example-plugin");
 
     const artifactPath = path.join(root, build.artifact.path);
     const archive = await readFile(artifactPath);
@@ -115,11 +115,11 @@ test("a successful package build produces a valid zip Plugin Artifact with check
 
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
-        package: "example.plugin",
+        package: "example-plugin",
         version: "1.2.3",
-        pluginFolder: "example.plugin",
-        artifact: "artifacts/example.plugin-1.2.3.zip",
-        objectKey: "artifacts/example.plugin-1.2.3.zip",
+        pluginFolder: "example-plugin",
+        artifact: "artifacts/example-plugin-1.2.3.zip",
+        objectKey: "artifacts/example-plugin-1.2.3.zip",
         size: build.artifact.size,
         checksum: build.artifact.checksum,
       },
@@ -128,7 +128,7 @@ test("a successful package build produces a valid zip Plugin Artifact with check
     const entries = readZipEntries(archive);
     assert.deepEqual(
       [...new Set(entries.map((entry) => entry.name.split("/")[0]))],
-      ["example.plugin"],
+      ["example-plugin"],
       "archive contains exactly one top-level plugin folder",
     );
 
@@ -140,19 +140,19 @@ test("a successful package build produces a valid zip Plugin Artifact with check
       "editor/run.js",
       "process/main.js",
     ]) {
-      const entry = entries.find((candidate) => candidate.name === `example.plugin/${relativePath}`);
+      const entry = entries.find((candidate) => candidate.name === `example-plugin/${relativePath}`);
       assert.ok(entry, `archive contains ${relativePath}`);
       const onDisk = await readFile(
-        path.join(root, "plugins", "example.plugin", "dist", "example.plugin", relativePath),
+        path.join(root, "plugins", "example-plugin", "dist", "example-plugin", relativePath),
       );
       assert.equal(Buffer.compare(entry.data, onDisk), 0, `${relativePath} content matches`);
     }
 
     assert.equal(
       JSON.parse(
-        entries.find((entry) => entry.name === "example.plugin/manifest.json").data.toString("utf8"),
+        entries.find((entry) => entry.name === "example-plugin/manifest.json").data.toString("utf8"),
       ).name,
-      "example.plugin",
+      "example-plugin",
     );
   });
 });
