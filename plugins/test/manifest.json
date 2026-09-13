@@ -2,7 +2,7 @@
   "name": "test",
   "title": "Test",
   "description": "Test",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "",
@@ -18,7 +18,7 @@
       "context": "item",
       "editor": "editor/index.html",
       "name": "Hello",
-      "type": "test.hello"
+      "type": "hello"
     }
   ]
 }

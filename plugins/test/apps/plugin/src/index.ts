@@ -7,16 +7,16 @@ type HelloSettings = {
 
 /**
  * The sample Item Action. Its `name` matches the manifest action `type`
- * ("test.hello") so the host can dispatch triggers to it.
+ * ("hello") so the host can dispatch triggers to it.
  */
 class HelloAction extends ItemAction<HelloSettings> {
-  name = "test.hello";
+  name = "hello";
 
   onTrigger(ctx: ItemTriggerContext<HelloSettings>) {
     // stdout and stderr are captured to logs/test.log inside the
     // plugin folder, so console is how a sidecar reports what it did.
     console.log(
-      `[${ctx.trigger}] item ${ctx.itemId}: ${ctx.settings.message ?? "Hello from Fluxta!"}`,
+      `item ${ctx.itemId}: ${ctx.settings.message ?? "Hello from Fluxta!"}`,
     );
   }
 }
