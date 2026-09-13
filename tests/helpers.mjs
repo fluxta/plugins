@@ -12,6 +12,7 @@ export const cliPath = path.join(repoRoot, "scripts", "plugins.mjs");
 export const prValidatePath = path.join(repoRoot, "scripts", "pr-validate.mjs");
 export const registrySyncPath = path.join(repoRoot, "scripts", "registry-sync.mjs");
 export const changedPluginsPath = path.join(repoRoot, "scripts", "changed-plugins.mjs");
+export const migratePath = path.join(repoRoot, "scripts", "migrate.mjs");
 
 export const EMPTY_PNPM_LOCKFILE = [
   "lockfileVersion: '9.0'",
@@ -89,6 +90,23 @@ export function runChangedPlugins(args, options = {}) {
   });
 }
 
+export function runMigrate(args, options = {}) {
+  return new Promise((resolve) => {
+    execFile(
+      process.execPath,
+      [migratePath, ...args],
+      { cwd: repoRoot, ...options },
+      (error, stdout, stderr) => {
+        resolve({
+          code: error?.code ?? 0,
+          stdout,
+          stderr,
+        });
+      },
+    );
+  });
+}
+
 export async function withTempDir(callback) {
   const dir = await mkdtemp(path.join(tmpdir(), "plugins-"));
   try {
@@ -100,7 +118,7 @@ export async function withTempDir(callback) {
 
 export function validManifest(overrides = {}) {
   return {
-    name: "example.plugin",
+    name: "example-plugin",
     apiVersion: 1,
     version: "1.2.3",
     title: "Example Plugin",
@@ -108,7 +126,7 @@ export function validManifest(overrides = {}) {
     actions: [],
     author: "Example Author",
     license: "MIT",
-    repository: "https://github.com/example/example.plugin",
+    repository: "https://github.com/example/example-plugin",
     minAppVersion: "0.1.0",
     maintainers: ["inferst"],
     ...overrides,
