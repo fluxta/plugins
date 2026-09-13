@@ -7,8 +7,8 @@ settings:
 catalogs:
   default:
     '@fluxta/cli':
-      specifier: ^0.2.0
-      version: 0.2.0
+      specifier: ^0.4.0
+      version: 0.4.0
     '@fluxta/sdk':
       specifier: ^0.1.2
       version: 0.1.2
@@ -67,7 +67,7 @@ importers:
     devDependencies:
       '@fluxta/cli':
         specifier: 'catalog:'
-        version: 0.2.0(@types/node@22.20.1)
+        version: 0.4.0(@types/node@22.20.1)
       shx:
         specifier: 'catalog:'
         version: 0.3.4
@@ -412,8 +412,8 @@ packages:
     cpu: [x64]
     os: [win32]
 
-  '@fluxta/cli@0.2.0':
-    resolution: {integrity: sha512-fh4u8q7kHoT1I81GeEfeqxfyR0QUshxHMmZeyFBcDQeLCQ6dCwQpRofyGx6KEfcUkc9mfuxfS0f2Mdwa4yzmLQ==}
+  '@fluxta/cli@0.4.0':
+    resolution: {integrity: sha512-EI6orx9l7MxxqgM2fIleUMcpQFdi2lK/PS1mJPokO+N1xyeHw3M//MLAhWog3cc46uE1kRzJUJ9IWcL/qrNomg==}
     engines: {node: '>=22.0.0'}
     hasBin: true
 
@@ -2374,7 +2374,7 @@ snapshots:
   '@esbuild/win32-x64@0.28.2':
     optional: true
 
-  '@fluxta/cli@0.2.0(@types/node@22.20.1)':
+  '@fluxta/cli@0.4.0(@types/node@22.20.1)':
     dependencies:
       '@inquirer/prompts': 7.10.1(@types/node@22.20.1)
       '@oclif/core': 4.14.0

@@ -4,7 +4,7 @@ import type { ConnectionsService } from "../connections/service";
 import { connectionArg } from "./args";
 import { getCurrentScene } from "../obs/scenes";
 
-export const CURRENT_SCENE_SOURCE = "current-scene";
+export const CURRENT_SCENE_SOURCE = "currentScene";
 
 /** Pull Value Source: the given Connection's current program Scene name. */
 export function createCurrentSceneSource(connections: ConnectionsService): Source {

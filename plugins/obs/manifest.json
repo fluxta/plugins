@@ -87,7 +87,7 @@
   ],
   "sources": [
     {
-      "key": "is-streaming",
+      "key": "isStreaming",
       "name": "Is Streaming",
       "type": "boolean",
       "resolve": "query",
@@ -96,7 +96,7 @@
       ]
     },
     {
-      "key": "is-recording",
+      "key": "isRecording",
       "name": "Is Recording",
       "type": "boolean",
       "resolve": "query",
@@ -105,7 +105,7 @@
       ]
     },
     {
-      "key": "is-recording-paused",
+      "key": "isRecordingPaused",
       "name": "Is Recording Paused",
       "type": "boolean",
       "resolve": "query",
@@ -114,7 +114,7 @@
       ]
     },
     {
-      "key": "current-scene",
+      "key": "currentScene",
       "name": "Current Scene",
       "type": "string",
       "resolve": "query",
@@ -138,7 +138,7 @@
   "name": "obs",
   "repository": "https://github.com/inferst/fluxta-obs",
   "title": "OBS",
-  "version": "0.1.4",
+  "version": "0.2.0",
   "events": [
     {
       "type": "scene-changed",
@@ -151,7 +151,7 @@
           "operand": { "editor": "select", "options": "connections" }
         },
         {
-          "key": "scene_name",
+          "key": "sceneName",
           "name": "Scene Name",
           "type": "string",
           "operand": { "editor": "select", "options": "scenes" }
@@ -168,7 +168,7 @@
           "type": "string",
           "operand": { "editor": "select", "options": "connections" }
         },
-        { "key": "is_streaming", "name": "Is Streaming", "type": "boolean" }
+        { "key": "isStreaming", "name": "Is Streaming", "type": "boolean" }
       ]
     },
     {
@@ -181,8 +181,8 @@
           "type": "string",
           "operand": { "editor": "select", "options": "connections" }
         },
-        { "key": "is_recording", "name": "Is Recording", "type": "boolean" },
-        { "key": "is_recording_paused", "name": "Is Recording Paused", "type": "boolean" }
+        { "key": "isRecording", "name": "Is Recording", "type": "boolean" },
+        { "key": "isRecordingPaused", "name": "Is Recording Paused", "type": "boolean" }
       ]
     },
     {
@@ -196,13 +196,13 @@
           "operand": { "editor": "select", "options": "connections" }
         },
         {
-          "key": "scene_name",
+          "key": "sceneName",
           "name": "Scene Name",
           "type": "string",
           "operand": { "editor": "select", "options": "scenes" }
         },
         {
-          "key": "source_name",
+          "key": "sourceName",
           "name": "Source Name",
           "type": "string",
           "operand": { "editor": "select", "options": "scene-sources" }
@@ -221,7 +221,7 @@
           "operand": { "editor": "select", "options": "connections" }
         },
         {
-          "key": "input_name",
+          "key": "inputName",
           "name": "Input Name",
           "type": "string",
           "operand": { "editor": "select", "options": "inputs" }
@@ -240,13 +240,13 @@
           "operand": { "editor": "select", "options": "connections" }
         },
         {
-          "key": "source_name",
+          "key": "sourceName",
           "name": "Source Name",
           "type": "string",
           "operand": { "editor": "select", "options": "inputs" }
         },
         {
-          "key": "filter_name",
+          "key": "filterName",
           "name": "Filter Name",
           "type": "string",
           "operand": { "editor": "select", "options": "filters" }

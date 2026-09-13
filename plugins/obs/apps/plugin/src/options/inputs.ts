@@ -6,7 +6,7 @@ import { stringArg } from "./args";
 
 export const INPUTS_OPTIONS = "inputs";
 
-/** The chosen Connection's live Sources — backs `source_name`/`input_name` Event Field operands. */
+/** The chosen Connection's live Sources — backs `sourceName`/`inputName` Event Field operands. */
 export function createInputsOptions(connections: ConnectionsService): Options {
   return {
     key: INPUTS_OPTIONS,

@@ -4,7 +4,7 @@ import type { ConnectionsService } from "../connections/service";
 import { connectionArg } from "./args";
 import { recordStatus } from "../obs/record";
 
-export const IS_RECORDING_PAUSED_SOURCE = "is-recording-paused";
+export const IS_RECORDING_PAUSED_SOURCE = "isRecordingPaused";
 
 /** Pull Value Source: is the given Connection's Recording currently paused? */
 export function createIsRecordingPausedSource(connections: ConnectionsService): Source {

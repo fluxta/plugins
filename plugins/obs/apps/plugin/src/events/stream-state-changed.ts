@@ -8,7 +8,7 @@ export const STREAM_STATE_CHANGED_EVENT = "stream-state-changed";
  */
 export type StreamStateChangedPayload = {
   connection: string;
-  is_streaming: boolean;
+  isStreaming: boolean;
 };
 
 export function toStreamStateChangedPayload(
@@ -17,6 +17,6 @@ export function toStreamStateChangedPayload(
 ): StreamStateChangedPayload {
   return {
     connection: connectionId,
-    is_streaming: isStreaming,
+    isStreaming,
   };
 }
