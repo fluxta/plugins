@@ -6,7 +6,7 @@ import { stringArg } from "./args";
 
 export const SCENES_OPTIONS = "scenes";
 
-/** The chosen Connection's live Scenes — backs `obs.current-scene`'s operand and `scene_name` Event Field operands. */
+/** The chosen Connection's live Scenes — backs `obs.currentScene`'s operand and `sceneName` Event Field operands. */
 export function createScenesOptions(connections: ConnectionsService): Options {
   return {
     key: SCENES_OPTIONS,

@@ -3,15 +3,15 @@ export const SOURCE_FILTER_ENABLED_CHANGED_EVENT = "source-filter-enabled-change
 /**
  * Every field declared for `source-filter-enabled-changed` in the manifest.
  *
- * `filter_name`'s `select` operand resolves against the `filters` Options
- * Source, which reads the *sibling* `source_name` filter row's value out of
+ * `filterName`'s `select` operand resolves against the `filters` Options
+ * Source, which reads the *sibling* `sourceName` filter row's value out of
  * its own `args` to narrow the list to that Source's Filters — a host
  * capability this plugin depends on before it has shipped.
  */
 export type SourceFilterEnabledChangedPayload = {
   connection: string;
-  source_name: string;
-  filter_name: string;
+  sourceName: string;
+  filterName: string;
   enabled: boolean;
 };
 
@@ -23,8 +23,8 @@ export function toSourceFilterEnabledChangedPayload(
 ): SourceFilterEnabledChangedPayload {
   return {
     connection: connectionId,
-    source_name: sourceName,
-    filter_name: filterName,
+    sourceName,
+    filterName,
     enabled,
   };
 }

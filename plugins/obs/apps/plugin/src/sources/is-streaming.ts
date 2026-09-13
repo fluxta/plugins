@@ -4,7 +4,7 @@ import type { ConnectionsService } from "../connections/service";
 import { connectionArg } from "./args";
 import { isStreaming } from "../obs/stream";
 
-export const IS_STREAMING_SOURCE = "is-streaming";
+export const IS_STREAMING_SOURCE = "isStreaming";
 
 /** Pull Value Source: is the given Connection currently streaming? */
 export function createIsStreamingSource(connections: ConnectionsService): Source {
