@@ -9,7 +9,7 @@ export const SET_SCENE_ACTION = "set-scene";
 
 /** Switches the Connection's current program Scene. */
 export class SetSceneAction extends StandaloneAction<SetSceneSettings> {
-  name = SET_SCENE_ACTION;
+  type = SET_SCENE_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

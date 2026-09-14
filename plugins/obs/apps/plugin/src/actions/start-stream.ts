@@ -8,7 +8,7 @@ import { startStream } from "../obs/stream";
 export const START_STREAM_ACTION = "start-stream";
 
 export class StartStreamAction extends StandaloneAction<StartStreamSettings> {
-  name = START_STREAM_ACTION;
+  type = START_STREAM_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

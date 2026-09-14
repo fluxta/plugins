@@ -8,7 +8,7 @@ import { startRecord } from "../obs/record";
 export const START_RECORD_ACTION = "start-record";
 
 export class StartRecordAction extends StandaloneAction<StartRecordSettings> {
-  name = START_RECORD_ACTION;
+  type = START_RECORD_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

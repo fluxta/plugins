@@ -8,7 +8,7 @@ import { resumeRecord } from "../obs/record";
 export const RESUME_RECORD_ACTION = "resume-record";
 
 export class ResumeRecordAction extends StandaloneAction<ResumeRecordSettings> {
-  name = RESUME_RECORD_ACTION;
+  type = RESUME_RECORD_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

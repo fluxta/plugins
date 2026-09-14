@@ -10,7 +10,7 @@ type HelloSettings = {
  * ("hello") so the host can dispatch triggers to it.
  */
 class HelloAction extends ItemAction<HelloSettings> {
-  name = "hello";
+  type = "hello";
 
   onTrigger(ctx: ItemTriggerContext<HelloSettings>) {
     // stdout and stderr are captured to logs/test.log inside the

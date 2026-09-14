@@ -8,7 +8,7 @@ import { setInputMuted } from "../obs/inputs";
 export const MUTE_INPUT_ACTION = "mute-input";
 
 export class MuteInputAction extends StandaloneAction<MuteInputSettings> {
-  name = MUTE_INPUT_ACTION;
+  type = MUTE_INPUT_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

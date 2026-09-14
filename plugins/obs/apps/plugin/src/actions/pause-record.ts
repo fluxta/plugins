@@ -8,7 +8,7 @@ import { pauseRecord } from "../obs/record";
 export const PAUSE_RECORD_ACTION = "pause-record";
 
 export class PauseRecordAction extends StandaloneAction<PauseRecordSettings> {
-  name = PAUSE_RECORD_ACTION;
+  type = PAUSE_RECORD_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

@@ -14,7 +14,7 @@ export const SET_SOURCE_FILTER_ACTION = "set-source-filter";
  * Stream/Record/Mute on this.
  */
 export class SetSourceFilterAction extends StandaloneAction<SetSourceFilterSettings> {
-  name = SET_SOURCE_FILTER_ACTION;
+  type = SET_SOURCE_FILTER_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

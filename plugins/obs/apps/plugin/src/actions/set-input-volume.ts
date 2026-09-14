@@ -8,7 +8,7 @@ import { setInputVolumePercent } from "../obs/inputs";
 export const SET_INPUT_VOLUME_ACTION = "set-input-volume";
 
 export class SetInputVolumeAction extends StandaloneAction<SetInputVolumeSettings> {
-  name = SET_INPUT_VOLUME_ACTION;
+  type = SET_INPUT_VOLUME_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

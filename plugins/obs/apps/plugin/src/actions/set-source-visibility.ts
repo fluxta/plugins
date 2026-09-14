@@ -14,7 +14,7 @@ export const SET_SOURCE_VISIBILITY_ACTION = "set-source-visibility";
  * two groups are inconsistent on purpose.
  */
 export class SetSourceVisibilityAction extends StandaloneAction<SetSourceVisibilitySettings> {
-  name = SET_SOURCE_VISIBILITY_ACTION;
+  type = SET_SOURCE_VISIBILITY_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();

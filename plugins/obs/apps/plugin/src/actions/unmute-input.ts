@@ -8,7 +8,7 @@ import { setInputMuted } from "../obs/inputs";
 export const UNMUTE_INPUT_ACTION = "unmute-input";
 
 export class UnmuteInputAction extends StandaloneAction<UnmuteInputSettings> {
-  name = UNMUTE_INPUT_ACTION;
+  type = UNMUTE_INPUT_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();
