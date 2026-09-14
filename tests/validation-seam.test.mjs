@@ -38,15 +38,15 @@ test("validate succeeds for an empty repository checkout", async () => {
 
 test("validate accepts a Plugin Source Package with identity, Package Metadata, and ownership", async () => {
   await withTempDir(async (root) => {
-    await writeManifest(root, "example.plugin", validManifest());
+    await writeManifest(root, "example-plugin", validManifest());
     await writeBuildContract(
       root,
-      "example.plugin",
-      { buildScript: simpleBuildScript("example.plugin") },
+      "example-plugin",
+      { buildScript: simpleBuildScript("example-plugin") },
     );
     await writeCodeowners(
       root,
-      "/plugins/example.plugin/ @inferst\n",
+      "/plugins/example-plugin/ @inferst\n",
     );
 
     const result = await runCli(["validate", "--root", root, "--json"]);
@@ -59,18 +59,18 @@ test("validate accepts a Plugin Source Package with identity, Package Metadata, 
     const [pkg] = output.packages;
     const { build, ...rest } = pkg;
     assert.deepEqual(rest, {
-      id: "example.plugin",
-      path: "plugins/example.plugin",
+      id: "example-plugin",
+      path: "plugins/example-plugin",
       status: "valid",
       manifest: {
-        name: "example.plugin",
+        name: "example-plugin",
         version: "1.2.3",
         apiVersion: 1,
         title: "Example Plugin",
         description: "An example trusted package.",
         author: "Example Author",
         license: "MIT",
-        repository: "https://github.com/example/example.plugin",
+        repository: "https://github.com/example/example-plugin",
         homepage: null,
         minAppVersion: "0.1.0",
         maintainers: ["inferst"],
@@ -80,21 +80,21 @@ test("validate accepts a Plugin Source Package with identity, Package Metadata, 
         maintainers: ["inferst"],
         codeowners: {
           path: ".github/CODEOWNERS",
-          pattern: "/plugins/example.plugin/",
+          pattern: "/plugins/example-plugin/",
           owners: ["@inferst"],
         },
       },
       change: {
         kind: "new-version",
         reason:
-          "Version '1.2.3' of 'example.plugin' has no published history; the built " +
+          "Version '1.2.3' of 'example-plugin' has no published history; the built " +
           "Plugin Artifact is planned as the first publication.",
       },
     });
     assert.equal(build.status, "built");
-    assert.equal(build.outputDir, "plugins/example.plugin/dist");
-    assert.equal(build.pluginFolder, "example.plugin");
-    assert.equal(build.artifact.path, "artifacts/example.plugin-1.2.3.zip");
+    assert.equal(build.outputDir, "plugins/example-plugin/dist");
+    assert.equal(build.pluginFolder, "example-plugin");
+    assert.equal(build.artifact.path, "artifacts/example-plugin-1.2.3.zip");
     assert.equal(typeof build.artifact.size, "number");
     assert.match(build.artifact.checksum, /^[0-9a-f]{64}$/);
   });

@@ -22,7 +22,7 @@ function indexVersion(version, overrides = {}) {
   return {
     version,
     manifest: {
-      name: "example.plugin",
+      name: "example-plugin",
       version,
       apiVersion: 1,
       title: "Example Plugin",
@@ -33,7 +33,7 @@ function indexVersion(version, overrides = {}) {
       maintainers: ["inferst"],
     },
     artifact: {
-      objectKey: `artifacts/example.plugin-${version}.zip`,
+      objectKey: `artifacts/example-plugin-${version}.zip`,
       checksum: `sha256:${"a".repeat(64)}`,
       size: 1024,
       sourceCommit: "p".repeat(40),
@@ -45,7 +45,7 @@ function indexVersion(version, overrides = {}) {
   };
 }
 
-function previousIndex(versions, packageName = "example.plugin") {
+function previousIndex(versions, packageName = "example-plugin") {
   return {
     schemaVersion: 1,
     packages: [{ name: packageName, versions }],
@@ -76,12 +76,12 @@ async function writeBuildablePackage(root, packageId, manifest, copiedDirs = [])
 
 test("validate generates a dry-run Publication Index with schema version, identity, manifest fields, Package Metadata, and artifact metadata", async () => {
   await withTempDir(async (root) => {
-    await writeBuildablePackage(root, "example.plugin", validManifest(), [
+    await writeBuildablePackage(root, "example-plugin", validManifest(), [
       "icons",
       "editor",
       "process",
     ]);
-    await writeSourceFiles(root, "example.plugin", [
+    await writeSourceFiles(root, "example-plugin", [
       "icons/app.svg",
       "icons/run.svg",
       "editor/config.js",
@@ -110,11 +110,11 @@ test("validate generates a dry-run Publication Index with schema version, identi
     const index = output.publicationIndex;
     assert.equal(index.schemaVersion, 1);
     assert.equal(index.packages.length, 1);
-    assert.equal(index.packages[0].name, "example.plugin");
+    assert.equal(index.packages[0].name, "example-plugin");
 
     const [entry] = index.packages[0].versions;
     assert.deepEqual(entry.manifest, {
-      name: "example.plugin",
+      name: "example-plugin",
       version: "1.2.3",
       apiVersion: 1,
       title: "Example Plugin",
@@ -125,7 +125,7 @@ test("validate generates a dry-run Publication Index with schema version, identi
       maintainers: ["inferst"],
     });
     assert.deepEqual(entry.artifact, {
-      objectKey: "artifacts/example.plugin-1.2.3.zip",
+      objectKey: "artifacts/example-plugin-1.2.3.zip",
       checksum: output.packages[0].build.artifact.checksum,
       size: output.packages[0].build.artifact.size,
       sourceCommit: SOURCE_COMMIT,
@@ -136,11 +136,11 @@ test("validate generates a dry-run Publication Index with schema version, identi
 
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
-        package: "example.plugin",
+        package: "example-plugin",
         version: "1.2.3",
-        pluginFolder: "example.plugin",
-        artifact: "artifacts/example.plugin-1.2.3.zip",
-        objectKey: "artifacts/example.plugin-1.2.3.zip",
+        pluginFolder: "example-plugin",
+        artifact: "artifacts/example-plugin-1.2.3.zip",
+        objectKey: "artifacts/example-plugin-1.2.3.zip",
         size: output.packages[0].build.artifact.size,
         checksum: output.packages[0].build.artifact.checksum,
       },
@@ -155,7 +155,7 @@ test("validate generates a dry-run Publication Index with schema version, identi
       },
     ]);
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.2.3" },
+      { package: "example-plugin", latestVersion: "1.2.3" },
     ]);
   });
 });
@@ -172,7 +172,7 @@ test("the Publication Index includes all supplied published versions and appends
     );
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.3.0" }),
     );
 
@@ -210,7 +210,7 @@ test("the Publication Index includes all supplied published versions and appends
     assert.deepEqual(versions[2].artifact, indexVersion("1.2.0", { status: "yanked" }).artifact);
 
     assert.deepEqual(versions[3].artifact, {
-      objectKey: "artifacts/example.plugin-1.3.0.zip",
+      objectKey: "artifacts/example-plugin-1.3.0.zip",
       checksum: output.packages[0].build.artifact.checksum,
       size: output.packages[0].build.artifact.size,
       sourceCommit: SOURCE_COMMIT,
@@ -219,7 +219,7 @@ test("the Publication Index includes all supplied published versions and appends
     assert.equal(versions[3].status, "published");
 
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.3.0" },
+      { package: "example-plugin", latestVersion: "1.3.0" },
     ]);
   });
 });
@@ -254,7 +254,7 @@ test("the latest recommended version falls back to the latest non-yanked supplie
       ["1.0.0", "1.1.0", "1.2.0"],
     );
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.1.0" },
+      { package: "example-plugin", latestVersion: "1.1.0" },
     ]);
     assert.equal(output.publicationPlan.indexWrites.length, 1);
   });
@@ -291,7 +291,7 @@ test("deterministic object keys sanitize version metadata and are stable across 
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.2.3+build.5" }),
     );
 
@@ -310,13 +310,13 @@ test("deterministic object keys sanitize version metadata and are stable across 
     const second = JSON.parse((await runCli(args)).stdout);
 
     const [entry] = first.publicationIndex.packages[0].versions;
-    assert.equal(entry.artifact.objectKey, "artifacts/example.plugin-1.2.3-build.5.zip");
+    assert.equal(entry.artifact.objectKey, "artifacts/example-plugin-1.2.3-build.5.zip");
     assert.equal(
       first.publicationPlan.artifactWrites[0].objectKey,
-      "artifacts/example.plugin-1.2.3-build.5.zip",
+      "artifacts/example-plugin-1.2.3-build.5.zip",
     );
     assert.deepEqual(first.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.2.3+build.5" },
+      { package: "example-plugin", latestVersion: "1.2.3+build.5" },
     ]);
 
     assert.equal(
@@ -329,10 +329,10 @@ test("deterministic object keys sanitize version metadata and are stable across 
 
 test("a rebuilt version matching the published artifact is docs-only and is not written again", async () => {
   await withTempDir(async (root) => {
-    await writeBuildablePackage(root, "example.plugin", validManifest(), [
+    await writeBuildablePackage(root, "example-plugin", validManifest(), [
       "process",
     ]);
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
 
     const baseline = JSON.parse(
       (
@@ -451,11 +451,11 @@ test("legacy boolean yanked entries in a supplied index are read as their status
   await withTempDir(async (root) => {
     await writeBuildablePackage(
       root,
-      "example.plugin",
+      "example-plugin",
       validManifest({ version: "1.1.0" }),
       ["process"],
     );
-    await writeSourceFiles(root, "example.plugin", ["process/main.js"]);
+    await writeSourceFiles(root, "example-plugin", ["process/main.js"]);
     const baseline = JSON.parse(
       (
         await runCli([
@@ -505,7 +505,7 @@ test("legacy boolean yanked entries in a supplied index are read as their status
     assert.equal(versions[0].yanked, undefined, "the legacy boolean is not carried over");
     assert.equal(versions[1].status, "published", "legacy yanked:false reads as published");
     assert.deepEqual(output.publicationPlan.recommendations, [
-      { package: "example.plugin", latestVersion: "1.1.0" },
+      { package: "example-plugin", latestVersion: "1.1.0" },
     ]);
   });
 });

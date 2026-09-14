@@ -15,13 +15,13 @@ const SAMPLE_INDEX = {
   schemaVersion: 1,
   packages: [
     {
-      name: "example.plugin",
+      name: "example-plugin",
       versions: [
         {
           version: "1.2.3",
-          manifest: { name: "example.plugin", version: "1.2.3" },
+          manifest: { name: "example-plugin", version: "1.2.3" },
           artifact: {
-            objectKey: "artifacts/example.plugin-1.2.3.zip",
+            objectKey: "artifacts/example-plugin-1.2.3.zip",
             checksum: "sha256:0000000000000000000000000000000000000000000000000000000000000000",
             size: 1,
             sourceCommit: "c".repeat(40),

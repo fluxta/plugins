@@ -84,14 +84,14 @@ test("the fake publisher records intended object writes with checksums and sizes
   const publisher = createFakePublisher();
   const bytes = Buffer.from("artifact bytes");
 
-  const written = await publisher.putObject("artifacts/example.plugin-1.2.3.zip", bytes);
+  const written = await publisher.putObject("artifacts/example-plugin-1.2.3.zip", bytes);
   assert.deepEqual(written, {
-    objectKey: "artifacts/example.plugin-1.2.3.zip",
+    objectKey: "artifacts/example-plugin-1.2.3.zip",
     size: bytes.length,
     checksum: sha256Hex(bytes),
   });
 
-  const object = await publisher.getObject("artifacts/example.plugin-1.2.3.zip");
+  const object = await publisher.getObject("artifacts/example-plugin-1.2.3.zip");
   assert.deepEqual(object.bytes, bytes);
   assert.equal(object.size, bytes.length);
   assert.equal(object.checksum, sha256Hex(bytes));
@@ -105,26 +105,26 @@ test("the fake publisher refuses to overwrite an existing object", async () => {
   const firstBytes = Buffer.from("first bytes");
   const differentBytes = Buffer.from("different bytes");
 
-  await publisher.putObject("artifacts/example.plugin-1.2.3.zip", firstBytes);
+  await publisher.putObject("artifacts/example-plugin-1.2.3.zip", firstBytes);
 
   const refused = await publisher.putObjectIfAbsent(
-    "artifacts/example.plugin-1.2.3.zip",
+    "artifacts/example-plugin-1.2.3.zip",
     differentBytes,
   );
   assert.equal(refused.refused, true);
-  assert.equal(refused.objectKey, "artifacts/example.plugin-1.2.3.zip");
+  assert.equal(refused.objectKey, "artifacts/example-plugin-1.2.3.zip");
 
-  const object = await publisher.getObject("artifacts/example.plugin-1.2.3.zip");
+  const object = await publisher.getObject("artifacts/example-plugin-1.2.3.zip");
   assert.deepEqual(object.bytes, firstBytes, "the existing object is not overwritten");
 
   const written = await publisher.putObjectIfAbsent(
-    "artifacts/example.plugin-1.2.4.zip",
+    "artifacts/example-plugin-1.2.4.zip",
     differentBytes,
   );
   assert.equal(written.refused, undefined);
-  assert.equal(written.objectKey, "artifacts/example.plugin-1.2.4.zip");
+  assert.equal(written.objectKey, "artifacts/example-plugin-1.2.4.zip");
   assert.deepEqual(
-    (await publisher.getObject("artifacts/example.plugin-1.2.4.zip")).bytes,
+    (await publisher.getObject("artifacts/example-plugin-1.2.4.zip")).bytes,
     differentBytes,
   );
 });
@@ -135,12 +135,12 @@ test("the fake publisher persists objects across instances through a state direc
     const bytes = Buffer.from("persisted bytes");
 
     await createFakePublisher({ stateDir }).putObject(
-      "artifacts/example.plugin-1.2.3.zip",
+      "artifacts/example-plugin-1.2.3.zip",
       bytes,
     );
 
     const reloaded = createFakePublisher({ stateDir });
-    const object = await reloaded.getObject("artifacts/example.plugin-1.2.3.zip");
+    const object = await reloaded.getObject("artifacts/example-plugin-1.2.3.zip");
     assert.deepEqual(object.bytes, bytes);
     assert.equal(object.checksum, sha256Hex(bytes));
   });
@@ -170,7 +170,7 @@ test("the r2 publisher exposes the object operations when credentials are config
 test("the r2 publisher signs and completes every object operation against the store", async () => {
   await withStubObjectStore(async ({ env, bucket, requests }) => {
     const publisher = createR2Publisher(env);
-    const objectKey = "artifacts/example.plugin-1.2.3.zip";
+    const objectKey = "artifacts/example-plugin-1.2.3.zip";
     const bytes = Buffer.from("artifact bytes");
 
     assert.equal(await publisher.getObject(objectKey), null, "an absent object reads as null");
@@ -203,7 +203,7 @@ test("the r2 publisher signs and completes every object operation against the st
 test("the r2 publisher refuses to overwrite an existing object", async () => {
   await withStubObjectStore(async ({ env, objects, bucket }) => {
     const publisher = createR2Publisher(env);
-    const objectKey = "artifacts/example.plugin-1.2.3.zip";
+    const objectKey = "artifacts/example-plugin-1.2.3.zip";
     const firstBytes = Buffer.from("first bytes");
     const differentBytes = Buffer.from("different bytes");
 
