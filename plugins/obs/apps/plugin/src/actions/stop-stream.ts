@@ -8,7 +8,7 @@ import { stopStream } from "../obs/stream";
 export const STOP_STREAM_ACTION = "stop-stream";
 
 export class StopStreamAction extends StandaloneAction<StopStreamSettings> {
-  name = STOP_STREAM_ACTION;
+  type = STOP_STREAM_ACTION;
 
   constructor(private readonly connections: ConnectionsService) {
     super();
