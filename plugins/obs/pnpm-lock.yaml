@@ -10,8 +10,8 @@ catalogs:
       specifier: ^0.5.0
       version: 0.5.0
     '@fluxta/sdk':
-      specifier: ^0.4.0
-      version: 0.4.0
+      specifier: ^0.5.1
+      version: 0.5.1
     '@tailwindcss/vite':
       specifier: ^4.1.18
       version: 4.3.3
@@ -82,7 +82,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.5.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       obs-protocol:
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -122,7 +122,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.5.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       obs-protocol:
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -417,8 +417,8 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@fluxta/sdk@0.4.0':
-    resolution: {integrity: sha512-SI3/XLk1DdzAKASKZu8Slb7K6f+B9Sptsnl9SHT/i/u1p2BQV8ys/7MTVqnPsnKR/3vW91YK5qMMtqiZVhYfsQ==}
+  '@fluxta/sdk@0.5.1':
+    resolution: {integrity: sha512-C/OseeSDme6+rFRGwzVkJMSfK7yl/MDl3cihR+64MThaaOTUFkbSiYKlEIygV6vTJJ6m4VSFYFJBPdlbqoldmw==}
     peerDependencies:
       react: 19.x
       react-dom: 19.x
@@ -2021,6 +2021,11 @@ packages:
     peerDependencies:
       browserslist: '>= 4.21.0'
 
+  use-sync-external-store@1.6.0:
+    resolution: {integrity: sha512-Pp6GSwGP/NrPIrxVFAIkOQeyw8lFenOHijQWkUTrDvrF4ALqylP2C/KCkeS9dpUM3KvYRQhna5vt7IL95+ZQ9w==}
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0 || ^18.0.0 || ^19.0.0
+
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
@@ -2388,9 +2393,10 @@ snapshots:
       - bare-buffer
       - react-native-b4a
 
-  '@fluxta/sdk@0.4.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@fluxta/sdk@0.5.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       nanoid: 5.1.16
+      use-sync-external-store: 1.6.0(react@19.2.8)
     optionalDependencies:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
@@ -3776,6 +3782,10 @@ snapshots:
       browserslist: 4.28.8
       escalade: 3.2.0
       picocolors: 1.1.1
+
+  use-sync-external-store@1.6.0(react@19.2.8):
+    dependencies:
+      react: 19.2.8
 
   util-deprecate@1.0.2: {}
 

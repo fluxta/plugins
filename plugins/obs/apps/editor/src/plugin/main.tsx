@@ -1,3 +1,4 @@
+import { PluginEditorProvider } from "@fluxta/sdk/ui";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -6,6 +7,8 @@ import { PluginEditorApp } from "./PluginEditorApp";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <PluginEditorApp />
+    <PluginEditorProvider>
+      <PluginEditorApp />
+    </PluginEditorProvider>
   </StrictMode>,
 );

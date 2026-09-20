@@ -22,6 +22,13 @@ export type ConnectionEventCallbacks = {
     filter: string,
     enabled: boolean,
   ) => void;
+  onSceneFilterEnabledChanged: (
+    connectionId: string,
+    scene: string,
+    filter: string,
+    enabled: boolean,
+  ) => void;
+  onConnectionStatusChanged: (connectionId: string, status: ConnectionStatus) => void;
 };
 
 function draftOf(connection: StoredConnection): SessionDraft {
@@ -110,6 +117,9 @@ export class ConnectionsService {
       onInputMuteChanged: (input, muted) => this.callbacks.onInputMuteChanged(id, input, muted),
       onSourceFilterEnabledChanged: (source, filter, enabled) =>
         this.callbacks.onSourceFilterEnabledChanged(id, source, filter, enabled),
+      onSceneFilterEnabledChanged: (scene, filter, enabled) =>
+        this.callbacks.onSceneFilterEnabledChanged(id, scene, filter, enabled),
+      onConnectionStatusChanged: (status) => this.callbacks.onConnectionStatusChanged(id, status),
     });
 
     this.sessions.set(id, session);

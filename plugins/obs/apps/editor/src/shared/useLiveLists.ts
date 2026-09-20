@@ -1,146 +1,80 @@
-import type { BaseEditor } from "@fluxta/sdk/api";
-import { useEffect, useState } from "react";
-import { isPluginMessage, type EditorMessage, type PickerOption } from "obs-protocol";
+import { usePluginData } from "@fluxta/sdk/ui";
+import { isPluginMessage, type PickerOption } from "obs-protocol";
 
 /**
  * The chosen Connection's live Scenes. Empty (not "loading") while no
  * Connection is chosen — there is nothing to ask for yet.
  */
-export function useScenes(
-  editor: BaseEditor,
-  connected: Promise<void>,
-  connectionId: string | undefined,
-): PickerOption[] {
-  const [scenes, setScenes] = useState<PickerOption[]>([]);
+export function useScenes(connectionId: string | undefined): PickerOption[] {
+  const { data } = usePluginData<PickerOption[]>(
+    connectionId ? { event: "get-scenes", connectionId } : null,
+    "scenes",
+  );
 
-  useEffect(() => {
-    if (!connectionId) {
-      setScenes([]);
-      return;
-    }
-
-    const unsubscribe = editor.onReceiveFromPlugin((incoming: unknown) => {
-      if (
-        isPluginMessage(incoming) &&
-        incoming.event === "scenes" &&
-        incoming.connectionId === connectionId
-      ) {
-        setScenes(incoming.scenes);
-      }
-    });
-
-    void connected.then(() => {
-      editor.sendToPlugin({ event: "get-scenes", connectionId } satisfies EditorMessage);
-    });
-
-    return unsubscribe;
-  }, [editor, connected, connectionId]);
-
-  return scenes;
+  return data ?? [];
 }
 
 /** The Sources placed within one Scene of the chosen Connection — for Set Source Visibility's cascade. */
 export function useSceneSources(
-  editor: BaseEditor,
-  connected: Promise<void>,
   connectionId: string | undefined,
   scene: string | undefined,
 ): PickerOption[] {
-  const [sources, setSources] = useState<PickerOption[]>([]);
+  // The reply's data lives under `sources`, not under the `scene-sources`
+  // event name, so a function response — matching the event and echoed
+  // fields by hand — replaces the string shorthand.
+  const { data } = usePluginData<PickerOption[]>(
+    connectionId && scene ? { event: "get-scene-sources", connectionId, scene } : null,
+    (message) =>
+      isPluginMessage(message) &&
+      message.event === "scene-sources" &&
+      message.connectionId === connectionId &&
+      message.scene === scene
+        ? message.sources
+        : undefined,
+  );
 
-  useEffect(() => {
-    if (!connectionId || !scene) {
-      setSources([]);
-      return;
-    }
-
-    const unsubscribe = editor.onReceiveFromPlugin((incoming: unknown) => {
-      if (
-        isPluginMessage(incoming) &&
-        incoming.event === "scene-sources" &&
-        incoming.connectionId === connectionId &&
-        incoming.scene === scene
-      ) {
-        setSources(incoming.sources);
-      }
-    });
-
-    void connected.then(() => {
-      editor.sendToPlugin({ event: "get-scene-sources", connectionId, scene } satisfies EditorMessage);
-    });
-
-    return unsubscribe;
-  }, [editor, connected, connectionId, scene]);
-
-  return sources;
+  return data ?? [];
 }
 
-/** Every Source/Input on the chosen Connection, regardless of Scene placement. */
+/**
+ * Every Input on the chosen Connection, regardless of Scene placement.
+ *
+ * `kinds`, when given, narrows this to those OBS kind ids (e.g. only Browser
+ * Sources).
+ */
 export function useInputs(
-  editor: BaseEditor,
-  connected: Promise<void>,
   connectionId: string | undefined,
+  kinds?: readonly string[],
 ): PickerOption[] {
-  const [inputs, setInputs] = useState<PickerOption[]>([]);
+  const { data } = usePluginData<PickerOption[]>(
+    connectionId
+      ? { event: "get-inputs", connectionId, ...(kinds ? { kinds: [...kinds] } : {}) }
+      : null,
+    "inputs",
+  );
 
-  useEffect(() => {
-    if (!connectionId) {
-      setInputs([]);
-      return;
-    }
+  return data ?? [];
+}
 
-    const unsubscribe = editor.onReceiveFromPlugin((incoming: unknown) => {
-      if (
-        isPluginMessage(incoming) &&
-        incoming.event === "inputs" &&
-        incoming.connectionId === connectionId
-      ) {
-        setInputs(incoming.inputs);
-      }
-    });
+/** Every Group configured on the chosen Connection. */
+export function useGroups(connectionId: string | undefined): PickerOption[] {
+  const { data } = usePluginData<PickerOption[]>(
+    connectionId ? { event: "get-groups", connectionId } : null,
+    "groups",
+  );
 
-    void connected.then(() => {
-      editor.sendToPlugin({ event: "get-inputs", connectionId } satisfies EditorMessage);
-    });
-
-    return unsubscribe;
-  }, [editor, connected, connectionId]);
-
-  return inputs;
+  return data ?? [];
 }
 
 /** The Filters attached to one Source — for Set Source Filter's cascade. */
 export function useFilters(
-  editor: BaseEditor,
-  connected: Promise<void>,
   connectionId: string | undefined,
   source: string | undefined,
 ): PickerOption[] {
-  const [filters, setFilters] = useState<PickerOption[]>([]);
+  const { data } = usePluginData<PickerOption[]>(
+    connectionId && source ? { event: "get-filters", connectionId, source } : null,
+    "filters",
+  );
 
-  useEffect(() => {
-    if (!connectionId || !source) {
-      setFilters([]);
-      return;
-    }
-
-    const unsubscribe = editor.onReceiveFromPlugin((incoming: unknown) => {
-      if (
-        isPluginMessage(incoming) &&
-        incoming.event === "filters" &&
-        incoming.connectionId === connectionId &&
-        incoming.source === source
-      ) {
-        setFilters(incoming.filters);
-      }
-    });
-
-    void connected.then(() => {
-      editor.sendToPlugin({ event: "get-filters", connectionId, source } satisfies EditorMessage);
-    });
-
-    return unsubscribe;
-  }, [editor, connected, connectionId, source]);
-
-  return filters;
+  return data ?? [];
 }

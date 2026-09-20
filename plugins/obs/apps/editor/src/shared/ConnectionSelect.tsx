@@ -1,11 +1,4 @@
-import {
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@fluxta/sdk/ui";
+import { SelectField } from "@fluxta/sdk/ui";
 import type { ConnectionEntry } from "obs-protocol";
 
 type Props = {
@@ -27,29 +20,17 @@ export function ConnectionSelect({ connections, value, onChange }: Props) {
     return null;
   }
 
-  const missing = !!value && !connections.some((connection) => connection.id === value);
-
   return (
-    <div className="space-y-2">
-      <Label htmlFor="connection">Connection</Label>
-      <Select value={value ?? ""} onValueChange={onChange}>
-        <SelectTrigger id="connection" className="w-full">
-          <SelectValue placeholder="Choose a Connection" />
-        </SelectTrigger>
-        <SelectContent>
-          {missing ? (
-            // Keeps a saved choice visible rather than silently emptying the
-            // field: the Connection may have been deleted, or renamed by an
-            // id this instance no longer matches.
-            <SelectItem value={value}>A Connection that no longer exists</SelectItem>
-          ) : null}
-          {connections.map((connection) => (
-            <SelectItem key={connection.id} value={connection.id}>
-              {connection.name}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <SelectField
+      label="Connection"
+      placeholder="Choose a Connection"
+      options={connections.map((connection) => ({
+        value: connection.id,
+        label: connection.name,
+      }))}
+      value={value}
+      onChange={onChange}
+      missingLabel="A Connection that no longer exists"
+    />
   );
 }

@@ -28,3 +28,14 @@ export async function getCurrentScene(obs: OBSWebSocket): Promise<string> {
   const { currentProgramSceneName } = await obs.call("GetCurrentProgramScene");
   return currentProgramSceneName;
 }
+
+/**
+ * `SourceFilterEnableStateChanged` names its target only by name, and that
+ * name may belong to a Scene or an Input alike — filters live on both. This
+ * tells the two apart so the event can be forwarded as the right one of
+ * `scene-filter-enabled-changed` / `source-filter-enabled-changed`.
+ */
+export async function isScene(obs: OBSWebSocket, name: string): Promise<boolean> {
+  const { scenes } = await obs.call("GetSceneList");
+  return scenes.some((scene) => scene["sceneName"] === name);
+}

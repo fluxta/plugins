@@ -26,7 +26,8 @@ export type EditorMessage =
   | { event: "delete-connection"; id: string }
   | { event: "get-scenes"; connectionId: string }
   | { event: "get-scene-sources"; connectionId: string; scene: string }
-  | { event: "get-inputs"; connectionId: string }
+  | { event: "get-inputs"; connectionId: string; kinds?: string[] }
+  | { event: "get-groups"; connectionId: string }
   | { event: "get-filters"; connectionId: string; source: string };
 
 /**
@@ -52,6 +53,7 @@ export type PluginMessage =
       sources: PickerOption[];
     }
   | { event: "inputs"; connectionId: string; inputs: PickerOption[] }
+  | { event: "groups"; connectionId: string; groups: PickerOption[] }
   | {
       event: "filters";
       connectionId: string;
@@ -96,8 +98,15 @@ export function isEditorMessage(value: unknown): value is EditorMessage {
     case "delete-connection":
       return typeof message["id"] === "string";
     case "get-scenes":
-    case "get-inputs":
+    case "get-groups":
       return typeof message["connectionId"] === "string";
+    case "get-inputs":
+      return (
+        typeof message["connectionId"] === "string" &&
+        (message["kinds"] === undefined ||
+          (Array.isArray(message["kinds"]) &&
+            message["kinds"].every((kind) => typeof kind === "string")))
+      );
     case "get-scene-sources":
       return (
         typeof message["connectionId"] === "string" &&
@@ -126,6 +135,7 @@ export function isPluginMessage(value: unknown): value is PluginMessage {
     case "scenes":
     case "scene-sources":
     case "inputs":
+    case "groups":
     case "filters":
       return true;
     default:
