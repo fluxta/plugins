@@ -1,0 +1,748 @@
+{
+  "actions": [
+    {
+      "name": "Send Twitch Chat Message",
+      "type": "send-message",
+      "icon": "icons/message-circle.svg",
+      "context": "standalone",
+      "editor": "editor/send-message.html"
+    },
+    {
+      "name": "Update Twitch Reward",
+      "type": "twitch-update-reward",
+      "icon": "icons/gift.svg",
+      "context": "standalone",
+      "editor": "editor/update-reward.html"
+    },
+    {
+      "name": "Resolve Twitch Redemption",
+      "type": "twitch-resolve-redemption",
+      "icon": "icons/check-check.svg",
+      "context": "standalone",
+      "editor": "editor/resolve-redemption.html"
+    },
+    {
+      "name": "Start Twitch Poll",
+      "type": "twitch-start-poll",
+      "icon": "icons/vote.svg",
+      "context": "standalone",
+      "editor": "editor/start-poll.html",
+      "produces": [
+        {
+          "key": "pollId",
+          "name": "Poll ID",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "End Twitch Poll",
+      "type": "twitch-end-poll",
+      "icon": "icons/flag.svg",
+      "context": "standalone"
+    },
+    {
+      "name": "Start Twitch Prediction",
+      "type": "twitch-start-prediction",
+      "icon": "icons/target.svg",
+      "context": "standalone",
+      "editor": "editor/start-prediction.html",
+      "produces": [
+        {
+          "key": "predictionId",
+          "name": "Prediction ID",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Lock Twitch Prediction",
+      "type": "twitch-lock-prediction",
+      "icon": "icons/lock.svg",
+      "context": "standalone"
+    },
+    {
+      "name": "Resolve Twitch Prediction",
+      "type": "twitch-resolve-prediction",
+      "icon": "icons/trophy.svg",
+      "context": "standalone",
+      "editor": "editor/resolve-prediction.html"
+    },
+    {
+      "name": "Cancel Twitch Prediction",
+      "type": "twitch-cancel-prediction",
+      "icon": "icons/circle-x.svg",
+      "context": "standalone"
+    }
+  ],
+  "sources": [
+    {
+      "key": "twitchIsLive",
+      "name": "Twitch Is Live",
+      "type": "boolean",
+      "resolve": "query"
+    },
+    {
+      "key": "twitchViewerCount",
+      "name": "Twitch Viewer Count",
+      "type": "number",
+      "resolve": "query"
+    }
+  ],
+  "apiVersion": 1,
+  "author": "Mikhail Morozov",
+  "description": "Streaming platform integration",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "navigation",
+  "homepage": "https://github.com/inferst/fluxta-platforms",
+  "icon": "icons/radio-tower.svg",
+  "license": "MIT",
+  "main": "index.mjs",
+  "maintainers": [
+    "inferst"
+  ],
+  "minAppVersion": "0.1.0",
+  "name": "platforms",
+  "repository": "https://github.com/inferst/fluxta-platforms",
+  "title": "Platforms",
+  "version": "0.1.1",
+  "events": [
+    {
+      "type": "twitch-chat-message",
+      "name": "Twitch Chat Message",
+      "fields": [
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        },
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "messageId",
+          "name": "Message ID",
+          "type": "string"
+        },
+        {
+          "key": "isBroadcaster",
+          "name": "Is Broadcaster",
+          "type": "boolean"
+        },
+        {
+          "key": "isModerator",
+          "name": "Is Moderator",
+          "type": "boolean"
+        },
+        {
+          "key": "isVip",
+          "name": "Is VIP",
+          "type": "boolean"
+        },
+        {
+          "key": "isSubscriber",
+          "name": "Is Subscriber",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "command-triggered",
+      "name": "Command Triggered",
+      "fields": [
+        {
+          "key": "command",
+          "name": "Command Name",
+          "type": "string"
+        },
+        {
+          "key": "commandId",
+          "name": "Command",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "commands"
+          }
+        },
+        {
+          "key": "alias",
+          "name": "Alias",
+          "type": "string"
+        },
+        {
+          "key": "args",
+          "name": "Arguments",
+          "type": "string"
+        },
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        },
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "messageId",
+          "name": "Message ID",
+          "type": "string"
+        },
+        {
+          "key": "platform",
+          "name": "Platform",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "platforms"
+          }
+        },
+        {
+          "key": "isBroadcaster",
+          "name": "Is Broadcaster",
+          "type": "boolean"
+        },
+        {
+          "key": "isModerator",
+          "name": "Is Moderator",
+          "type": "boolean"
+        },
+        {
+          "key": "isVip",
+          "name": "Is VIP",
+          "type": "boolean"
+        },
+        {
+          "key": "isSubscriber",
+          "name": "Is Subscriber",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-reward-redeemed",
+      "name": "Twitch Reward Redeemed",
+      "fields": [
+        {
+          "key": "rewardTitle",
+          "name": "Reward Title",
+          "type": "string"
+        },
+        {
+          "key": "rewardCost",
+          "name": "Reward Cost",
+          "type": "number"
+        },
+        {
+          "key": "userInput",
+          "name": "User Input",
+          "type": "string"
+        },
+        {
+          "key": "redemptionId",
+          "name": "Redemption ID",
+          "type": "string"
+        },
+        {
+          "key": "rewardId",
+          "name": "Reward ID",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "rewards"
+          }
+        },
+        {
+          "key": "status",
+          "name": "Status",
+          "type": "string"
+        },
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-poll-begin",
+      "name": "Twitch Poll Begin",
+      "fields": [
+        {
+          "key": "pollId",
+          "name": "Poll ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "choice1",
+          "name": "Choice 1",
+          "type": "string"
+        },
+        {
+          "key": "choice2",
+          "name": "Choice 2",
+          "type": "string"
+        },
+        {
+          "key": "choice3",
+          "name": "Choice 3",
+          "type": "string"
+        },
+        {
+          "key": "choice4",
+          "name": "Choice 4",
+          "type": "string"
+        },
+        {
+          "key": "choice5",
+          "name": "Choice 5",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-poll-end",
+      "name": "Twitch Poll End",
+      "fields": [
+        {
+          "key": "pollId",
+          "name": "Poll ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "choice1",
+          "name": "Choice 1",
+          "type": "string"
+        },
+        {
+          "key": "choice1Votes",
+          "name": "Choice 1 Votes",
+          "type": "number"
+        },
+        {
+          "key": "choice2",
+          "name": "Choice 2",
+          "type": "string"
+        },
+        {
+          "key": "choice2Votes",
+          "name": "Choice 2 Votes",
+          "type": "number"
+        },
+        {
+          "key": "choice3",
+          "name": "Choice 3",
+          "type": "string"
+        },
+        {
+          "key": "choice3Votes",
+          "name": "Choice 3 Votes",
+          "type": "number"
+        },
+        {
+          "key": "choice4",
+          "name": "Choice 4",
+          "type": "string"
+        },
+        {
+          "key": "choice4Votes",
+          "name": "Choice 4 Votes",
+          "type": "number"
+        },
+        {
+          "key": "choice5",
+          "name": "Choice 5",
+          "type": "string"
+        },
+        {
+          "key": "choice5Votes",
+          "name": "Choice 5 Votes",
+          "type": "number"
+        },
+        {
+          "key": "winner",
+          "name": "Winner",
+          "type": "string"
+        },
+        {
+          "key": "status",
+          "name": "Status",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-prediction-begin",
+      "name": "Twitch Prediction Begin",
+      "fields": [
+        {
+          "key": "predictionId",
+          "name": "Prediction ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "outcome1",
+          "name": "Outcome 1",
+          "type": "string"
+        },
+        {
+          "key": "outcome2",
+          "name": "Outcome 2",
+          "type": "string"
+        },
+        {
+          "key": "outcome3",
+          "name": "Outcome 3",
+          "type": "string"
+        },
+        {
+          "key": "outcome4",
+          "name": "Outcome 4",
+          "type": "string"
+        },
+        {
+          "key": "outcome5",
+          "name": "Outcome 5",
+          "type": "string"
+        },
+        {
+          "key": "outcome6",
+          "name": "Outcome 6",
+          "type": "string"
+        },
+        {
+          "key": "outcome7",
+          "name": "Outcome 7",
+          "type": "string"
+        },
+        {
+          "key": "outcome8",
+          "name": "Outcome 8",
+          "type": "string"
+        },
+        {
+          "key": "outcome9",
+          "name": "Outcome 9",
+          "type": "string"
+        },
+        {
+          "key": "outcome10",
+          "name": "Outcome 10",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-prediction-lock",
+      "name": "Twitch Prediction Lock",
+      "fields": [
+        {
+          "key": "predictionId",
+          "name": "Prediction ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "outcome1",
+          "name": "Outcome 1",
+          "type": "string"
+        },
+        {
+          "key": "outcome1Points",
+          "name": "Outcome 1 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome2",
+          "name": "Outcome 2",
+          "type": "string"
+        },
+        {
+          "key": "outcome2Points",
+          "name": "Outcome 2 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome3",
+          "name": "Outcome 3",
+          "type": "string"
+        },
+        {
+          "key": "outcome3Points",
+          "name": "Outcome 3 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome4",
+          "name": "Outcome 4",
+          "type": "string"
+        },
+        {
+          "key": "outcome4Points",
+          "name": "Outcome 4 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome5",
+          "name": "Outcome 5",
+          "type": "string"
+        },
+        {
+          "key": "outcome5Points",
+          "name": "Outcome 5 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome6",
+          "name": "Outcome 6",
+          "type": "string"
+        },
+        {
+          "key": "outcome6Points",
+          "name": "Outcome 6 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome7",
+          "name": "Outcome 7",
+          "type": "string"
+        },
+        {
+          "key": "outcome7Points",
+          "name": "Outcome 7 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome8",
+          "name": "Outcome 8",
+          "type": "string"
+        },
+        {
+          "key": "outcome8Points",
+          "name": "Outcome 8 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome9",
+          "name": "Outcome 9",
+          "type": "string"
+        },
+        {
+          "key": "outcome9Points",
+          "name": "Outcome 9 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome10",
+          "name": "Outcome 10",
+          "type": "string"
+        },
+        {
+          "key": "outcome10Points",
+          "name": "Outcome 10 Points",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-prediction-end",
+      "name": "Twitch Prediction End",
+      "fields": [
+        {
+          "key": "predictionId",
+          "name": "Prediction ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "outcome1",
+          "name": "Outcome 1",
+          "type": "string"
+        },
+        {
+          "key": "outcome1Points",
+          "name": "Outcome 1 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome2",
+          "name": "Outcome 2",
+          "type": "string"
+        },
+        {
+          "key": "outcome2Points",
+          "name": "Outcome 2 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome3",
+          "name": "Outcome 3",
+          "type": "string"
+        },
+        {
+          "key": "outcome3Points",
+          "name": "Outcome 3 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome4",
+          "name": "Outcome 4",
+          "type": "string"
+        },
+        {
+          "key": "outcome4Points",
+          "name": "Outcome 4 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome5",
+          "name": "Outcome 5",
+          "type": "string"
+        },
+        {
+          "key": "outcome5Points",
+          "name": "Outcome 5 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome6",
+          "name": "Outcome 6",
+          "type": "string"
+        },
+        {
+          "key": "outcome6Points",
+          "name": "Outcome 6 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome7",
+          "name": "Outcome 7",
+          "type": "string"
+        },
+        {
+          "key": "outcome7Points",
+          "name": "Outcome 7 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome8",
+          "name": "Outcome 8",
+          "type": "string"
+        },
+        {
+          "key": "outcome8Points",
+          "name": "Outcome 8 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome9",
+          "name": "Outcome 9",
+          "type": "string"
+        },
+        {
+          "key": "outcome9Points",
+          "name": "Outcome 9 Points",
+          "type": "number"
+        },
+        {
+          "key": "outcome10",
+          "name": "Outcome 10",
+          "type": "string"
+        },
+        {
+          "key": "outcome10Points",
+          "name": "Outcome 10 Points",
+          "type": "number"
+        },
+        {
+          "key": "winner",
+          "name": "Winner",
+          "type": "string"
+        },
+        {
+          "key": "status",
+          "name": "Status",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-is-live-changed",
+      "name": "Twitch Is Live Changed",
+      "fields": [
+        {
+          "key": "isLive",
+          "name": "Is Live",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-viewer-count-changed",
+      "name": "Twitch Viewer Count Changed",
+      "fields": [
+        {
+          "key": "viewerCount",
+          "name": "Viewer Count",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}
