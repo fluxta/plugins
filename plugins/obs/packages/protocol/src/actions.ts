@@ -1,4 +1,4 @@
-import type { FilterMode, VisibilityMode } from "./picker";
+import type { ColorMode, FilterMode, MediaMode, VisibilityMode } from "./picker";
 
 /**
  * Every Action's settings carry the Connection they act on. Optional because
@@ -50,4 +50,56 @@ export type SetSourceFilterSettings = WithConnection & {
   source?: string;
   filter?: string;
   mode?: FilterMode;
+};
+
+/** A Filter attached directly to a Scene itself, not to a Source placed on it. */
+export type SetSceneFilterSettings = WithConnection & {
+  scene?: string;
+  filter?: string;
+  mode?: FilterMode;
+};
+
+export type SetMediaStateSettings = WithConnection & {
+  input?: string;
+  mode?: MediaMode;
+};
+
+/** Swaps the file a Media/Image Source plays, as opposed to controlling its playback. */
+export type SetMediaSourceFileSettings = WithConnection & {
+  input?: string;
+  path?: string;
+};
+
+export type SetBrowserSourceUrlSettings = WithConnection & {
+  input?: string;
+  url?: string;
+};
+
+export type SetTextSourceSettings = WithConnection & {
+  input?: string;
+  text?: string;
+};
+
+export type SetColorSourceSettings = WithConnection & {
+  input?: string;
+  mode?: ColorMode;
+  /** #RRGGBB — only read when `mode` is "fixed". */
+  color?: string;
+};
+
+/** Shows/hides/toggles every Source inside a Group at once — not the Group's own placement. */
+export type SetGroupSourcesVisibilitySettings = WithConnection & {
+  group?: string;
+  mode?: VisibilityMode;
+};
+
+export type TakeScreenshotSettings = WithConnection & {
+  source?: string;
+  /**
+   * Full file path, including filename and extension — OBS writes exactly
+   * this path. The image format is derived from the extension (see
+   * `obs/screenshot.ts`'s `formatFromPath`) rather than asked for
+   * separately, so the two can never disagree.
+   */
+  path?: string;
 };

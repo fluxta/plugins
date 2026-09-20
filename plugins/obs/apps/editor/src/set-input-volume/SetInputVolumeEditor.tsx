@@ -1,6 +1,4 @@
-import { ActionEditor } from "@fluxta/sdk/api";
-import { Input, Label } from "@fluxta/sdk/ui";
-import { useEffect, useRef, useState } from "react";
+import { EditorPage, NumberField, useActionSettings } from "@fluxta/sdk/ui";
 import type { SetInputVolumeSettings } from "obs-protocol";
 
 import { ConnectionSelect } from "../shared/ConnectionSelect";
@@ -9,62 +7,29 @@ import { PickerSelect } from "../shared/PickerSelect";
 import { useEditorConnections } from "../shared/useEditorConnections";
 import { useInputs } from "../shared/useLiveLists";
 
-const editor = new ActionEditor();
-const connected = editor.connect();
-
 export function SetInputVolumeEditor() {
-  const [connectionId, setConnectionId] = useState<string>();
-  const [input, setInput] = useState<string>();
-  const [volumePercent, setVolumePercent] = useState("");
-  const connections = useEditorConnections(editor, connected);
-  const inputs = useInputs(editor, connected, effectiveConnectionId(connections, connectionId));
-
-  const latest = useRef<SetInputVolumeSettings>({});
-  latest.current = {
-    connection: connectionId,
-    input,
-    volumePercent: volumePercent === "" ? undefined : Number(volumePercent),
-  };
-
-  useEffect(() => {
-    const off = editor.onActionSave(() => latest.current);
-
-    void connected.then(async () => {
-      const saved = (await editor.getActionSettings()) as SetInputVolumeSettings | null;
-      setConnectionId(saved?.connection);
-      setInput(saved?.input);
-      setVolumePercent(saved?.volumePercent === undefined ? "" : String(saved.volumePercent));
-    });
-
-    return off;
-  }, []);
+  const { values, set } = useActionSettings<SetInputVolumeSettings>();
+  const connections = useEditorConnections();
+  const inputs = useInputs(effectiveConnectionId(connections, values.connection));
 
   return (
-    <main className="min-h-screen space-y-4 p-4 text-foreground">
-      <ConnectionSelect connections={connections} value={connectionId} onChange={setConnectionId} />
+    <EditorPage>
+      <ConnectionSelect connections={connections} value={values.connection} onChange={set("connection")} />
       <PickerSelect
-        id="input"
         label="Input"
         placeholder="Choose an Input"
         options={inputs}
-        value={input}
-        onChange={setInput}
+        value={values.input}
+        onChange={set("input")}
       />
-      <div className="space-y-2">
-        <Label htmlFor="volume">Volume</Label>
-        <Input
-          id="volume"
-          type="number"
-          min={0}
-          value={volumePercent}
-          onChange={(event) => setVolumePercent(event.target.value)}
-          placeholder="100"
-        />
-        <p className="text-xs text-muted-foreground">
-          Percent — matches what OBS's own mixer shows. 100 is unity gain; OBS allows boosting past
-          it.
-        </p>
-      </div>
-    </main>
+      <NumberField
+        label="Volume"
+        min={0}
+        value={values.volumePercent}
+        onChange={set("volumePercent")}
+        placeholder="100"
+        hint="Percent — matches what OBS's own mixer shows. 100 is unity gain; OBS allows boosting past it."
+      />
+    </EditorPage>
   );
 }

@@ -1,3 +1,4 @@
+import { ActionEditorProvider } from "@fluxta/sdk/ui";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -6,6 +7,8 @@ import { SetSourceFilterEditor } from "./SetSourceFilterEditor";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <SetSourceFilterEditor />
+    <ActionEditorProvider>
+      <SetSourceFilterEditor />
+    </ActionEditorProvider>
   </StrictMode>,
 );

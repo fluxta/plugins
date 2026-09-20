@@ -1,8 +1,8 @@
-import { Badge, Button } from "@fluxta/sdk/ui";
+import { Button, ListRow, StatusBadge, useConfirm, type StatusTone } from "@fluxta/sdk/ui";
 import { useState } from "react";
 import type { Connection, ConnectionDraft, ConnectionEntry, EditorMessage } from "obs-protocol";
 
-import { ConnectionForm } from "./ConnectionForm";
+import { ConnectionDialog } from "./ConnectionDialog";
 
 type Props = {
   connection: ConnectionEntry;
@@ -12,65 +12,80 @@ type Props = {
 
 export function ConnectionRow({ connection, others, send }: Props) {
   const [editing, setEditing] = useState(false);
+  const confirm = useConfirm();
 
-  if (editing) {
-    return (
-      <ConnectionForm
+  return (
+    <>
+      <ListRow
+        title={connection.name}
+        badges={<StatusBadge tone={statusTone(connection.status)}>{statusLabel(connection.status)}</StatusBadge>}
+        description={`${connection.host}:${connection.port}`}
+        detail={
+          connection.status.status === "error" ? (
+            <p role="alert" className="text-destructive text-xs/relaxed">
+              {connection.status.message}
+            </p>
+          ) : null
+        }
+        actions={
+          <>
+            <Button variant="outline" onClick={() => setEditing(true)}>
+              Edit
+            </Button>
+            <Button
+              variant="outline"
+              onClick={async () => {
+                const sure = await confirm({
+                  title: `Delete "${connection.name}"?`,
+                  description: "Every Action or Event pointed at this Connection will need a new one.",
+                  confirmLabel: "Delete",
+                  destructive: true,
+                });
+
+                if (sure) {
+                  send({ event: "delete-connection", id: connection.id });
+                }
+              }}
+            >
+              Delete
+            </Button>
+          </>
+        }
+      />
+      <ConnectionDialog
+        open={editing}
+        onOpenChange={setEditing}
+        title="Edit Connection"
         draft={{ name: connection.name, host: connection.host, port: connection.port }}
         hasPassword={connection.hasPassword}
         editingId={connection.id}
         others={others}
         onSave={(draft: ConnectionDraft) => {
           send({ event: "update-connection", id: connection.id, connection: draft });
-          setEditing(false);
         }}
-        onCancel={() => setEditing(false)}
       />
-    );
-  }
-
-  return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4 bg-muted/30">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">{connection.name}</span>
-          <StatusBadge status={connection.status} />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          {connection.host}:{connection.port}
-        </p>
-        <Detail status={connection.status} />
-      </div>
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" onClick={() => setEditing(true)}>
-          Edit
-        </Button>
-        <Button
-          variant="outline"
-          onClick={() => send({ event: "delete-connection", id: connection.id })}
-        >
-          Delete
-        </Button>
-      </div>
-    </div>
+    </>
   );
 }
 
-function StatusBadge({ status }: { status: ConnectionEntry["status"] }) {
+function statusTone(status: ConnectionEntry["status"]): StatusTone {
   switch (status.status) {
     case "connected":
-      return <Badge variant="secondary">Connected</Badge>;
+      return "ok";
     case "connecting":
-      return <Badge variant="outline">Connecting…</Badge>;
+      return "pending";
     case "error":
-      return <Badge variant="destructive">Unreachable</Badge>;
+      return "error";
   }
 }
 
-function Detail({ status }: { status: ConnectionEntry["status"] }) {
-  if (status.status !== "error") {
-    return null;
+function statusLabel(status: ConnectionEntry["status"]): string {
+  switch (status.status) {
+    case "connected":
+      return "Connected";
+    case "connecting":
+      return "Connecting…";
+    case "error":
+      return "Unreachable";
   }
-
-  return <p className="text-sm text-destructive">{status.message}</p>;
 }

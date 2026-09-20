@@ -8,17 +8,29 @@ import {
 import { MuteInputAction } from "./actions/mute-input";
 import { PauseRecordAction } from "./actions/pause-record";
 import { ResumeRecordAction } from "./actions/resume-record";
+import { SetBrowserSourceUrlAction } from "./actions/set-browser-source-url";
+import { SetColorSourceAction } from "./actions/set-color-source";
+import { SetGroupSourcesVisibilityAction } from "./actions/set-group-sources-visibility";
 import { SetInputVolumeAction } from "./actions/set-input-volume";
+import { SetMediaSourceFileAction } from "./actions/set-media-source-file";
+import { SetMediaStateAction } from "./actions/set-media-state";
 import { SetSceneAction } from "./actions/set-scene";
+import { SetSceneFilterAction } from "./actions/set-scene-filter";
 import { SetSourceFilterAction } from "./actions/set-source-filter";
 import { SetSourceVisibilityAction } from "./actions/set-source-visibility";
+import { SetTextSourceAction } from "./actions/set-text-source";
 import { StartRecordAction } from "./actions/start-record";
 import { StartStreamAction } from "./actions/start-stream";
 import { StopRecordAction } from "./actions/stop-record";
 import { StopStreamAction } from "./actions/stop-stream";
+import { TakeScreenshotAction } from "./actions/take-screenshot";
 import { UnmuteInputAction } from "./actions/unmute-input";
 import { ConnectionsService } from "./connections/service";
 import { ConnectionsStore, type StoredSettings } from "./connections/store";
+import {
+  CONNECTION_STATUS_CHANGED_EVENT,
+  toConnectionStatusChangedPayload,
+} from "./events/connection-status-changed";
 import {
   INPUT_MUTE_CHANGED_EVENT,
   toInputMuteChangedPayload,
@@ -28,6 +40,10 @@ import {
   toRecordStateChangedPayload,
 } from "./events/record-state-changed";
 import { SCENE_CHANGED_EVENT, toSceneChangedPayload } from "./events/scene-changed";
+import {
+  SCENE_FILTER_ENABLED_CHANGED_EVENT,
+  toSceneFilterEnabledChangedPayload,
+} from "./events/scene-filter-enabled-changed";
 import {
   SOURCE_FILTER_ENABLED_CHANGED_EVENT,
   toSourceFilterEnabledChangedPayload,
@@ -42,17 +58,24 @@ import {
 } from "./events/stream-state-changed";
 import { readManifestVersion } from "./manifest";
 import { listFilters } from "./obs/filters";
+import { listGroups } from "./obs/groups";
 import { listInputs } from "./obs/sources";
 import { listScenes, listSceneSources } from "./obs/scenes";
+import { createConnectionStatusOptions } from "./options/connection-status";
 import { createConnectionsOptions } from "./options/connections";
 import { createFiltersOptions } from "./options/filters";
 import { createInputsOptions } from "./options/inputs";
+import { createSceneFiltersOptions } from "./options/scene-filters";
 import { createSceneSourcesOptions } from "./options/scene-sources";
 import { createScenesOptions } from "./options/scenes";
 import { plugin } from "./plugin";
 import { createCurrentSceneSource } from "./sources/current-scene";
+import { createInputVolumeSource } from "./sources/input-volume";
+import { createIsFilterEnabledSource } from "./sources/is-filter-enabled";
+import { createIsInputMutedSource } from "./sources/is-input-muted";
 import { createIsRecordingSource } from "./sources/is-recording";
 import { createIsRecordingPausedSource } from "./sources/is-recording-paused";
+import { createIsSourceVisibleSource } from "./sources/is-source-visible";
 import { createIsStreamingSource } from "./sources/is-streaming";
 
 const version = await readManifestVersion();
@@ -95,6 +118,18 @@ const connections = new ConnectionsService(
         toSourceFilterEnabledChangedPayload(connectionId, source, filter, enabled),
       );
     },
+    onSceneFilterEnabledChanged: (connectionId, scene, filter, enabled) => {
+      plugin.emitEvent(
+        SCENE_FILTER_ENABLED_CHANGED_EVENT,
+        toSceneFilterEnabledChangedPayload(connectionId, scene, filter, enabled),
+      );
+    },
+    onConnectionStatusChanged: (connectionId, status) => {
+      plugin.emitEvent(
+        CONNECTION_STATUS_CHANGED_EVENT,
+        toConnectionStatusChangedPayload(connectionId, status),
+      );
+    },
   },
 );
 
@@ -110,17 +145,31 @@ plugin.registerAction(new MuteInputAction(connections));
 plugin.registerAction(new UnmuteInputAction(connections));
 plugin.registerAction(new SetInputVolumeAction(connections));
 plugin.registerAction(new SetSourceFilterAction(connections));
+plugin.registerAction(new SetSceneFilterAction(connections));
+plugin.registerAction(new SetMediaStateAction(connections));
+plugin.registerAction(new SetMediaSourceFileAction(connections));
+plugin.registerAction(new SetBrowserSourceUrlAction(connections));
+plugin.registerAction(new SetTextSourceAction(connections));
+plugin.registerAction(new SetColorSourceAction(connections));
+plugin.registerAction(new SetGroupSourcesVisibilityAction(connections));
+plugin.registerAction(new TakeScreenshotAction(connections));
 
 plugin.registerSource(createIsStreamingSource(connections));
 plugin.registerSource(createIsRecordingSource(connections));
 plugin.registerSource(createIsRecordingPausedSource(connections));
 plugin.registerSource(createCurrentSceneSource(connections));
+plugin.registerSource(createIsSourceVisibleSource(connections));
+plugin.registerSource(createIsInputMutedSource(connections));
+plugin.registerSource(createInputVolumeSource(connections));
+plugin.registerSource(createIsFilterEnabledSource(connections));
 
 plugin.registerOptions(createConnectionsOptions(store));
+plugin.registerOptions(createConnectionStatusOptions());
 plugin.registerOptions(createScenesOptions(connections));
 plugin.registerOptions(createInputsOptions(connections));
 plugin.registerOptions(createSceneSourcesOptions(connections));
 plugin.registerOptions(createFiltersOptions(connections));
+plugin.registerOptions(createSceneFiltersOptions(connections));
 
 function publish(): void {
   const message: PluginMessage = {
@@ -237,7 +286,7 @@ plugin.onReceiveFromEditor((message: unknown) => {
     case "get-inputs": {
       const obs = connections.obsOf(message.connectionId);
 
-      void (obs ? listInputs(obs) : Promise.resolve([]))
+      void (obs ? listInputs(obs, message.kinds) : Promise.resolve([]))
         .catch((error: unknown) => {
           console.warn("Inputs could not be listed for the editor:", error);
           return [];
@@ -247,6 +296,25 @@ plugin.onReceiveFromEditor((message: unknown) => {
             event: "inputs",
             connectionId: message.connectionId,
             inputs,
+          } satisfies PluginMessage);
+        });
+
+      return;
+    }
+
+    case "get-groups": {
+      const obs = connections.obsOf(message.connectionId);
+
+      void (obs ? listGroups(obs) : Promise.resolve([]))
+        .catch((error: unknown) => {
+          console.warn("Groups could not be listed for the editor:", error);
+          return [];
+        })
+        .then((groups) => {
+          plugin.sendToEditor({
+            event: "groups",
+            connectionId: message.connectionId,
+            groups,
           } satisfies PluginMessage);
         });
 
