@@ -1,4 +1,12 @@
-import { Badge, Button } from "@fluxta/sdk/ui";
+import {
+  Badge,
+  Button,
+  EmptyState,
+  ListRow,
+  Section,
+  StatusBadge,
+  useConfirm,
+} from "@fluxta/sdk/ui";
 import {
   blankRewardDraft,
   toRewardDraft,
@@ -36,91 +44,76 @@ export function RewardsCard({ rewards, refusal, send }: Props) {
   };
 
   return (
-    <div>
-      <div className="bg-background/30 text-base font-semibold">
-        Channel point rewards
-      </div>
-      <p className="text-muted-foreground mt-2 mb-5 text-xs">
-        Twitch lets an app change only the rewards it created itself, so a
-        reward added in the Twitch dashboard is listed here but stays read-only.
-        Rewards created here can be edited, switched on and off from the deck,
-        and have their redemptions fulfilled or refunded.
-      </p>
-      <div className="space-y-3">
-        {refusal ? <p className="text-sm text-destructive">{refusal}</p> : null}
+    <Section
+      title="Channel point rewards"
+      description="Twitch lets an app change only the rewards it created itself, so a reward added in the Twitch dashboard is listed here but stays read-only. Rewards created here can be edited, switched on and off from the deck, and have their redemptions fulfilled or refunded."
+      actions={
+        <>
+          <Button
+            variant="outline"
+            disabled={rewards.status !== "ready"}
+            onClick={() => setEditing({ draft: blankRewardDraft() })}
+          >
+            Add a reward
+          </Button>
+          <Button
+            variant="outline"
+            disabled={rewards.status === "idle"}
+            onClick={() => send({ event: "refresh-rewards" })}
+          >
+            Refresh
+          </Button>
+        </>
+      }
+    >
+      {refusal ? <p className="text-destructive text-xs/relaxed">{refusal}</p> : null}
 
-        {rewards.status === "idle" ? (
-          <p className="text-sm text-muted-foreground">
-            Connect the broadcaster account to see this channel's rewards.
-          </p>
-        ) : null}
+      {rewards.status === "idle" ? (
+        <EmptyState>Connect the broadcaster account to see this channel's rewards.</EmptyState>
+      ) : null}
 
-        {rewards.status === "loading" ? (
-          <p className="text-sm text-muted-foreground">
-            Reading the channel's rewards…
-          </p>
-        ) : null}
+      {rewards.status === "loading" ? (
+        <p className="text-muted-foreground text-xs/relaxed">Reading the channel's rewards…</p>
+      ) : null}
 
-        {rewards.status === "error" ? (
-          <p className="text-sm text-destructive">{rewards.message}</p>
-        ) : null}
+      {rewards.status === "error" ? (
+        <p className="text-destructive text-xs/relaxed">{rewards.message}</p>
+      ) : null}
 
-        {rewards.status === "ready" && listed.length === 0 && !editing ? (
-          <p className="text-sm text-muted-foreground">
-            This channel has no rewards yet.
-          </p>
-        ) : null}
+      {rewards.status === "ready" && listed.length === 0 ? (
+        <EmptyState>This channel has no rewards yet.</EmptyState>
+      ) : null}
 
-        {editing && !editing.id ? (
+      {listed.map((reward) =>
+        editing?.id === reward.id ? (
           <RewardForm
+            key={reward.id}
             draft={editing.draft}
-            others={listed}
+            others={listed.filter((other) => other.id !== reward.id)}
             onSave={save}
             onCancel={() => setEditing(undefined)}
           />
-        ) : null}
+        ) : (
+          <RewardRow
+            key={reward.id}
+            reward={reward}
+            onEdit={() =>
+              setEditing({ id: reward.id, draft: toRewardDraft(reward) })
+            }
+            onDelete={() => send({ event: "delete-reward", id: reward.id })}
+          />
+        ),
+      )}
 
-        {editing ? null : (
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              disabled={rewards.status !== "ready"}
-              onClick={() => setEditing({ draft: blankRewardDraft() })}
-            >
-              Add a reward
-            </Button>
-            <Button
-              variant="outline"
-              disabled={rewards.status === "idle"}
-              onClick={() => send({ event: "refresh-rewards" })}
-            >
-              Refresh
-            </Button>
-          </div>
-        )}
-
-        {listed.map((reward) =>
-          editing?.id === reward.id ? (
-            <RewardForm
-              key={reward.id}
-              draft={editing.draft}
-              others={listed.filter((other) => other.id !== reward.id)}
-              onSave={save}
-              onCancel={() => setEditing(undefined)}
-            />
-          ) : (
-            <RewardRow
-              key={reward.id}
-              reward={reward}
-              onEdit={() =>
-                setEditing({ id: reward.id, draft: toRewardDraft(reward) })
-              }
-              onDelete={() => send({ event: "delete-reward", id: reward.id })}
-            />
-          ),
-        )}
-      </div>
-    </div>
+      {editing && !editing.id ? (
+        <RewardForm
+          draft={editing.draft}
+          others={listed}
+          onSave={save}
+          onCancel={() => setEditing(undefined)}
+        />
+      ) : null}
+    </Section>
   );
 }
 
@@ -133,51 +126,52 @@ function RewardRow({
   onEdit: () => void;
   onDelete: () => void;
 }) {
-  // Deleting a reward on Twitch takes its redemption history with it, and
-  // nothing brings it back, so the second click is the one that means it.
-  const [confirming, setConfirming] = useState(false);
+  const confirm = useConfirm();
+
+  const handleDelete = async () => {
+    // Deleting a reward on Twitch takes its redemption history with it, and
+    // nothing brings it back, so the confirmation is the click that means it.
+    const sure = await confirm({
+      title: `Delete "${reward.title}"?`,
+      description: "Its redemption history goes with it, for good.",
+      confirmLabel: "Delete for good",
+      destructive: true,
+    });
+
+    if (sure) {
+      onDelete();
+    }
+  };
 
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-4 bg-muted/30">
-      <div className="min-w-0 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span
-            className="size-3 shrink-0 rounded-full"
-            style={{ backgroundColor: reward.backgroundColor }}
-          />
-          <span className="font-medium">{reward.title}</span>
+    <ListRow
+      title={reward.title}
+      leading={
+        <span
+          className="mt-1 size-3 shrink-0 rounded-full"
+          style={{ backgroundColor: reward.backgroundColor }}
+        />
+      }
+      badges={
+        <>
           {reward.managed ? null : <Badge variant="outline">Unmanaged</Badge>}
-          {reward.enabled ? null : <Badge variant="outline">Disabled</Badge>}
-          {reward.paused ? <Badge variant="outline">Paused</Badge> : null}
-          <Badge variant="secondary">
-            {reward.cost.toLocaleString()} points
-          </Badge>
-        </div>
-      </div>
-
-      {reward.managed && (
-        <div className="flex shrink-0 gap-2">
-          {confirming ? (
-            <>
-              <Button variant="outline" onClick={onDelete}>
-                Delete for good
-              </Button>
-              <Button variant="outline" onClick={() => setConfirming(false)}>
-                Keep
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button variant="outline" onClick={onEdit}>
-                Edit
-              </Button>
-              <Button variant="outline" onClick={() => setConfirming(true)}>
-                Delete
-              </Button>
-            </>
-          )}
-        </div>
-      )}
-    </div>
+          {reward.enabled ? null : <StatusBadge tone="idle">Disabled</StatusBadge>}
+          {reward.paused ? <StatusBadge tone="pending">Paused</StatusBadge> : null}
+          <Badge variant="secondary">{reward.cost.toLocaleString()} points</Badge>
+        </>
+      }
+      actions={
+        reward.managed ? (
+          <>
+            <Button variant="outline" onClick={onEdit}>
+              Edit
+            </Button>
+            <Button variant="outline" onClick={handleDelete}>
+              Delete
+            </Button>
+          </>
+        ) : null
+      }
+    />
   );
 }

@@ -1,4 +1,4 @@
-import { Badge, Button } from "@fluxta/sdk/ui";
+import { Button, ListRow, StatusBadge, type StatusTone } from "@fluxta/sdk/ui";
 import type { AccountRole, AccountState, EditorMessage } from "platforms-protocol";
 
 type Props = {
@@ -11,36 +11,36 @@ type Props = {
 
 export function AccountRow({ role, title, description, state, send }: Props) {
   return (
-    <div className="flex flex-col gap-3 rounded-lg border border-border p-4 bg-muted/30">
-      <div className="flex items-start justify-between gap-4">
-        <div className="min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-medium">{title}</span>
-            <StateBadge state={state} />
-          </div>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        </div>
-        <Action role={role} state={state} send={send} />
-      </div>
-
-      <Detail state={state} />
-    </div>
+    <ListRow
+      title={title}
+      description={description}
+      badges={<StateBadge state={state} />}
+      actions={<Action role={role} state={state} send={send} />}
+      detail={<Detail state={state} />}
+    />
   );
 }
 
+const TONE: Record<Exclude<AccountState["status"], "disconnected">, StatusTone> = {
+  connected: "ok",
+  authorizing: "pending",
+  "reauthorization-required": "idle",
+  error: "error",
+};
+
+const LABEL: Record<Exclude<AccountState["status"], "disconnected">, string> = {
+  connected: "Connected",
+  authorizing: "Waiting for Twitch",
+  "reauthorization-required": "Signed out",
+  error: "Failed",
+};
+
 function StateBadge({ state }: { state: AccountState }) {
-  switch (state.status) {
-    case "connected":
-      return <Badge variant="secondary">Connected</Badge>;
-    case "authorizing":
-      return <Badge variant="outline">Waiting for Twitch</Badge>;
-    case "reauthorization-required":
-      return <Badge variant="outline">Signed out</Badge>;
-    case "error":
-      return <Badge variant="destructive">Failed</Badge>;
-    case "disconnected":
-      return null;
+  if (state.status === "disconnected") {
+    return null;
   }
+
+  return <StatusBadge tone={TONE[state.status]}>{LABEL[state.status]}</StatusBadge>;
 }
 
 function Action({
@@ -79,7 +79,7 @@ function Detail({ state }: { state: AccountState }) {
   switch (state.status) {
     case "connected":
       return (
-        <p className="text-sm">
+        <p className="text-xs/relaxed">
           {state.displayName}{" "}
           <span className="text-muted-foreground">@{state.login}</span>
         </p>
@@ -87,7 +87,7 @@ function Detail({ state }: { state: AccountState }) {
 
     case "reauthorization-required":
       return (
-        <p className="text-sm text-muted-foreground">
+        <p className="text-muted-foreground text-xs/relaxed">
           Twitch signed <span className="text-foreground">@{state.login}</span> out. This happens
           after 30 days without use — sign in again to restore it.
         </p>
@@ -95,19 +95,19 @@ function Detail({ state }: { state: AccountState }) {
 
     case "authorizing":
       return (
-        <div className="space-y-1 text-sm text-muted-foreground">
+        <div className="text-muted-foreground space-y-1 text-xs/relaxed">
           <p>
             Confirm the sign-in in your browser. If it did not open, visit{" "}
             <span className="text-foreground">{state.verificationUri}</span>
           </p>
           <p>
-            and enter the code <span className="font-mono text-foreground">{state.userCode}</span>.
+            and enter the code <span className="text-foreground font-mono">{state.userCode}</span>.
           </p>
         </div>
       );
 
     case "error":
-      return <p className="text-sm text-destructive">{state.message}</p>;
+      return <p className="text-destructive text-xs/relaxed">{state.message}</p>;
 
     case "disconnected":
       return null;
