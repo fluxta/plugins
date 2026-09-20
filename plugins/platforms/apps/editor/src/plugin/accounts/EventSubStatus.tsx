@@ -1,30 +1,24 @@
-import { Badge } from "@fluxta/sdk/ui";
+import { ListRow, StatusBadge } from "@fluxta/sdk/ui";
 import type { EventSubState } from "platforms-protocol";
 
 export function EventSubStatus({ state }: { state: EventSubState }) {
   return (
-    <div className="flex items-start justify-between gap-4 rounded-lg border border-border p-4 bg-muted/30">
-      <div className="min-w-0">
-        <div className="flex items-center gap-2">
-          <span className="font-medium">Twitch events</span>
-          <StateBadge state={state} />
-        </div>
-        <p className="mt-1 text-sm text-muted-foreground">
-          <Detail state={state} />
-        </p>
-      </div>
-    </div>
+    <ListRow
+      title="Twitch events"
+      badges={<StateBadge state={state} />}
+      description={<Detail state={state} />}
+    />
   );
 }
 
 function StateBadge({ state }: { state: EventSubState }) {
   switch (state.status) {
     case "listening":
-      return <Badge variant="secondary">Listening</Badge>;
+      return <StatusBadge tone="ok">Listening</StatusBadge>;
     case "connecting":
-      return <Badge variant="outline">Connecting</Badge>;
+      return <StatusBadge tone="pending">Connecting</StatusBadge>;
     case "error":
-      return <Badge variant="destructive">Failed</Badge>;
+      return <StatusBadge tone="error">Failed</StatusBadge>;
     case "idle":
       return null;
   }
