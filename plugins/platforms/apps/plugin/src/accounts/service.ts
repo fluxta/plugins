@@ -14,7 +14,7 @@ import {
 
 import { openInBrowser } from "../open-browser";
 import { AccountAuthProvider, type TokenSource } from "../twitch/auth-provider";
-import { CLIENT_ID } from "../twitch/config";
+import { CLIENT_ID, hasRequiredScopes } from "../twitch/config";
 import {
   AuthorizationRejected,
   pollForToken,
@@ -180,6 +180,18 @@ export class AccountsService implements TokenSource {
       // Said out loud: otherwise a plugin that starts up and does nothing
       // looks broken rather than signed out.
       console.log(`The ${role} account (${stored.login}) needs to sign in again`);
+      this.set(role, { status: "reauthorization-required", login: stored.login });
+      return;
+    }
+
+    if (!hasRequiredScopes(role, stored.tokens.scope)) {
+      // A feature shipped after this Account last signed in and asks for a
+      // scope its token does not have. Twitch would refuse the calls that
+      // need it one by one; asking again up front is the only way back to a
+      // token that covers everything the plugin does.
+      console.log(
+        `The ${role} account (${stored.login}) is missing a scope this version needs; sign in again`,
+      );
       this.set(role, { status: "reauthorization-required", login: stored.login });
       return;
     }
