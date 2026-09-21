@@ -1,5 +1,4 @@
-import { ActionEditor } from "@fluxta/sdk/api";
-import { useEffect, useRef, useState } from "react";
+import { EditorPage, useActionSettings } from "@fluxta/sdk/ui";
 import type { FilterMode, SetSourceFilterSettings } from "obs-protocol";
 
 import { ConnectionSelect } from "../shared/ConnectionSelect";
@@ -9,9 +8,6 @@ import { PickerSelect } from "../shared/PickerSelect";
 import { useEditorConnections } from "../shared/useEditorConnections";
 import { useFilters, useSceneSources, useScenes } from "../shared/useLiveLists";
 
-const editor = new ActionEditor();
-const connected = editor.connect();
-
 const MODE_OPTIONS: readonly { value: FilterMode; label: string }[] = [
   { value: "enable", label: "Enable" },
   { value: "disable", label: "Disable" },
@@ -19,77 +15,49 @@ const MODE_OPTIONS: readonly { value: FilterMode; label: string }[] = [
 ];
 
 export function SetSourceFilterEditor() {
-  const [connectionId, setConnectionId] = useState<string>();
-  const [scene, setScene] = useState<string>();
-  const [source, setSource] = useState<string>();
-  const [filter, setFilter] = useState<string>();
-  const [mode, setMode] = useState<FilterMode>();
-  const connections = useEditorConnections(editor, connected);
-  const activeConnectionId = effectiveConnectionId(connections, connectionId);
-  const scenes = useScenes(editor, connected, activeConnectionId);
+  const { values, set, update } = useActionSettings<SetSourceFilterSettings>();
+  const connections = useEditorConnections();
+  const activeConnectionId = effectiveConnectionId(connections, values.connection);
+  const scenes = useScenes(activeConnectionId);
   // A Filter belongs to the Source itself, not to any Scene — `scene` only
   // narrows this picker, it is never read by the Action (see the settings
   // type's own doc comment).
-  const sources = useSceneSources(editor, connected, activeConnectionId, scene);
-  const filters = useFilters(editor, connected, activeConnectionId, source);
-
-  const latest = useRef<SetSourceFilterSettings>({});
-  latest.current = { connection: connectionId, scene, source, filter, mode };
-
-  useEffect(() => {
-    const off = editor.onActionSave(() => latest.current);
-
-    void connected.then(async () => {
-      const saved = (await editor.getActionSettings()) as SetSourceFilterSettings | null;
-      setConnectionId(saved?.connection);
-      setScene(saved?.scene);
-      setSource(saved?.source);
-      setFilter(saved?.filter);
-      setMode(saved?.mode);
-    });
-
-    return off;
-  }, []);
+  const sources = useSceneSources(activeConnectionId, values.scene);
+  const filters = useFilters(activeConnectionId, values.source);
 
   return (
-    <main className="min-h-screen space-y-4 p-4 text-foreground">
-      <ConnectionSelect connections={connections} value={connectionId} onChange={setConnectionId} />
+    <EditorPage>
+      <ConnectionSelect connections={connections} value={values.connection} onChange={set("connection")} />
       <PickerSelect
-        id="scene"
         label="Scene"
         placeholder="Choose a Scene"
         options={scenes}
-        value={scene}
-        onChange={(next) => {
-          setScene(next);
+        value={values.scene}
+        onChange={(scene) =>
           // A Source picked against the previous Scene has no reason to
           // still be right against a new one.
-          setSource(undefined);
-          setFilter(undefined);
-        }}
+          update({ scene, source: undefined, filter: undefined })
+        }
       />
       <PickerSelect
-        id="source"
         label="Source"
-        placeholder={scene ? "Choose a Source" : "Choose a Scene first"}
+        placeholder={values.scene ? "Choose a Source" : "Choose a Scene first"}
         options={sources}
-        value={source}
-        onChange={(next) => {
-          setSource(next);
+        value={values.source}
+        onChange={(source) =>
           // A Filter picked against the previous Source has no reason to
           // still exist on a different one.
-          setFilter(undefined);
-        }}
+          update({ source, filter: undefined })
+        }
       />
       <PickerSelect
-        id="filter"
         label="Filter"
-        placeholder={source ? "Choose a Filter" : "Choose a Source first"}
+        placeholder={values.source ? "Choose a Filter" : "Choose a Source first"}
         options={filters}
-        value={filter}
-        onChange={setFilter}
+        value={values.filter}
+        onChange={set("filter")}
       />
-      <ModeSelect value={mode} options={MODE_OPTIONS} onChange={setMode} />
-    </main>
+      <ModeSelect value={values.mode} options={MODE_OPTIONS} onChange={set("mode")} />
+    </EditorPage>
   );
 }

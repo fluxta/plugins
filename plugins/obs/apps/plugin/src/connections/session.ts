@@ -1,6 +1,7 @@
 import { OBSWebSocket } from "obs-websocket-js";
 import type { ConnectionStatus } from "obs-protocol";
 
+import { isScene } from "../obs/scenes";
 import { sourceNameForSceneItem } from "../obs/sources";
 import { Backoff } from "./backoff";
 
@@ -14,6 +15,8 @@ export type SessionEventHandlers = {
   onSourceVisibilityChanged: (scene: string, source: string, visible: boolean) => void;
   onInputMuteChanged: (input: string, muted: boolean) => void;
   onSourceFilterEnabledChanged: (source: string, filter: string, enabled: boolean) => void;
+  onSceneFilterEnabledChanged: (scene: string, filter: string, enabled: boolean) => void;
+  onConnectionStatusChanged: (status: ConnectionStatus) => void;
 };
 
 const RECORD_PAUSED_STATE = "OBS_WEBSOCKET_OUTPUT_PAUSED";
@@ -77,6 +80,7 @@ export class ObsSession {
   private setStatus(status: ConnectionStatus): void {
     this.status = status;
     this.onStatusChange();
+    this.handlers.onConnectionStatusChanged(status);
   }
 
   private clearRetry(): void {
@@ -138,8 +142,33 @@ export class ObsSession {
     });
 
     this.obs.on("SourceFilterEnableStateChanged", (data) => {
-      this.handlers.onSourceFilterEnabledChanged(data.sourceName, data.filterName, data.filterEnabled);
+      void this.forwardFilterEnabledChanged(data.sourceName, data.filterName, data.filterEnabled);
     });
+  }
+
+  /**
+   * `SourceFilterEnableStateChanged` names its target only by name — a Filter
+   * lives on a Scene or a Source alike, and the event alone cannot say which.
+   * This tells the two apart so it forwards as the right one of this
+   * plugin's own `scene-filter-enabled-changed` / `source-filter-enabled-changed`.
+   */
+  private async forwardFilterEnabledChanged(
+    name: string,
+    filter: string,
+    enabled: boolean,
+  ): Promise<void> {
+    try {
+      if (await isScene(this.obs, name)) {
+        this.handlers.onSceneFilterEnabledChanged(name, filter, enabled);
+      } else {
+        this.handlers.onSourceFilterEnabledChanged(name, filter, enabled);
+      }
+    } catch (error) {
+      console.warn(
+        `Could not determine whether "${name}" is a Scene or a Source for filter "${filter}":`,
+        error,
+      );
+    }
   }
 
   /**

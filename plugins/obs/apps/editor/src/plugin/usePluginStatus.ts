@@ -1,23 +1,16 @@
-import { PluginEditor } from "@fluxta/sdk/api";
+import { usePluginEditor } from "@fluxta/sdk/ui";
 import { useCallback, useEffect, useState } from "react";
 import { isPluginMessage, type EditorMessage, type PluginStatus } from "obs-protocol";
 
-const editor = new PluginEditor();
-const connected = editor.connect();
-
-/** How long to wait for the sidecar before saying it is not answering. */
+/**
+ * How long to wait for the sidecar's answer before saying the plugin process
+ * itself is not responding — distinct from the Editor's own link to Fluxta,
+ * which `<PluginEditorProvider>` already watches and reports on its own.
+ */
 const SIDECAR_TIMEOUT_MS = 3000;
 
-/**
- * The editor's own WebSocket link to the Fluxta host — distinct from an
- * OBS Connection (this plugin's domain term for a configured OBS Studio
- * instance), which is a completely separate thing this same editor renders
- * a list of.
- */
-export type EditorLink = "connecting" | "connected" | "failed";
-
 export function usePluginStatus() {
-  const [link, setLink] = useState<EditorLink>("connecting");
+  const editor = usePluginEditor();
   const [status, setStatus] = useState<PluginStatus>();
   const [refusal, setRefusal] = useState<string>();
   const [sidecarSilent, setSidecarSilent] = useState(false);
@@ -35,16 +28,9 @@ export function usePluginStatus() {
       }
     });
 
-    connected.then(
-      () => {
-        setLink("connected");
-        editor.sendToPlugin({ event: "get-status" } satisfies EditorMessage);
-      },
-      (error: unknown) => {
-        console.error("Editor connection failed", error);
-        setLink("failed");
-      },
-    );
+    // `sendToPlugin` queues internally until the Editor Connection the
+    // provider already opened comes up — no need to wait on it here.
+    editor.sendToPlugin({ event: "get-status" } satisfies EditorMessage);
 
     const timer = setTimeout(() => setSidecarSilent(true), SIDECAR_TIMEOUT_MS);
 
@@ -52,14 +38,17 @@ export function usePluginStatus() {
       unsubscribe();
       clearTimeout(timer);
     };
-  }, []);
+  }, [editor]);
 
-  const send = useCallback((message: EditorMessage) => {
-    // Every send is a fresh attempt, so what was refused last time has had
-    // its say and must not outlive it.
-    setRefusal(undefined);
-    editor.sendToPlugin(message);
-  }, []);
+  const send = useCallback(
+    (message: EditorMessage) => {
+      // Every send is a fresh attempt, so what was refused last time has had
+      // its say and must not outlive it.
+      setRefusal(undefined);
+      editor.sendToPlugin(message);
+    },
+    [editor],
+  );
 
-  return { link, status, refusal, sidecarSilent, send };
+  return { status, refusal, sidecarSilent, send };
 }
