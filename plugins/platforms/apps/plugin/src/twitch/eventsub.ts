@@ -5,13 +5,34 @@ import type { EventSubState } from "platforms-protocol";
 import type { AccountsService } from "../accounts/service";
 import type { OutgoingMessages } from "../chat/outgoing";
 import type { CommandService } from "../commands/service";
+import { AD_BREAK_BEGIN_EVENT, toAdBreakBeginPayload } from "../events/ad-break-begin";
+import { CHAT_CLEARED_EVENT, toChatClearedPayload } from "../events/chat-cleared";
 import { CHAT_MESSAGE_EVENT, toChatMessagePayload } from "../events/chat-message";
+import { CHEER_EVENT, toCheerPayload } from "../events/cheer";
+import { FOLLOW_EVENT, toFollowPayload } from "../events/follow";
+import { GIFT_SUBSCRIPTION_EVENT, toGiftSubscriptionPayload } from "../events/gift-subscription";
+import { HYPE_TRAIN_BEGIN_EVENT, toHypeTrainBeginPayload } from "../events/hype-train-begin";
+import { HYPE_TRAIN_END_EVENT, toHypeTrainEndPayload } from "../events/hype-train-end";
+import { MESSAGE_DELETED_EVENT, toMessageDeletedPayload } from "../events/message-deleted";
+import { MODERATOR_ADDED_EVENT, toModeratorAddedPayload } from "../events/moderator-added";
+import { MODERATOR_REMOVED_EVENT, toModeratorRemovedPayload } from "../events/moderator-removed";
 import { POLL_BEGIN_EVENT, toPollBeginPayload } from "../events/poll-begin";
 import { POLL_END_EVENT, toPollEndPayload } from "../events/poll-end";
 import { PREDICTION_BEGIN_EVENT, toPredictionBeginPayload } from "../events/prediction-begin";
 import { PREDICTION_END_EVENT, toPredictionEndPayload } from "../events/prediction-end";
 import { PREDICTION_LOCK_EVENT, toPredictionLockPayload } from "../events/prediction-lock";
+import { RAID_RECEIVED_EVENT, toRaidReceivedPayload } from "../events/raid-received";
+import { RAID_SENT_EVENT, toRaidSentPayload } from "../events/raid-sent";
+import { RESUBSCRIPTION_EVENT, toResubscriptionPayload } from "../events/resubscription";
 import { REWARD_REDEEMED_EVENT, toRewardRedeemedPayload } from "../events/reward-redeemed";
+import { SHOUTOUT_RECEIVED_EVENT, toShoutoutReceivedPayload } from "../events/shoutout-received";
+import { SUBSCRIPTION_EVENT, toSubscriptionPayload } from "../events/subscription";
+import { USER_BANNED_EVENT, toUserBannedPayload } from "../events/user-banned";
+import { USER_TIMED_OUT_EVENT, toUserTimedOutPayload } from "../events/user-timed-out";
+import { USER_UNBANNED_EVENT, toUserUnbannedPayload } from "../events/user-unbanned";
+import { USER_WARNED_EVENT, toUserWarnedPayload } from "../events/user-warned";
+import { VIP_ADDED_EVENT, toVipAddedPayload } from "../events/vip-added";
+import { VIP_REMOVED_EVENT, toVipRemovedPayload } from "../events/vip-removed";
 import { plugin } from "../plugin";
 import type { StreamStatusService } from "../stream/service";
 
@@ -196,6 +217,85 @@ export class EventSubService {
       }),
       listener.onChannelPredictionEnd(broadcasterId, (event) => {
         plugin.emitEvent(PREDICTION_END_EVENT, toPredictionEndPayload(event));
+      }),
+      // Read as the broadcaster being their own moderator: Twitch requires
+      // `moderator:read:followers` even for a channel's own followers.
+      listener.onChannelFollow(broadcasterId, broadcasterId, (event) => {
+        plugin.emitEvent(FOLLOW_EVENT, toFollowPayload(event));
+      }),
+      listener.onChannelSubscription(broadcasterId, (event) => {
+        plugin.emitEvent(SUBSCRIPTION_EVENT, toSubscriptionPayload(event));
+      }),
+      listener.onChannelSubscriptionMessage(broadcasterId, (event) => {
+        plugin.emitEvent(RESUBSCRIPTION_EVENT, toResubscriptionPayload(event));
+      }),
+      listener.onChannelSubscriptionGift(broadcasterId, (event) => {
+        plugin.emitEvent(GIFT_SUBSCRIPTION_EVENT, toGiftSubscriptionPayload(event));
+      }),
+      listener.onChannelCheer(broadcasterId, (event) => {
+        plugin.emitEvent(CHEER_EVENT, toCheerPayload(event));
+      }),
+      // Twitch's one `channel.raid` subscription type carries both directions
+      // of a raid; `onChannelRaidTo`/`onChannelRaidFrom` are twurple's split
+      // of it by which leg the Channel is on, matching the Raid Received and
+      // Raid Sent Events.
+      listener.onChannelRaidTo(broadcasterId, (event) => {
+        plugin.emitEvent(RAID_RECEIVED_EVENT, toRaidReceivedPayload(event));
+      }),
+      listener.onChannelRaidFrom(broadcasterId, (event) => {
+        plugin.emitEvent(RAID_SENT_EVENT, toRaidSentPayload(event));
+      }),
+      // v2: the v1 Hype Train subscription types they replace were withdrawn
+      // by Twitch in January 2026.
+      listener.onChannelHypeTrainBeginV2(broadcasterId, (event) => {
+        plugin.emitEvent(HYPE_TRAIN_BEGIN_EVENT, toHypeTrainBeginPayload(event));
+      }),
+      listener.onChannelHypeTrainEndV2(broadcasterId, (event) => {
+        plugin.emitEvent(HYPE_TRAIN_END_EVENT, toHypeTrainEndPayload(event));
+      }),
+      // Read as the broadcaster being their own moderator, like Follow above.
+      listener.onChannelShoutoutReceive(broadcasterId, broadcasterId, (event) => {
+        plugin.emitEvent(SHOUTOUT_RECEIVED_EVENT, toShoutoutReceivedPayload(event));
+      }),
+      listener.onChannelAdBreakBegin(broadcasterId, (event) => {
+        plugin.emitEvent(AD_BREAK_BEGIN_EVENT, toAdBreakBeginPayload(event));
+      }),
+      // Twitch's one `channel.ban` subscription type carries both a ban and a
+      // Timeout, told apart by `isPermanent`, matching the User Banned and
+      // User Timed Out Events.
+      listener.onChannelBan(broadcasterId, (event) => {
+        if (event.isPermanent) {
+          plugin.emitEvent(USER_BANNED_EVENT, toUserBannedPayload(event));
+        } else {
+          plugin.emitEvent(USER_TIMED_OUT_EVENT, toUserTimedOutPayload(event));
+        }
+      }),
+      // Fires for lifting either a Ban or a Timeout — see User Unbanned.
+      listener.onChannelUnban(broadcasterId, (event) => {
+        plugin.emitEvent(USER_UNBANNED_EVENT, toUserUnbannedPayload(event));
+      }),
+      listener.onChannelModeratorAdd(broadcasterId, (event) => {
+        plugin.emitEvent(MODERATOR_ADDED_EVENT, toModeratorAddedPayload(event));
+      }),
+      listener.onChannelModeratorRemove(broadcasterId, (event) => {
+        plugin.emitEvent(MODERATOR_REMOVED_EVENT, toModeratorRemovedPayload(event));
+      }),
+      listener.onChannelVipAdd(broadcasterId, (event) => {
+        plugin.emitEvent(VIP_ADDED_EVENT, toVipAddedPayload(event));
+      }),
+      listener.onChannelVipRemove(broadcasterId, (event) => {
+        plugin.emitEvent(VIP_REMOVED_EVENT, toVipRemovedPayload(event));
+      }),
+      // Read as the broadcaster reading their own chat, like Chat Message.
+      listener.onChannelChatClear(broadcasterId, broadcasterId, () => {
+        plugin.emitEvent(CHAT_CLEARED_EVENT, toChatClearedPayload());
+      }),
+      listener.onChannelChatMessageDelete(broadcasterId, broadcasterId, (event) => {
+        plugin.emitEvent(MESSAGE_DELETED_EVENT, toMessageDeletedPayload(event));
+      }),
+      // Read as the broadcaster being their own moderator, like Follow above.
+      listener.onChannelWarningSend(broadcasterId, broadcasterId, (event) => {
+        plugin.emitEvent(USER_WARNED_EVENT, toUserWarnedPayload(event));
       }),
       // Feeds the `is-live` and `viewer-count` Value Sources — no Event of
       // its own, since a condition reads these directly rather than reacting

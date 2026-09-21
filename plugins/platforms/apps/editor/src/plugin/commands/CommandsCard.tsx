@@ -1,4 +1,4 @@
-import { Badge, Button } from "@fluxta/sdk/ui";
+import { Badge, Button, EmptyState, ListRow, Section, StatusBadge } from "@fluxta/sdk/ui";
 import {
   PERMISSION_LABELS,
   type Command,
@@ -34,48 +34,37 @@ export function CommandsCard({ commands, send }: Props) {
   };
 
   return (
-    <div>
-      <div className="bg-background/30 text-base font-semibold">Commands</div>
-      <p className="text-muted-foreground mt-2 mb-5 text-xs">
-        A command only announces that it fired. Choose what happens on the
-        Events tab: react to Command Triggered and filter by the command name.
-      </p>
-      <div className="space-y-3">
-        {editing && !commands.some((command) => command.id === editing.id) ? (
-          <CommandForm
-            command={editing}
-            others={commands}
-            onSave={save}
-            onCancel={() => setEditing(undefined)}
+    <Section
+      title="Commands"
+      description="A command only announces that it fired. Choose what happens on the Events tab: react to Command Triggered and filter by the command name."
+      actions={
+        <Button variant="outline" onClick={() => setEditing(blankCommand())}>
+          Add a command
+        </Button>
+      }
+    >
+      {commands.length === 0 ? (
+        <EmptyState>No commands yet.</EmptyState>
+      ) : (
+        commands.map((command) => (
+          <CommandRow
+            key={command.id}
+            command={command}
+            onEdit={() => setEditing(command)}
+            onDelete={() => send({ event: "delete-command", id: command.id })}
           />
-        ) : null}
+        ))
+      )}
 
-        {editing ? null : (
-          <Button variant="outline" onClick={() => setEditing(blankCommand())}>
-            Add a command
-          </Button>
-        )}
-
-        {commands.map((command) =>
-          editing?.id === command.id ? (
-            <CommandForm
-              key={command.id}
-              command={command}
-              others={commands}
-              onSave={save}
-              onCancel={() => setEditing(undefined)}
-            />
-          ) : (
-            <CommandRow
-              key={command.id}
-              command={command}
-              onEdit={() => setEditing(command)}
-              onDelete={() => send({ event: "delete-command", id: command.id })}
-            />
-          ),
-        )}
-      </div>
-    </div>
+      {editing ? (
+        <CommandForm
+          command={editing}
+          others={commands.filter((command) => command.id !== editing.id)}
+          onSave={save}
+          onCancel={() => setEditing(undefined)}
+        />
+      ) : null}
+    </Section>
   );
 }
 
@@ -89,25 +78,24 @@ function CommandRow({
   onDelete: () => void;
 }) {
   return (
-    <div className="flex items-center justify-between gap-4 rounded-lg border border-border p-4 bg-muted/30">
-      <div className="min-w-0 space-y-1">
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="font-medium">{command.name}</span>
-          {command.enabled ? null : <Badge variant="outline">Disabled</Badge>}
-          <Badge variant="secondary">
-            {PERMISSION_LABELS[command.permission]}
-          </Badge>
-        </div>
-      </div>
-
-      <div className="flex shrink-0 gap-2">
-        <Button variant="outline" onClick={onEdit}>
-          Edit
-        </Button>
-        <Button variant="outline" onClick={onDelete}>
-          Delete
-        </Button>
-      </div>
-    </div>
+    <ListRow
+      title={command.name}
+      badges={
+        <>
+          {command.enabled ? null : <StatusBadge tone="idle">Disabled</StatusBadge>}
+          <Badge variant="secondary">{PERMISSION_LABELS[command.permission]}</Badge>
+        </>
+      }
+      actions={
+        <>
+          <Button variant="outline" onClick={onEdit}>
+            Edit
+          </Button>
+          <Button variant="outline" onClick={onDelete}>
+            Delete
+          </Button>
+        </>
+      }
+    />
   );
 }

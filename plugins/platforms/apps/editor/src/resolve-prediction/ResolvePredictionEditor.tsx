@@ -1,41 +1,17 @@
-import { ActionEditor } from "@fluxta/sdk/api";
-import { TemplateField } from "@fluxta/sdk/ui";
-import { useEffect, useRef, useState } from "react";
+import { EditorPage, TemplateField, useActionSettings } from "@fluxta/sdk/ui";
 import type { ResolvePredictionSettings } from "platforms-protocol";
 
-const editor = new ActionEditor();
-const connected = editor.connect();
-
 export function ResolvePredictionEditor() {
-  const [outcome, setOutcome] = useState("");
-
-  // The save handler is re-registered whenever the form changes, since only
-  // one is active at a time and it must return the latest values.
-  const latest = useRef<ResolvePredictionSettings>({});
-  latest.current = { outcome };
-
-  useEffect(() => {
-    const off = editor.onActionSave(() => latest.current);
-
-    void connected.then(async () => {
-      const saved = (await editor.getActionSettings()) as ResolvePredictionSettings | null;
-
-      if (saved) {
-        setOutcome(saved.outcome ?? "");
-      }
-    });
-
-    return off;
-  }, []);
+  const { values, set } = useActionSettings<Required<ResolvePredictionSettings>>({
+    outcome: "",
+  });
 
   return (
-    <main className="min-h-screen space-y-4 p-4 text-foreground">
+    <EditorPage>
       <TemplateField
-        id="outcome"
         label="Winning outcome"
-        value={outcome}
-        onChange={setOutcome}
-        editor={editor}
+        value={values.outcome}
+        onChange={set("outcome")}
         placeholder="1, or the outcome's exact title"
         hint={
           "Type the outcome's number (as configured in Start Prediction, e.g. \"2\") or its " +
@@ -43,6 +19,6 @@ export function ResolvePredictionEditor() {
           "that is currently running, so there is only one to resolve."
         }
       />
-    </main>
+    </EditorPage>
   );
 }

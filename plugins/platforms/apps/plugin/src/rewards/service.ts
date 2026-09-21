@@ -1,10 +1,11 @@
 import type { HelixUpdateCustomRewardData } from "@twurple/api";
-import type {
-  Enablement,
-  Resolution,
-  Reward,
-  RewardDraft,
-  RewardsState,
+import {
+  resolveEnablement,
+  type Enablement,
+  type Resolution,
+  type Reward,
+  type RewardDraft,
+  type RewardsState,
 } from "platforms-protocol";
 
 import { explainTwitchError } from "../twitch/errors";
@@ -184,7 +185,7 @@ export class RewardsService {
     }
 
     const { reward } = target;
-    const isEnabled = enabledAfter(change.enablement, reward.enabled);
+    const isEnabled = resolveEnablement(change.enablement, reward.enabled);
     const data: HelixUpdateCustomRewardData = {};
 
     if (change.cost !== undefined) {
@@ -345,20 +346,6 @@ export class RewardsService {
   private set(state: RewardsState): void {
     this.state = state;
     this.onChange();
-  }
-}
-
-/** Whether the Reward should be enabled afterwards, or nothing to leave it. */
-function enabledAfter(enablement: Enablement, enabled: boolean): boolean | undefined {
-  switch (enablement) {
-    case "enable":
-      return true;
-    case "disable":
-      return false;
-    case "toggle":
-      return !enabled;
-    case "unchanged":
-      return undefined;
   }
 }
 

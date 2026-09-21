@@ -73,6 +73,130 @@
       "type": "twitch-cancel-prediction",
       "icon": "icons/circle-x.svg",
       "context": "standalone"
+    },
+    {
+      "name": "Ban Twitch User",
+      "type": "twitch-ban-user",
+      "icon": "icons/ban.svg",
+      "context": "standalone",
+      "editor": "editor/ban-user.html"
+    },
+    {
+      "name": "Timeout Twitch User",
+      "type": "twitch-timeout-user",
+      "icon": "icons/hourglass.svg",
+      "context": "standalone",
+      "editor": "editor/timeout-user.html"
+    },
+    {
+      "name": "Unban Twitch User",
+      "type": "twitch-unban-user",
+      "icon": "icons/user-check.svg",
+      "context": "standalone",
+      "editor": "editor/unban-user.html"
+    },
+    {
+      "name": "Untimeout Twitch User",
+      "type": "twitch-untimeout-user",
+      "icon": "icons/timer-reset.svg",
+      "context": "standalone",
+      "editor": "editor/untimeout-user.html"
+    },
+    {
+      "name": "Send Twitch Shoutout",
+      "type": "twitch-send-shoutout",
+      "icon": "icons/megaphone.svg",
+      "context": "standalone",
+      "editor": "editor/send-shoutout.html"
+    },
+    {
+      "name": "Update Twitch Stream Info",
+      "type": "twitch-update-stream-info",
+      "icon": "icons/pencil.svg",
+      "context": "standalone",
+      "editor": "editor/update-stream-info.html"
+    },
+    {
+      "name": "Start Twitch Raid",
+      "type": "twitch-start-raid",
+      "icon": "icons/swords.svg",
+      "context": "standalone",
+      "editor": "editor/start-raid.html"
+    },
+    {
+      "name": "Cancel Twitch Raid",
+      "type": "twitch-cancel-raid",
+      "icon": "icons/circle-x.svg",
+      "context": "standalone"
+    },
+    {
+      "name": "Run Twitch Commercial",
+      "type": "twitch-run-commercial",
+      "icon": "icons/clapperboard.svg",
+      "context": "standalone",
+      "editor": "editor/run-commercial.html"
+    },
+    {
+      "name": "Add Twitch Moderator",
+      "type": "twitch-add-moderator",
+      "icon": "icons/shield-plus.svg",
+      "context": "standalone",
+      "editor": "editor/add-moderator.html"
+    },
+    {
+      "name": "Remove Twitch Moderator",
+      "type": "twitch-remove-moderator",
+      "icon": "icons/shield-minus.svg",
+      "context": "standalone",
+      "editor": "editor/remove-moderator.html"
+    },
+    {
+      "name": "Add Twitch VIP",
+      "type": "twitch-add-vip",
+      "icon": "icons/crown.svg",
+      "context": "standalone",
+      "editor": "editor/add-vip.html"
+    },
+    {
+      "name": "Remove Twitch VIP",
+      "type": "twitch-remove-vip",
+      "icon": "icons/star-off.svg",
+      "context": "standalone",
+      "editor": "editor/remove-vip.html"
+    },
+    {
+      "name": "Clear Twitch Chat",
+      "type": "twitch-clear-chat",
+      "icon": "icons/eraser.svg",
+      "context": "standalone"
+    },
+    {
+      "name": "Delete Twitch Message",
+      "type": "twitch-delete-message",
+      "icon": "icons/message-circle-x.svg",
+      "context": "standalone",
+      "editor": "editor/delete-message.html"
+    },
+    {
+      "name": "Warn Twitch User",
+      "type": "twitch-warn-user",
+      "icon": "icons/triangle-alert.svg",
+      "context": "standalone",
+      "editor": "editor/warn-user.html"
+    },
+    {
+      "name": "Send Twitch Announcement",
+      "type": "twitch-send-announcement",
+      "icon": "icons/sparkles.svg",
+      "context": "standalone",
+      "editor": "editor/send-announcement.html"
+    },
+    {
+      "name": "Update Twitch Chat Settings",
+      "type": "twitch-update-chat-settings",
+      "icon": "icons/sliders-horizontal.svg",
+      "context": "standalone",
+      "editor": "editor/update-chat-settings.html"
     }
   ],
   "sources": [
@@ -105,7 +229,7 @@
   "name": "platforms",
   "repository": "https://github.com/inferst/fluxta-platforms",
   "title": "Platforms",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "events": [
     {
       "type": "twitch-chat-message",
@@ -741,6 +865,616 @@
           "key": "viewerCount",
           "name": "Viewer Count",
           "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-follow",
+      "name": "Twitch Follow",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-subscribe",
+      "name": "Twitch New Subscription",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "tier",
+          "name": "Tier",
+          "type": "string"
+        },
+        {
+          "key": "isGift",
+          "name": "Is Gift",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-resubscribe",
+      "name": "Twitch Resubscription",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "tier",
+          "name": "Tier",
+          "type": "string"
+        },
+        {
+          "key": "cumulativeMonths",
+          "name": "Cumulative Months",
+          "type": "number"
+        },
+        {
+          "key": "streakMonths",
+          "name": "Streak Months",
+          "type": "number"
+        },
+        {
+          "key": "durationMonths",
+          "name": "Duration Months",
+          "type": "number"
+        },
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-gift-subscription",
+      "name": "Twitch Gift Subscription",
+      "fields": [
+        {
+          "key": "gifterId",
+          "name": "Gifter ID",
+          "type": "string"
+        },
+        {
+          "key": "gifterLogin",
+          "name": "Gifter Login",
+          "type": "string"
+        },
+        {
+          "key": "gifterName",
+          "name": "Gifter Name",
+          "type": "string"
+        },
+        {
+          "key": "tier",
+          "name": "Tier",
+          "type": "string"
+        },
+        {
+          "key": "total",
+          "name": "Total",
+          "type": "number"
+        },
+        {
+          "key": "cumulativeTotal",
+          "name": "Cumulative Total",
+          "type": "number"
+        },
+        {
+          "key": "isAnonymous",
+          "name": "Is Anonymous",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-cheer",
+      "name": "Twitch Cheer",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "bits",
+          "name": "Bits",
+          "type": "number"
+        },
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        },
+        {
+          "key": "isAnonymous",
+          "name": "Is Anonymous",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-raid-received",
+      "name": "Twitch Raid Received",
+      "fields": [
+        {
+          "key": "fromUserId",
+          "name": "From User ID",
+          "type": "string"
+        },
+        {
+          "key": "fromUserLogin",
+          "name": "From User Login",
+          "type": "string"
+        },
+        {
+          "key": "fromUserName",
+          "name": "From User Name",
+          "type": "string"
+        },
+        {
+          "key": "viewers",
+          "name": "Viewers",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-raid-sent",
+      "name": "Twitch Raid Sent",
+      "fields": [
+        {
+          "key": "toUserId",
+          "name": "To User ID",
+          "type": "string"
+        },
+        {
+          "key": "toUserLogin",
+          "name": "To User Login",
+          "type": "string"
+        },
+        {
+          "key": "toUserName",
+          "name": "To User Name",
+          "type": "string"
+        },
+        {
+          "key": "viewers",
+          "name": "Viewers",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-hype-train-begin",
+      "name": "Twitch Hype Train Begin",
+      "fields": [
+        {
+          "key": "hypeTrainId",
+          "name": "Hype Train ID",
+          "type": "string"
+        },
+        {
+          "key": "level",
+          "name": "Level",
+          "type": "number"
+        },
+        {
+          "key": "total",
+          "name": "Total",
+          "type": "number"
+        },
+        {
+          "key": "progress",
+          "name": "Progress",
+          "type": "number"
+        },
+        {
+          "key": "goal",
+          "name": "Goal",
+          "type": "number"
+        },
+        {
+          "key": "trainType",
+          "name": "Train Type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-hype-train-end",
+      "name": "Twitch Hype Train End",
+      "fields": [
+        {
+          "key": "hypeTrainId",
+          "name": "Hype Train ID",
+          "type": "string"
+        },
+        {
+          "key": "level",
+          "name": "Level",
+          "type": "number"
+        },
+        {
+          "key": "total",
+          "name": "Total",
+          "type": "number"
+        },
+        {
+          "key": "trainType",
+          "name": "Train Type",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-shoutout-received",
+      "name": "Twitch Shoutout Received",
+      "fields": [
+        {
+          "key": "fromUserId",
+          "name": "From User ID",
+          "type": "string"
+        },
+        {
+          "key": "fromUserLogin",
+          "name": "From User Login",
+          "type": "string"
+        },
+        {
+          "key": "fromUserName",
+          "name": "From User Name",
+          "type": "string"
+        },
+        {
+          "key": "viewerCount",
+          "name": "Viewer Count",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-ad-break-begin",
+      "name": "Twitch Ad Break Begin",
+      "fields": [
+        {
+          "key": "durationSeconds",
+          "name": "Duration Seconds",
+          "type": "number"
+        },
+        {
+          "key": "isAutomatic",
+          "name": "Is Automatic",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "twitch-user-banned",
+      "name": "Twitch User Banned",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "moderatorId",
+          "name": "Moderator ID",
+          "type": "string"
+        },
+        {
+          "key": "moderatorLogin",
+          "name": "Moderator Login",
+          "type": "string"
+        },
+        {
+          "key": "moderatorName",
+          "name": "Moderator Name",
+          "type": "string"
+        },
+        {
+          "key": "reason",
+          "name": "Reason",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-user-timed-out",
+      "name": "Twitch User Timed Out",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "moderatorId",
+          "name": "Moderator ID",
+          "type": "string"
+        },
+        {
+          "key": "moderatorLogin",
+          "name": "Moderator Login",
+          "type": "string"
+        },
+        {
+          "key": "moderatorName",
+          "name": "Moderator Name",
+          "type": "string"
+        },
+        {
+          "key": "reason",
+          "name": "Reason",
+          "type": "string"
+        },
+        {
+          "key": "durationSeconds",
+          "name": "Duration Seconds",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "twitch-user-unbanned",
+      "name": "Twitch User Unbanned",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "moderatorId",
+          "name": "Moderator ID",
+          "type": "string"
+        },
+        {
+          "key": "moderatorLogin",
+          "name": "Moderator Login",
+          "type": "string"
+        },
+        {
+          "key": "moderatorName",
+          "name": "Moderator Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-moderator-added",
+      "name": "Twitch Moderator Added",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-moderator-removed",
+      "name": "Twitch Moderator Removed",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-vip-added",
+      "name": "Twitch VIP Added",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-vip-removed",
+      "name": "Twitch VIP Removed",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-chat-cleared",
+      "name": "Twitch Chat Cleared",
+      "fields": []
+    },
+    {
+      "type": "twitch-message-deleted",
+      "name": "Twitch Message Deleted",
+      "fields": [
+        {
+          "key": "messageId",
+          "name": "Message ID",
+          "type": "string"
+        },
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "twitch-user-warned",
+      "name": "Twitch User Warned",
+      "fields": [
+        {
+          "key": "userId",
+          "name": "User ID",
+          "type": "string"
+        },
+        {
+          "key": "userLogin",
+          "name": "User Login",
+          "type": "string"
+        },
+        {
+          "key": "userName",
+          "name": "User Name",
+          "type": "string"
+        },
+        {
+          "key": "moderatorId",
+          "name": "Moderator ID",
+          "type": "string"
+        },
+        {
+          "key": "moderatorLogin",
+          "name": "Moderator Login",
+          "type": "string"
+        },
+        {
+          "key": "moderatorName",
+          "name": "Moderator Name",
+          "type": "string"
+        },
+        {
+          "key": "reason",
+          "name": "Reason",
+          "type": "string"
         }
       ]
     }
