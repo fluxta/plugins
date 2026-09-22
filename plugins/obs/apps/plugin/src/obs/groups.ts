@@ -1,9 +1,19 @@
 import type { OBSWebSocket } from "obs-websocket-js";
 import type { PickerOption } from "obs-protocol";
 
-export async function listGroups(obs: OBSWebSocket): Promise<PickerOption[]> {
+/**
+ * Every Group name on the Connection — `listGroups` with the PickerOption
+ * wrapper peeled off. The Scene Item walk needs the bare names to tell a
+ * Group from a Scene and to pick the request that answers for each.
+ */
+export async function listGroupNames(obs: OBSWebSocket): Promise<string[]> {
   const { groups } = await obs.call("GetGroupList");
-  return groups.map((name) => ({ value: name, label: name }));
+  return groups;
+}
+
+export async function listGroups(obs: OBSWebSocket): Promise<PickerOption[]> {
+  const names = await listGroupNames(obs);
+  return names.map((name) => ({ value: name, label: name }));
 }
 
 /**
