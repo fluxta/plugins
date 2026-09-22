@@ -13,3 +13,9 @@ export type VisibilityMode = "show" | "hide" | "toggle";
 
 /** A Filter's enabled setting: on, off, or flipped from whatever it is now. */
 export type FilterMode = "enable" | "disable" | "toggle";
+
+/** Which transport control to trigger on a Media Source. */
+export type MediaMode = "play" | "pause" | "stop" | "restart" | "next" | "previous";
+
+/** A Color Source's color setting: a specific hex value, or freshly rolled. */
+export type ColorMode = "fixed" | "random";

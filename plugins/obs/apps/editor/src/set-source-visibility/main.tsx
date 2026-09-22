@@ -1,3 +1,4 @@
+import { ActionEditorProvider } from "@fluxta/sdk/ui";
 import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 
@@ -6,6 +7,8 @@ import { SetSourceVisibilityEditor } from "./SetSourceVisibilityEditor";
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
-    <SetSourceVisibilityEditor />
+    <ActionEditorProvider>
+      <SetSourceVisibilityEditor />
+    </ActionEditorProvider>
   </StrictMode>,
 );

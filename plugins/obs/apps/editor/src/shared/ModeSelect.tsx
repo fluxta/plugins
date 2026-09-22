@@ -1,11 +1,4 @@
-import {
-  Label,
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@fluxta/sdk/ui";
+import { SelectField } from "@fluxta/sdk/ui";
 
 type Props<M extends string> = {
   value: M | undefined;
@@ -20,20 +13,12 @@ type Props<M extends string> = {
  */
 export function ModeSelect<M extends string>({ value, options, onChange }: Props<M>) {
   return (
-    <div className="space-y-2">
-      <Label htmlFor="mode">Mode</Label>
-      <Select value={value ?? ""} onValueChange={(next: string) => onChange(next as M)}>
-        <SelectTrigger id="mode" className="w-full">
-          <SelectValue placeholder="Choose a mode" />
-        </SelectTrigger>
-        <SelectContent>
-          {options.map((option) => (
-            <SelectItem key={option.value} value={option.value}>
-              {option.label}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    </div>
+    <SelectField
+      label="Mode"
+      placeholder="Choose a mode"
+      options={options}
+      value={value}
+      onChange={(next) => onChange(next as M)}
+    />
   );
 }

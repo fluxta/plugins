@@ -1,20 +1,17 @@
-import { ActionEditor } from "@fluxta/sdk/api";
+import { EditorPage, useActionSettings } from "@fluxta/sdk/ui";
+import type { StopStreamSettings } from "obs-protocol";
 
 import { ConnectionSelect } from "../shared/ConnectionSelect";
-import { useConnectionOnlySettings } from "../shared/useConnectionOnlySettings";
 import { useEditorConnections } from "../shared/useEditorConnections";
 
-const editor = new ActionEditor();
-const connected = editor.connect();
-
 export function StopStreamEditor() {
-  const { connectionId, setConnectionId } = useConnectionOnlySettings(editor, connected);
-  const connections = useEditorConnections(editor, connected);
+  const { values, set } = useActionSettings<StopStreamSettings>();
+  const connections = useEditorConnections();
 
   return (
-    <main className="min-h-screen space-y-4 p-4 text-foreground">
-      <ConnectionSelect connections={connections} value={connectionId} onChange={setConnectionId} />
-      <p className="text-xs text-muted-foreground">Stops the Connection's Stream.</p>
-    </main>
+    <EditorPage>
+      <ConnectionSelect connections={connections} value={values.connection} onChange={set("connection")} />
+      <p className="text-muted-foreground text-xs/relaxed">Stops the Connection's Stream.</p>
+    </EditorPage>
   );
 }

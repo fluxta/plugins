@@ -5,10 +5,23 @@ import type { PickerOption } from "obs-protocol";
  * Every Input configured on the Connection — cameras, browser sources, audio
  * devices, and so on, regardless of which Scenes (if any) currently place
  * them. Used for Mute/Volume/Filter pickers, which act on a Source directly.
+ *
+ * `kinds`, when given, narrows the list to Inputs of those OBS kind ids —
+ * e.g. an Action that only knows how to set a Browser Source's URL has no
+ * use for a microphone showing up in its picker. Left unfiltered for pickers
+ * where "kind" isn't the relevant boundary (Mute/Volume act on whatever
+ * Input the user points them at, audio-capable or not).
  */
-export async function listInputs(obs: OBSWebSocket): Promise<PickerOption[]> {
+export async function listInputs(
+  obs: OBSWebSocket,
+  kinds?: readonly string[],
+): Promise<PickerOption[]> {
   const { inputs } = await obs.call("GetInputList");
-  return inputs.map((input) => {
+  const matching = kinds
+    ? inputs.filter((input) => kinds.includes(String(input["inputKind"])))
+    : inputs;
+
+  return matching.map((input) => {
     const name = String(input["inputName"]);
     return { value: name, label: name };
   });
