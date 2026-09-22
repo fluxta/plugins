@@ -15,3 +15,4 @@
 * @inferst
 /plugins/obs/ @inferst
 /plugins/test/ @inferst
+/plugins/platforms/ @inferst
