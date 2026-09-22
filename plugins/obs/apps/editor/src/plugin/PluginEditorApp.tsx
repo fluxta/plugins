@@ -21,7 +21,6 @@ export function PluginEditorApp() {
 
   return (
     <PluginEditorLayout
-      version={`OBS ${status.version}`}
       sections={[
         {
           id: "connections",

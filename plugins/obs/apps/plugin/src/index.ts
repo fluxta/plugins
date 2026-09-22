@@ -56,7 +56,6 @@ import {
   STREAM_STATE_CHANGED_EVENT,
   toStreamStateChangedPayload,
 } from "./events/stream-state-changed";
-import { readManifestVersion } from "./manifest";
 import { listFilters } from "./obs/filters";
 import { listGroups } from "./obs/groups";
 import { listInputs } from "./obs/sources";
@@ -77,8 +76,6 @@ import { createIsRecordingSource } from "./sources/is-recording";
 import { createIsRecordingPausedSource } from "./sources/is-recording-paused";
 import { createIsSourceVisibleSource } from "./sources/is-source-visible";
 import { createIsStreamingSource } from "./sources/is-streaming";
-
-const version = await readManifestVersion();
 
 const store = new ConnectionsStore(plugin);
 
@@ -172,21 +169,28 @@ plugin.registerOptions(createFiltersOptions(connections));
 plugin.registerOptions(createSceneFiltersOptions(connections));
 
 function publish(): void {
+  const entries = store.list().map((connection) => ({
+    id: connection.id,
+    name: connection.name,
+    host: connection.host,
+    port: connection.port,
+    hasPassword: Boolean(connection.password),
+    status: connections.statusOf(connection.id) ?? { status: "connecting" },
+  }));
+
   const message: PluginMessage = {
     event: "status",
-    status: {
-      version,
-      connections: store.list().map((connection) => ({
-        id: connection.id,
-        name: connection.name,
-        host: connection.host,
-        port: connection.port,
-        hasPassword: Boolean(connection.password),
-        status: connections.statusOf(connection.id) ?? { status: "connecting" },
-      })),
-    },
+    status: { connections: entries },
   };
   plugin.sendToEditor(message);
+
+  plugin.setConnections(
+    entries.map((entry) => ({
+      id: entry.id,
+      title: entry.name,
+      connected: entry.status.status === "connected",
+    })),
+  );
 }
 
 function refuse(message: string): void {
@@ -345,7 +349,7 @@ plugin.onReceiveFromEditor((message: unknown) => {
 
 await plugin.connect();
 
-console.log(`OBS ${version} connected`);
+console.log("OBS connected");
 
 // Settings are only readable over the authenticated connection, so the first
 // firing — which the SDK guarantees fires immediately with what is already

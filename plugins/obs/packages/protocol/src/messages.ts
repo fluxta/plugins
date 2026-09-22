@@ -13,8 +13,6 @@ import type { PickerOption } from "./picker";
 
 /** Everything the plugin-wide editor renders. */
 export type PluginStatus = {
-  /** The sidecar's own version, read from the manifest it shipped with. */
-  version: string;
   connections: ConnectionEntry[];
 };
 
