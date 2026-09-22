@@ -71,8 +71,6 @@ export type RewardsState =
 
 /** Everything the plugin editor renders. */
 export type PluginStatus = {
-  /** The sidecar's own version, read from the manifest it shipped with. */
-  version: string;
   accounts: AccountsState;
   events: EventSubState;
   commands: Command[];
