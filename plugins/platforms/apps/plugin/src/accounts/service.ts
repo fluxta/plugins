@@ -27,6 +27,12 @@ import type { SettingsStore, StoredAccount } from "./store";
 /** Refresh this long before a token actually expires. */
 const REFRESH_MARGIN_MS = 5 * 60 * 1000;
 
+/** How each Account slot is named in the desktop's External Connections list. */
+const ROLE_TITLE: Record<AccountRole, string> = {
+  broadcaster: "Broadcaster",
+  bot: "Bot",
+};
+
 /**
  * Owns both Account slots: their persisted tokens, their sign-in flows, and
  * the state the editor renders.
@@ -57,6 +63,27 @@ export class AccountsService implements TokenSource {
       broadcaster: this.states.get("broadcaster") ?? { status: "disconnected" },
       bot: this.states.get("bot") ?? { status: "disconnected" },
     };
+  }
+
+  /**
+   * The Twitch Accounts as {@link Plugin.setConnections} wants them: one per
+   * slot, in a stable order, regardless of whether it is connected — an
+   * unconfigured Bot still reports as not connected rather than disappearing
+   * from the desktop's connections indicator. The `id` is the role, which
+   * never changes; the `title` carries the login once connected, so the
+   * indicator names *whose* Twitch account it is.
+   */
+  externalConnections(): { id: string; title: string; connected: boolean }[] {
+    return ACCOUNT_ROLES.map((role) => {
+      const state = this.states.get(role);
+      const label = `Twitch — ${ROLE_TITLE[role]}`;
+
+      return {
+        id: role,
+        title: label,
+        connected: state?.status === "connected",
+      };
+    });
   }
 
   /** The Twitch user id of a connected Account, if it is connected. */

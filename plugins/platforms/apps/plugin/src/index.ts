@@ -49,7 +49,6 @@ import {
   toViewerCountChangedPayload,
   VIEWER_COUNT_CHANGED_EVENT,
 } from "./events/viewer-count-changed";
-import { readManifestVersion } from "./manifest";
 import type { ModerationApi } from "./moderation/api";
 import { ModerationService } from "./moderation/service";
 import { plugin } from "./plugin";
@@ -58,8 +57,6 @@ import { PredictionsService } from "./predictions/service";
 import { RewardsService } from "./rewards/service";
 import { StreamStatusService } from "./stream/service";
 import { EventSubService } from "./twitch/eventsub";
-
-const version = await readManifestVersion();
 
 const store = new SettingsStore();
 
@@ -71,6 +68,7 @@ const accounts = new AccountsService(store, () => {
   rewards.sync();
   void stream.sync();
   publish();
+  plugin.setConnections(accounts.externalConnections());
 });
 
 // Shared by the sender and the listener, so the plugin can recognise its own
@@ -244,7 +242,6 @@ function publish(): void {
   const message: PluginMessage = {
     event: "status",
     status: {
-      version,
       accounts: accounts.snapshot(),
       events: events.snapshot(),
       commands: store.commands(),
@@ -338,7 +335,7 @@ async function deleteCommand(id: string): Promise<void> {
 
 await plugin.connect();
 
-console.log(`Platforms ${version} connected`);
+console.log("Platforms connected");
 
 // Settings are only readable over the authenticated connection, so loading
 // them waits for it.

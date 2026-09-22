@@ -52,13 +52,7 @@ export function PluginEditorApp() {
     },
   ];
 
-  return (
-    <PluginEditorLayout
-      title="Platforms"
-      version={status.version}
-      sections={sections}
-    />
-  );
+  return <PluginEditorLayout title="Platforms" sections={sections} />;
 }
 
 function SidecarHint(props: { sidecarSilent: boolean }) {
