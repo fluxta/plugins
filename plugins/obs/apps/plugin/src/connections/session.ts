@@ -1,8 +1,8 @@
 import { OBSWebSocket } from "obs-websocket-js";
 import type { ConnectionStatus } from "obs-protocol";
 
+import { resolveSceneItemChange } from "../obs/scene-items";
 import { isScene } from "../obs/scenes";
-import { sourceNameForSceneItem } from "../obs/sources";
 import { Backoff } from "./backoff";
 
 export type SessionDraft = { host: string; port: number; password?: string };
@@ -174,9 +174,12 @@ export class ObsSession {
   /**
    * `SceneItemEnableStateChanged` names its Scene Item only by id — resolve
    * it back to a Source name before this plugin's own Event fires (this
-   * plugin never surfaces a Scene Item id itself). If the lookup fails
-   * (the Source or Scene vanished in the same instant), the OBS event is
-   * dropped rather than emitted half-populated.
+   * plugin never surfaces a Scene Item id itself). The Scene(s) come from the
+   * same resolution: OBS names whatever container held the item, a Group
+   * included, and this plugin's Event reports the Scene a scenario actually
+   * configured. If the lookup fails (the Source or its container vanished in
+   * the same instant), the OBS event is dropped rather than emitted
+   * half-populated.
    */
   private async forwardSceneItemEnableChanged(
     scene: string,
@@ -184,8 +187,11 @@ export class ObsSession {
     visible: boolean,
   ): Promise<void> {
     try {
-      const source = await sourceNameForSceneItem(this.obs, scene, sceneItemId);
-      this.handlers.onSourceVisibilityChanged(scene, source, visible);
+      const { source, scenes } = await resolveSceneItemChange(this.obs, scene, sceneItemId);
+
+      for (const owning of scenes) {
+        this.handlers.onSourceVisibilityChanged(owning, source, visible);
+      }
     } catch (error) {
       console.warn(
         `Could not resolve which Source scene item ${sceneItemId} in "${scene}" refers to:`,

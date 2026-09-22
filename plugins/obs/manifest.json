@@ -236,7 +236,7 @@
   "name": "obs",
   "repository": "https://github.com/inferst/fluxta-obs",
   "title": "OBS",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "events": [
     {
       "type": "scene-changed",

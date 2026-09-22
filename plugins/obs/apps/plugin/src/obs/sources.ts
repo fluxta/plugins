@@ -1,6 +1,8 @@
 import type { OBSWebSocket } from "obs-websocket-js";
 import type { PickerOption } from "obs-protocol";
 
+import { findSceneItemRef } from "./scene-items";
+
 /**
  * Every Input configured on the Connection — cameras, browser sources, audio
  * devices, and so on, regardless of which Scenes (if any) currently place
@@ -29,16 +31,18 @@ export async function listInputs(
 
 /**
  * OBS addresses "this Source, placed in this Scene" by a numeric Scene Item
- * id, not by the Source's name — this plugin never names that concept
- * itself. This resolves the id each call rather than caching it: an id is
- * only stable for as long as the placement exists.
+ * id, and that id only means anything under the container that holds it — the
+ * Scene itself or a Group inside it. Resolves the placement each call rather
+ * than caching it: an id is only stable for as long as the placement exists.
  */
-async function sceneItemId(obs: OBSWebSocket, scene: string, source: string): Promise<number> {
-  const { sceneItemId } = await obs.call("GetSceneItemId", {
-    sceneName: scene,
-    sourceName: source,
-  });
-  return sceneItemId;
+async function sceneItemOf(obs: OBSWebSocket, scene: string, source: string) {
+  const ref = await findSceneItemRef(obs, scene, source);
+
+  if (!ref) {
+    throw new Error(`No placement of "${source}" in "${scene}"`);
+  }
+
+  return ref;
 }
 
 export async function isSourceVisible(
@@ -46,11 +50,12 @@ export async function isSourceVisible(
   scene: string,
   source: string,
 ): Promise<boolean> {
-  const id = await sceneItemId(obs, scene, source);
+  const item = await sceneItemOf(obs, scene, source);
   const { sceneItemEnabled } = await obs.call("GetSceneItemEnabled", {
-    sceneName: scene,
-    sceneItemId: id,
+    sceneName: item.container,
+    sceneItemId: item.itemId,
   });
+
   return sceneItemEnabled;
 }
 
@@ -60,23 +65,11 @@ export async function setSourceVisible(
   source: string,
   visible: boolean,
 ): Promise<void> {
-  const id = await sceneItemId(obs, scene, source);
+  const item = await sceneItemOf(obs, scene, source);
   await obs.call("SetSceneItemEnabled", {
-    sceneName: scene,
-    sceneItemId: id,
+    sceneName: item.container,
+    sceneItemId: item.itemId,
     sceneItemEnabled: visible,
   });
 }
 
-/** The reverse lookup: what `SceneItemEnableStateChanged` gives us is an id, never a name. */
-export async function sourceNameForSceneItem(
-  obs: OBSWebSocket,
-  scene: string,
-  sceneItemId: number,
-): Promise<string> {
-  const { sourceName } = await obs.call("GetSceneItemSource", {
-    sceneName: scene,
-    sceneItemId,
-  });
-  return sourceName;
-}

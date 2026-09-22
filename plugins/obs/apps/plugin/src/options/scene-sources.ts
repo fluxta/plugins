@@ -7,14 +7,16 @@ import { stringArg } from "./args";
 export const SCENE_SOURCES_OPTIONS = "scene-sources";
 
 /**
- * The Sources placed within one Scene — backs a `sourceName` Event Field
- * operand that should narrow by its sibling `sceneName` Field (currently
- * just `source-visibility-changed`, the only Source-related event where a
- * Scene is a genuine, always-present part of what fired: a Scene Item is
- * always exactly one (Scene, Source) pair). Reads `sceneName` out of its
+ * The Sources placed within one Scene, its Groups' contents included — the
+ * walk does the descending `GetSceneItemList` cannot, so an Event Field
+ * operand can reach a Source that lives inside a Group. Backs a `sourceName`
+ * Event Field operand that should narrow by its sibling `sceneName` Field
+ * (currently just `source-visibility-changed`, the only Source-related event
+ * where a Scene is a genuine, always-present part of what fired: a Scene Item
+ * is always exactly one (Scene, Source) pair). Reads `sceneName` out of its
  * own `args`, populated only once that sibling Field is itself filtered in
- * the same Event Filter row; until then this resolves to an empty list,
- * same as an offline Connection would.
+ * the same Event Filter row; until then this resolves to an empty list, same
+ * as an offline Connection would.
  */
 export function createSceneSourcesOptions(connections: ConnectionsService): Options {
   return {

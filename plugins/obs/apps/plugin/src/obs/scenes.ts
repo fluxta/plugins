@@ -1,6 +1,8 @@
 import type { OBSWebSocket } from "obs-websocket-js";
 import type { PickerOption } from "obs-protocol";
 
+import { listSceneItemRefs } from "./scene-items";
+
 export async function listScenes(obs: OBSWebSocket): Promise<PickerOption[]> {
   const { scenes } = await obs.call("GetSceneList");
   return scenes.map((scene) => {
@@ -9,15 +11,26 @@ export async function listScenes(obs: OBSWebSocket): Promise<PickerOption[]> {
   });
 }
 
+/**
+ * Every Source placed in a Scene, including the ones inside its Groups —
+ * `GetSceneItemList` answers for Scenes only and names direct children only,
+ * so the tree walk does the descending.
+ *
+ * `value` stays the plain Source name: an Event Filter operand compares it
+ * against the event payload, and the Action finds the placement by name
+ * either way. The Group path lives in the `label` only, so a Source inside a
+ * Group reads as "Cameras / Webcam".
+ */
 export async function listSceneSources(
   obs: OBSWebSocket,
   scene: string,
 ): Promise<PickerOption[]> {
-  const { sceneItems } = await obs.call("GetSceneItemList", { sceneName: scene });
-  return sceneItems.map((item) => {
-    const name = String(item["sourceName"]);
-    return { value: name, label: name };
-  });
+  const refs = await listSceneItemRefs(obs, scene);
+
+  return refs.map((ref) => ({
+    value: ref.source,
+    label: [...ref.path, ref.source].join(" / "),
+  }));
 }
 
 export async function setCurrentScene(obs: OBSWebSocket, scene: string): Promise<void> {
