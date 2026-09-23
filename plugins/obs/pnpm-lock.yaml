@@ -10,8 +10,8 @@ catalogs:
       specifier: ^0.5.0
       version: 0.5.0
     '@fluxta/sdk':
-      specifier: ^0.6.0
-      version: 0.6.0
+      specifier: ^0.6.1
+      version: 0.6.1
     '@tailwindcss/vite':
       specifier: ^4.1.18
       version: 4.3.3
@@ -82,7 +82,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.6.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       obs-protocol:
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -122,7 +122,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.6.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        version: 0.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       obs-protocol:
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -417,8 +417,8 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@fluxta/sdk@0.6.0':
-    resolution: {integrity: sha512-8YWALRpcqSA4oolajPzVhRcRRL1j8D9RYovAtMk3oLQnYIzY/35y2YSq3AgCoD0cQ0pgAOwrJiEE2psroKDsqQ==}
+  '@fluxta/sdk@0.6.1':
+    resolution: {integrity: sha512-6Bdkfbw51sWvN5taRb/DHgS+45GZ/4DQiEqtmttfnw1dNOd2OTS+yVaSyb+E3XTrrVi8qDe/UfBmk88F5N6ihg==}
     peerDependencies:
       react: 19.x
       react-dom: 19.x
@@ -2393,7 +2393,7 @@ snapshots:
       - bare-buffer
       - react-native-b4a
 
-  '@fluxta/sdk@0.6.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@fluxta/sdk@0.6.1(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       nanoid: 5.1.16
       use-sync-external-store: 1.6.0(react@19.2.8)
