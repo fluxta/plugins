@@ -14,6 +14,16 @@ const ARTIFACTS_OUTPUT_DIR = "artifacts";
 // parses back (`PublishedVersion.manifest`, no separate `packageMetadata`).
 const INDEX_MANIFEST_FIELDS = ["name", "version", "apiVersion", "title", "description"];
 const INDEX_ENTRY_MANIFEST_FIELDS = [...INDEX_MANIFEST_FIELDS, ...PACKAGE_METADATA_FIELDS];
+// An Iconset has no `apiVersion`; it has an Icon Color Mode instead (ADR-0043).
+const INDEX_ICONSET_MANIFEST_FIELDS = [
+  "name",
+  "version",
+  "title",
+  "description",
+  "color",
+  ...PACKAGE_METADATA_FIELDS,
+];
+const PACKAGE_TYPES = new Set(["plugin", "iconset"]);
 const INDEX_ARTIFACT_FIELDS = [
   "objectKey",
   "checksum",
@@ -31,6 +41,11 @@ export function serializePublicationIndex(index) {
   return `${JSON.stringify(index, null, 2)}\n`;
 }
 
+/** The Package Type an index entry declares; entries written before Iconsets are plugins. */
+export function packageTypeOfEntry(entry) {
+  return PACKAGE_TYPES.has(entry?.type) ? entry.type : "plugin";
+}
+
 /**
  * Puts one published version into the Publication Index's canonical shape and
  * key order. The index is serialized with JSON.stringify, so key order is part
@@ -40,15 +55,43 @@ export function serializePublicationIndex(index) {
  *
  * Legacy `yanked` and `unlisted` booleans are folded into `status`.
  */
-function normalizeVersionEntry(entry) {
+function normalizeVersionEntry(entry, type = "plugin") {
   const legacyStatus =
     entry.yanked === true ? "yanked" : entry.unlisted === true ? "unlisted" : null;
+  const status = VERSION_STATUSES.has(entry.status)
+    ? entry.status
+    : (legacyStatus ?? "published");
+
+  if (type === "iconset") {
+    return {
+      version: entry.version,
+      manifest: pickFields(entry.manifest, INDEX_ICONSET_MANIFEST_FIELDS),
+      artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
+      details: iconsetDetails(entry.details),
+      status,
+      reason: stringOrNull(entry.reason),
+    };
+  }
+
   return {
     version: entry.version,
     manifest: pickFields(entry.manifest, INDEX_ENTRY_MANIFEST_FIELDS),
     artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
-    status: VERSION_STATUSES.has(entry.status) ? entry.status : (legacyStatus ?? "published"),
+    status,
     reason: stringOrNull(entry.reason),
+  };
+}
+
+/**
+ * What only an Iconset version carries, kept apart from the fields every
+ * package shares (ADR-0044): the Iconset Preview's object keys, in display
+ * order, and the icon count the Marketplace card shows. A plugin version has
+ * no `details` at all, so its entry is byte-identical to before Iconsets.
+ */
+function iconsetDetails(details) {
+  return {
+    preview: Array.isArray(details?.preview) ? details.preview.filter(isNonEmptyString) : [],
+    iconCount: Number.isInteger(details?.iconCount) ? details.iconCount : 0,
   };
 }
 
@@ -121,11 +164,12 @@ export function buildPublicationIndex(
     if (!isNonEmptyString(previousPackage.name) || !Array.isArray(previousPackage.versions)) {
       continue;
     }
+    const type = packageTypeOfEntry(previousPackage);
     const versions = previousPackage.versions
       .filter((entry) => entry && isNonEmptyString(entry.version))
-      .map((entry) => normalizeVersionEntry(entry));
+      .map((entry) => normalizeVersionEntry(entry, type));
     if (versions.length > 0) {
-      packagesByName.set(previousPackage.name, { name: previousPackage.name, versions });
+      packagesByName.set(previousPackage.name, { name: previousPackage.name, type, versions });
       previousVersionsByPackage.set(
         previousPackage.name,
         new Set(versions.map((entry) => entry.version)),
@@ -138,20 +182,28 @@ export function buildPublicationIndex(
       continue;
     }
     const version = pkg.manifest.version;
-    const existing = packagesByName.get(pkg.id) ?? { name: pkg.id, versions: [] };
+    const type = pkg.type ?? "plugin";
+    const existing = packagesByName.get(pkg.id) ?? { name: pkg.id, type, versions: [] };
     if (!existing.versions.some((entry) => entry.version === version)) {
       existing.versions.push(
-        normalizeVersionEntry({
-          version,
-          manifest: { ...pkg.manifest },
-          artifact: {
-            objectKey: artifactObjectKey(pkg.id, version),
-            checksum: pkg.build.artifact.checksum,
-            size: pkg.build.artifact.size,
-            sourceCommit,
-            publishedAt,
+        normalizeVersionEntry(
+          {
+            version,
+            manifest: { ...pkg.manifest },
+            artifact: {
+              objectKey: artifactObjectKey(pkg.id, version),
+              checksum: pkg.build.artifact.checksum,
+              size: pkg.build.artifact.size,
+              sourceCommit,
+              publishedAt,
+            },
+            details: {
+              preview: pkg.build.preview?.map((entry) => entry.objectKey),
+              iconCount: pkg.build.iconCount,
+            },
           },
-        }),
+          type,
+        ),
       );
     }
     packagesByName.set(pkg.id, existing);
@@ -201,6 +253,18 @@ export function artifactObjectKey(packageId, version) {
   return `${ARTIFACTS_OUTPUT_DIR}/${packageId}-${sanitizeArtifactFileName(version)}.zip`;
 }
 
+/**
+ * Where one Iconset Preview icon is published: beside the artifacts, under a
+ * per-version folder, so a published version's preview is as immutable as its
+ * artifact (ADR-0044).
+ */
+export function previewObjectKey(packageId, version, iconPath) {
+  return (
+    `${ARTIFACTS_OUTPUT_DIR}/previews/${packageId}/` +
+    `${sanitizeArtifactFileName(version)}/${path.basename(iconPath)}`
+  );
+}
+
 function sanitizeArtifactFileName(value) {
   return value.replace(/[^A-Za-z0-9.-]/g, "-");
 }
@@ -224,7 +288,7 @@ export function indexPublishedVersionsByPackage(previousIndex) {
     }
     const versions = previousPackage.versions
       .filter((entry) => entry && isNonEmptyString(entry.version))
-      .map((entry) => normalizeVersionEntry(entry));
+      .map((entry) => normalizeVersionEntry(entry, packageTypeOfEntry(previousPackage)));
     if (versions.length > 0) {
       byPackage.set(previousPackage.name, versions);
     }

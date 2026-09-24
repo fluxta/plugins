@@ -61,6 +61,10 @@ export function createFakePublisher(options = {}) {
     memory.set(objectKey, bytes);
   }
 
+  function contentTypeOf(options) {
+    return options.contentType ? { contentType: options.contentType } : {};
+  }
+
   function describe(bytes) {
     return { size: bytes.length, checksum: sha256Hex(bytes) };
   }
@@ -78,16 +82,16 @@ export function createFakePublisher(options = {}) {
       const bytes = await loadBytes(objectKey);
       return bytes === null ? null : { size: bytes.length };
     },
-    async putObject(objectKey, bytes) {
+    async putObject(objectKey, bytes, options = {}) {
       await storeBytes(objectKey, bytes);
-      return { objectKey, ...describe(bytes) };
+      return { objectKey, ...describe(bytes), ...contentTypeOf(options) };
     },
-    async putObjectIfAbsent(objectKey, bytes) {
+    async putObjectIfAbsent(objectKey, bytes, options = {}) {
       if ((await loadBytes(objectKey)) !== null) {
         return { objectKey, refused: true };
       }
       await storeBytes(objectKey, bytes);
-      return { objectKey, ...describe(bytes) };
+      return { objectKey, ...describe(bytes), ...contentTypeOf(options) };
     },
   };
 }
@@ -109,7 +113,11 @@ export function createR2Publisher(env) {
     env[R2_ENDPOINT_VAR] ?? `https://${env[R2_ACCOUNT_ID_VAR]}.r2.cloudflarestorage.com`,
   );
 
-  async function signedRequest(method, objectKey, bytes) {
+  // `contentType` rides as an ordinary, unsigned header: SigV4 only has to
+  // sign `host` and the `x-amz-*` headers, and R2 stores whatever Content-Type
+  // a PUT carries and serves it back — which is what lets a browser render an
+  // Iconset Preview SVG straight from the CDN (ADR-0044).
+  async function signedRequest(method, objectKey, bytes, contentType) {
     const payloadHash = bytes === undefined ? EMPTY_SHA256 : sha256Hex(bytes);
     const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");
     const dateStamp = amzDate.slice(0, 8);
@@ -150,6 +158,7 @@ export function createR2Publisher(env) {
         "x-amz-content-sha256": payloadHash,
         "x-amz-date": amzDate,
         Authorization: authorization,
+        ...(contentType ? { "Content-Type": contentType } : {}),
       },
       body: bytes,
     });
@@ -186,18 +195,18 @@ export function createR2Publisher(env) {
     return { size: Number(response.headers["content-length"] ?? 0) };
   }
 
-  async function putObject(objectKey, bytes) {
-    const response = await signedRequest("PUT", objectKey, bytes);
+  async function putObject(objectKey, bytes, options = {}) {
+    const response = await signedRequest("PUT", objectKey, bytes, options.contentType);
     assertOkStatus(response, "PUT", objectKey);
     return { objectKey, size: bytes.length, checksum: sha256Hex(bytes) };
   }
 
-  async function putObjectIfAbsent(objectKey, bytes) {
+  async function putObjectIfAbsent(objectKey, bytes, options = {}) {
     const existing = await headObject(objectKey);
     if (existing) {
       return { objectKey, refused: true };
     }
-    return putObject(objectKey, bytes);
+    return putObject(objectKey, bytes, options);
   }
 
   return { name: "r2", getObject, headObject, putObject, putObjectIfAbsent };

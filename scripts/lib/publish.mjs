@@ -174,15 +174,37 @@ async function removeTempDir(cleanupDir) {
 }
 
 /**
- * Reads every planned artifact object from the store, recording a refusal for
- * each one that already exists with different content. Existing objects with
- * identical content pass through as no-op uploads.
+ * Every immutable object this run plans to write: the Plugin and Iconset
+ * artifacts, then each Iconset Preview icon (ADR-0044). Previews go through
+ * exactly the artifacts' rules — never overwritten, identical content is a
+ * no-op — since a published version's preview is as fixed as its artifact.
+ * `localPath` is where the build staged the bytes.
+ */
+function plannedObjectWrites(validation) {
+  return [
+    ...validation.publicationPlan.artifactWrites.map((write) => ({
+      ...write,
+      kind: "artifact",
+      localPath: write.artifact,
+    })),
+    ...(validation.publicationPlan.previewWrites ?? []).map((write) => ({
+      ...write,
+      kind: "preview",
+      localPath: write.objectKey,
+    })),
+  ];
+}
+
+/**
+ * Reads every planned object from the store, recording a refusal for each one
+ * that already exists with different content. Existing objects with identical
+ * content pass through as no-op uploads.
  */
 async function classifyAgainstExistingObjects(run) {
   const { publisher, publication, validation } = run;
   const writes = [];
 
-  for (const write of validation.publicationPlan.artifactWrites) {
+  for (const write of plannedObjectWrites(validation)) {
     const existing = await publisherRead(publisher, write.objectKey);
     if (existing.error) {
       return { abort: true, result: failPublication(run, [existing.error]) };
@@ -205,9 +227,19 @@ async function classifyAgainstExistingObjects(run) {
 async function uploadArtifactWrites(run, classified) {
   const { rootDir, publisher, publication, validation, networkWrites } = run;
 
-  for (const { write, existing } of classified) {
+  for (const { write: planned, existing } of classified) {
+    const { kind, localPath, ...write } = planned;
+    const label =
+      kind === "preview"
+        ? "Iconset Preview icon"
+        : write.type === "iconset"
+          ? "Iconset artifact"
+          : "Plugin Artifact";
     const metadata =
-      artifactMetadataFromIndex(validation.publicationIndex, write.package, write.version) ?? {};
+      kind === "preview"
+        ? {}
+        : (artifactMetadataFromIndex(validation.publicationIndex, write.package, write.version) ??
+          {});
 
     if (existing) {
       publication.alreadyPublished.push({ ...write, ...metadata });
@@ -220,31 +252,36 @@ async function uploadArtifactWrites(run, classified) {
 
     let bytes;
     try {
-      bytes = await readFile(path.join(rootDir, write.artifact));
+      bytes = await readFile(path.join(rootDir, localPath));
     } catch (error) {
       return {
         abort: true,
         result: failPublication(run, [
           {
             code: "ARTIFACT_READ_FAILED",
-            message: `Could not read the built Plugin Artifact '${write.artifact}': ${error.message}`,
+            message: `Could not read the built ${label} '${localPath}': ${error.message}`,
           },
         ]),
       };
     }
 
-    const put = await publisherPutIfAbsent(publisher, write.objectKey, bytes);
+    const put = await publisherPutIfAbsent(publisher, write.objectKey, bytes, {
+      contentType: write.contentType,
+    });
     if (put.error) {
       return { abort: true, result: failPublication(run, [put.error]) };
     }
     if (put.status === "written") {
-      publication.artifactWrites.push({ ...write, ...metadata });
+      (kind === "preview" ? publication.previewWrites : publication.artifactWrites).push({
+        ...write,
+        ...metadata,
+      });
       networkWrites.push({
         objectKey: write.objectKey,
         size: write.size,
         checksum: write.checksum,
       });
-      publication.notes.push(`Published Plugin Artifact '${write.objectKey}' (${write.checksum}).`);
+      publication.notes.push(`Published ${label} '${write.objectKey}' (${write.checksum}).`);
       continue;
     }
 
@@ -339,6 +376,7 @@ function emptyPublication(publisherName, previousIndexSource) {
     publisher: publisherName,
     previousIndexSource,
     artifactWrites: [],
+    previewWrites: [],
     alreadyPublished: [],
     refusals: [],
     indexWrite: null,
@@ -397,9 +435,9 @@ async function publisherWrite(publisher, objectKey, bytes) {
   }
 }
 
-async function publisherPutIfAbsent(publisher, objectKey, bytes) {
+async function publisherPutIfAbsent(publisher, objectKey, bytes, options = {}) {
   try {
-    const outcome = await publisher.putObjectIfAbsent(objectKey, bytes);
+    const outcome = await publisher.putObjectIfAbsent(objectKey, bytes, options);
     return outcome.refused
       ? { status: "exists", error: null }
       : { status: "written", error: null };

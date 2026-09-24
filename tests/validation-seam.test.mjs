@@ -60,6 +60,7 @@ test("validate accepts a Plugin Source Package with identity, Package Metadata, 
     const { build, ...rest } = pkg;
     assert.deepEqual(rest, {
       id: "example-plugin",
+      type: "plugin",
       path: "plugins/example-plugin",
       status: "valid",
       manifest: {

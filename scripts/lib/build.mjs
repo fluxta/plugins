@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buildArtifactZip } from "@fluxta/cli/artifact";
+import { buildPluginArtifactZip } from "@fluxta/cli/plugin/artifact";
 import { validateSourcePackageWithCli } from "../cli-validation.mjs";
 import { runProcess } from "../process.mjs";
 import { artifactObjectKey } from "./publication-index.mjs";
@@ -113,7 +113,7 @@ async function createPluginArtifact(
 
   try {
     await mkdir(path.dirname(artifactPath), { recursive: true });
-    const archive = await buildArtifactZip(pluginDir, pluginFolder);
+    const archive = await buildPluginArtifactZip(pluginDir, pluginFolder);
     await writeFile(artifactPath, archive);
     return {
       path: relativePath,

@@ -112,7 +112,7 @@ export function validatePackageOwnership(sourcePackage, manifest, codeowners) {
   const codeownersPath = codeowners?.path ?? null;
   const matchingEntry =
     codeowners?.entries
-      .filter((entry) => codeownersPatternsForPackage(sourcePackage.id).has(entry.pattern))
+      .filter((entry) => codeownersPatternsForPackage(sourcePackage).has(entry.pattern))
       .at(-1) ?? null;
 
   if (!matchingEntry) {
@@ -121,7 +121,8 @@ export function validatePackageOwnership(sourcePackage, manifest, codeowners) {
         sourcePackage,
         "MISSING_PACKAGE_OWNERSHIP",
         "maintainers",
-        `Plugin Source Package '${sourcePackage.id}' declares Package Maintainers ` +
+        `${sourcePackage.type === "iconset" ? "Iconset" : "Plugin Source Package"} ` +
+          `'${sourcePackage.id}' declares Package Maintainers ` +
           `(${formatGitHubIdentities(declaredMaintainers)}) but no CODEOWNERS entry covers ` +
           `${sourcePackage.path}/. Add an explicit entry such as ` +
           `'/${sourcePackage.path}/ ${formatGitHubIdentities(declaredMaintainers)}'.`,
@@ -183,8 +184,15 @@ export function validatePackageOwnership(sourcePackage, manifest, codeowners) {
   };
 }
 
-function codeownersPatternsForPackage(packageId) {
-  const packagePath = `plugins/${packageId}`;
+/**
+ * The pattern spellings that cover a package's directory — `plugins/<id>` or
+ * `iconsets/<id>`, whichever it lives under (ADR-0043). A discovered package
+ * always carries its repository-relative path; a bare id is a plugin's.
+ */
+function codeownersPatternsForPackage(sourcePackage) {
+  const packagePath = (sourcePackage.path ?? `plugins/${sourcePackage.id}`)
+    .split(path.sep)
+    .join("/");
   return new Set([
     packagePath,
     `/${packagePath}`,

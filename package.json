@@ -11,6 +11,6 @@
     "test": "node --test 'tests/**/*.test.mjs'"
   },
   "dependencies": {
-    "@fluxta/cli": "^0.4.0"
+    "@fluxta/cli": "^0.6.0"
   }
 }

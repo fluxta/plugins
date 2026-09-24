@@ -4,10 +4,12 @@ import path from "node:path";
 import { PACKAGE_METADATA_FIELDS } from "@fluxta/cli/validation/package-metadata";
 import { parsePublicationIndex } from "@fluxta/cli/previous-index";
 import { compareSemVer } from "@fluxta/cli/semver";
-import { validateSourcePackageWithCli } from "../cli-validation.mjs";
+import { packageTypeOf } from "@fluxta/cli/package-type";
+import { validateIconsetWithCli, validateSourcePackageWithCli } from "../cli-validation.mjs";
 import { runProcess } from "../process.mjs";
 import { loadCodeowners, validatePackageOwnership } from "./codeowners.mjs";
 import { buildAndValidatePluginArtifact } from "./build.mjs";
+import { buildIconsetArtifact } from "./iconset-build.mjs";
 import {
   INDEX_OBJECT_KEY,
   artifactObjectKey,
@@ -29,25 +31,51 @@ import {
   stringOrNull,
 } from "./shared.mjs";
 
-const PLUGINS_DIR = "plugins";
+/**
+ * The directory each Package Type is published under (ADR-0043). A package's
+ * type is decided by where it lives; its manifest must agree.
+ */
+export const PACKAGE_ROOTS = { plugin: "plugins", iconset: "iconsets" };
 const UNKNOWN_SOURCE_COMMIT = "unknown";
 
-export async function discoverPluginSourcePackages(rootDir) {
-  const pluginsDir = path.join(rootDir, PLUGINS_DIR);
+/**
+ * Every package in the checkout — plugins under plugins/, Iconsets under
+ * iconsets/ — each tagged with the Package Type its directory implies.
+ */
+export async function discoverSourcePackages(rootDir) {
+  const packages = [];
 
-  if (!(await pathExists(pluginsDir))) {
-    return [];
+  for (const [type, root] of Object.entries(PACKAGE_ROOTS)) {
+    const rootPath = path.join(rootDir, root);
+    if (!(await pathExists(rootPath))) {
+      continue;
+    }
+
+    const entries = await readdir(rootPath, { withFileTypes: true });
+    for (const entry of entries) {
+      if (!entry.isDirectory()) {
+        continue;
+      }
+      packages.push({
+        id: entry.name,
+        type,
+        path: path.relative(rootDir, path.join(rootPath, entry.name)),
+        absolutePath: path.join(rootPath, entry.name),
+      });
+    }
   }
 
-  const entries = await readdir(pluginsDir, { withFileTypes: true });
-  return entries
-    .filter((entry) => entry.isDirectory())
-    .map((entry) => ({
-      id: entry.name,
-      path: path.relative(rootDir, path.join(pluginsDir, entry.name)),
-      absolutePath: path.join(pluginsDir, entry.name),
-    }))
-    .sort((left, right) => left.id.localeCompare(right.id));
+  return packages.sort(
+    (left, right) => left.id.localeCompare(right.id) || left.type.localeCompare(right.type),
+  );
+}
+
+/**
+ * Only the plugins — what a Trusted-Repo Migration walks, since an Iconset has
+ * no dependencies to bump.
+ */
+export async function discoverPluginSourcePackages(rootDir) {
+  return (await discoverSourcePackages(rootDir)).filter((pkg) => pkg.type === "plugin");
 }
 
 /**
@@ -81,7 +109,7 @@ export async function buildCheckout(rootDir, options = {}) {
       }))
     : [];
 
-  const discoveredPackages = await discoverPluginSourcePackages(rootDir);
+  const discoveredPackages = await discoverSourcePackages(rootDir);
   const selected = selectPackages(discoveredPackages, options.only);
   const { packages, errors, publicationStates } = await validatePluginSourcePackages(
     rootDir,
@@ -117,7 +145,7 @@ function selectPackages(discoveredPackages, only) {
     .filter((id) => !discoveredIds.has(id))
     .map((id) => ({
       code: "UNKNOWN_ONLY_PACKAGE",
-      message: `--only names package '${id}', which was not found under 'plugins/'.`,
+      message: `--only names package '${id}', which was not found under 'plugins/' or 'iconsets/'.`,
     }));
 
   const wanted = new Set(only);
@@ -201,6 +229,11 @@ async function validatePluginSourcePackages(rootDir, discoveredPackages, codeown
       publicationStates.set(sourcePackage.id, state.entries);
     }
 
+    if (sourcePackage.type === "iconset") {
+      packages.push(await validateIconsetSourcePackage(rootDir, sourcePackage, codeowners, errors));
+      continue;
+    }
+
     // Static package validation before the build: manifest shape, package id,
     // Package Metadata, SemVer, and the build contract all come from the CLI.
     const source = await validateSourcePackageWithCli(sourcePackage);
@@ -217,6 +250,7 @@ async function validatePluginSourcePackages(rootDir, discoveredPackages, codeown
     }
 
     errors.push(...validatePackageDirectoryIdentity(sourcePackage, manifest));
+    errors.push(...validatePackageTypeMatchesDirectory(sourcePackage, manifest));
 
     // Ownership is independent of whether the package builds, so it is checked
     // as soon as the manifest declares a maintainer list to route. A package
@@ -247,6 +281,71 @@ async function validatePluginSourcePackages(rootDir, discoveredPackages, codeown
   }
 
   return { packages, errors, publicationStates };
+}
+
+/**
+ * The Iconset counterpart of the plugin loop above (ADR-0043): the CLI seam
+ * checks the whole package in one call, the repository adds its own rules —
+ * directory identity and type, CODEOWNERS ownership — and, with no build to
+ * run, packages the artifact and stages its preview straight away.
+ */
+async function validateIconsetSourcePackage(rootDir, sourcePackage, codeowners, errors) {
+  const source = await validateIconsetWithCli(sourcePackage);
+  errors.push(...source.errors);
+
+  const manifest = await readSourceManifest(sourcePackage);
+  if (!manifest) {
+    return { id: sourcePackage.id, type: "iconset", path: sourcePackage.path, status: "invalid" };
+  }
+
+  errors.push(...validatePackageDirectoryIdentity(sourcePackage, manifest));
+  errors.push(...validatePackageTypeMatchesDirectory(sourcePackage, manifest));
+
+  let ownership = null;
+  if (Array.isArray(manifest.maintainers) && manifest.maintainers.length > 0) {
+    const result = validatePackageOwnership(sourcePackage, manifest, codeowners);
+    ownership = result.ownership;
+    errors.push(...result.errors);
+  }
+
+  let build = null;
+  if (!hasPackageErrors(errors, sourcePackage) && source.manifest) {
+    const result = await buildIconsetArtifact(rootDir, sourcePackage, source.manifest, source.files);
+    build = result.build;
+    errors.push(...result.errors);
+  }
+
+  return packageSummary(
+    sourcePackage,
+    manifest,
+    !hasPackageErrors(errors, sourcePackage),
+    ownership,
+    build,
+  );
+}
+
+/**
+ * A package's directory decides its Package Type (ADR-0043); the manifest's
+ * `type` must say the same, so an Iconset cannot be slipped in under plugins/
+ * or the other way round.
+ */
+function validatePackageTypeMatchesDirectory(sourcePackage, manifest) {
+  const declared = packageTypeOf(manifest);
+  if (declared === sourcePackage.type) {
+    return [];
+  }
+
+  const root = PACKAGE_ROOTS[sourcePackage.type];
+  const expected = declared === null ? `an unknown type '${String(manifest.type)}'` : `a ${declared}`;
+  return [
+    packageError(
+      sourcePackage,
+      "PACKAGE_TYPE_MISMATCH",
+      "manifest.json.type",
+      `'${sourcePackage.path}' is under '${root}/', which holds ${sourcePackage.type}s, ` +
+        `but its manifest declares ${expected}.`,
+    ),
+  ];
 }
 
 /**
@@ -286,7 +385,8 @@ function caseInsensitiveCollisionErrors(discoveredPackages) {
           sourcePackage,
           "PACKAGE_ID_COLLISION",
           "name",
-          `Package id '${sourcePackage.id}' collides case-insensitively with another package directory.`,
+          `Package id '${sourcePackage.id}' collides with another package directory ` +
+            "(names are compared case-insensitively, and plugins and iconsets share one set of names).",
         ),
       ),
     );
@@ -311,14 +411,19 @@ async function readSourceManifest(sourcePackage) {
 // of manifest.json, so this summary carries them as one `manifest` object —
 // matching the shape the Publication Index now uses (see publication-index.mjs).
 function packageSummary(sourcePackage, manifest, isValid, ownership, build) {
+  const typeFields =
+    sourcePackage.type === "iconset"
+      ? { color: stringOrNull(manifest.color) ?? "original" }
+      : { apiVersion: Number.isInteger(manifest.apiVersion) ? manifest.apiVersion : null };
   return {
     id: sourcePackage.id,
+    type: sourcePackage.type,
     path: sourcePackage.path,
     status: isValid ? "valid" : "invalid",
     manifest: {
       name: stringOrNull(manifest.name),
       version: stringOrNull(manifest.version),
-      apiVersion: Number.isInteger(manifest.apiVersion) ? manifest.apiVersion : null,
+      ...typeFields,
       title: stringOrNull(manifest.title),
       description: stringOrNull(manifest.description),
       author: stringOrNull(manifest.author),
@@ -457,10 +562,24 @@ function validationResult({ rootDir, packages, errors, publicationInput, publica
 
   const outputPackages = analyzedPackages.map(({ pkg, change }) => ({ ...pkg, change }));
 
-  const artifactWrites = analyzedPackages
-    .filter(({ change }) => change?.kind === "new-version")
+  const newVersions = analyzedPackages.filter(({ change }) => change?.kind === "new-version");
+
+  const previewWrites = newVersions.flatMap(({ pkg }) =>
+    (pkg.build.preview ?? []).map((entry) => ({
+      package: pkg.id,
+      version: pkg.manifest.version,
+      icon: entry.icon,
+      objectKey: entry.objectKey,
+      size: entry.size,
+      checksum: entry.checksum,
+      contentType: entry.contentType,
+    })),
+  );
+
+  const artifactWrites = newVersions
     .map(({ pkg }) => ({
       package: pkg.id,
+      type: pkg.type ?? "plugin",
       version: pkg.manifest.version,
       pluginFolder: pkg.build.pluginFolder,
       artifact: pkg.build.artifact.path,
@@ -512,6 +631,7 @@ function validationResult({ rootDir, packages, errors, publicationInput, publica
     publicationPlan: {
       ...emptyPublicationPlan(),
       artifactWrites,
+      previewWrites,
       indexWrites,
       recommendations,
     },

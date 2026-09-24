@@ -63,7 +63,7 @@ test("decideChangeScope: a path for a plugin that no longer exists is dropped, n
   assert.deepEqual(scope, {
     mode: "none",
     only: [],
-    reason: "changed files do not touch any existing plugin or shared build tooling",
+    reason: "changed files do not touch any existing package or shared build tooling",
   });
 });
 
