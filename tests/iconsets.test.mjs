@@ -151,16 +151,17 @@ test("validate accepts an iconset, packages it without a build, and plans its pr
       "version",
       "manifest",
       "artifact",
-      "preview",
-      "iconCount",
+      "details",
       "status",
       "reason",
     ]);
-    assert.deepEqual(version.preview, [
-      "artifacts/previews/streamer-icons/1.0.0/mic.svg",
-      "artifacts/previews/streamer-icons/1.0.0/camera.svg",
-    ]);
-    assert.equal(version.iconCount, 3);
+    assert.deepEqual(version.details, {
+      preview: [
+        "artifacts/previews/streamer-icons/1.0.0/mic.svg",
+        "artifacts/previews/streamer-icons/1.0.0/camera.svg",
+      ],
+      iconCount: 3,
+    });
     assert.equal(version.manifest.color, "stroke");
     assert.equal(version.manifest.license, "ISC");
     assert.equal("apiVersion" in version.manifest, false);
@@ -304,6 +305,9 @@ test("publish uploads the iconset artifact and each preview icon, then indexes i
     assert.equal(rerun.ok, true);
     assert.deepEqual(rerun.publication.previewWrites, []);
     assert.deepEqual(rerun.publication.artifactWrites, []);
+    // The index read back from the store — details included — normalizes to
+    // the same bytes, so it is not rewritten.
+    assert.equal(rerun.publication.indexWrite.skipped, true);
   });
 });
 

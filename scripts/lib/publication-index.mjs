@@ -63,14 +63,11 @@ function normalizeVersionEntry(entry, type = "plugin") {
     : (legacyStatus ?? "published");
 
   if (type === "iconset") {
-    // The Iconset Preview's object keys, in display order, and the icon count
-    // the Marketplace card shows — both only known to an Iconset (ADR-0044).
     return {
       version: entry.version,
       manifest: pickFields(entry.manifest, INDEX_ICONSET_MANIFEST_FIELDS),
       artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
-      preview: Array.isArray(entry.preview) ? entry.preview.filter(isNonEmptyString) : [],
-      iconCount: Number.isInteger(entry.iconCount) ? entry.iconCount : 0,
+      details: iconsetDetails(entry.details),
       status,
       reason: stringOrNull(entry.reason),
     };
@@ -82,6 +79,19 @@ function normalizeVersionEntry(entry, type = "plugin") {
     artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
     status,
     reason: stringOrNull(entry.reason),
+  };
+}
+
+/**
+ * What only an Iconset version carries, kept apart from the fields every
+ * package shares (ADR-0044): the Iconset Preview's object keys, in display
+ * order, and the icon count the Marketplace card shows. A plugin version has
+ * no `details` at all, so its entry is byte-identical to before Iconsets.
+ */
+function iconsetDetails(details) {
+  return {
+    preview: Array.isArray(details?.preview) ? details.preview.filter(isNonEmptyString) : [],
+    iconCount: Number.isInteger(details?.iconCount) ? details.iconCount : 0,
   };
 }
 
@@ -187,8 +197,10 @@ export function buildPublicationIndex(
               sourceCommit,
               publishedAt,
             },
-            preview: pkg.build.preview?.map((entry) => entry.objectKey),
-            iconCount: pkg.build.iconCount,
+            details: {
+              preview: pkg.build.preview?.map((entry) => entry.objectKey),
+              iconCount: pkg.build.iconCount,
+            },
           },
           type,
         ),
