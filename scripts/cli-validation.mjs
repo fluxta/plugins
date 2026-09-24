@@ -13,8 +13,8 @@
  * so a package that passes locally passes here.
  */
 
-import { validatePackage } from "@fluxta/cli/validation";
-import { validateIconsetPackage } from "@fluxta/cli/validation/iconset";
+import { validatePluginPackage } from "@fluxta/cli/plugin/validation";
+import { validateIconsetPackage } from "@fluxta/cli/iconset/validation";
 
 /**
  * Runs the seam against one Plugin Source Package and translates the CLI's
@@ -24,7 +24,7 @@ import { validateIconsetPackage } from "@fluxta/cli/validation/iconset";
  * `builtFolder` is "exclusive" once the package has been built, "skip" before.
  */
 export async function validateSourcePackageWithCli(sourcePackage, { builtFolder = "skip" } = {}) {
-  const result = await validatePackage(sourcePackage.absolutePath, {
+  const result = await validatePluginPackage(sourcePackage.absolutePath, {
     builtFolder,
     mode: "strict",
   });

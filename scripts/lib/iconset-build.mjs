@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buildIconsetArtifactZip } from "@fluxta/cli/iconset";
+import { buildIconsetArtifactZip } from "@fluxta/cli/iconset/artifact";
 import { artifactObjectKey, previewObjectKey } from "./publication-index.mjs";
 import { isNonEmptyString, packageError } from "./shared.mjs";
 
