@@ -4,10 +4,10 @@ import { appendFile, mkdir, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { parseCliArgs } from "./lib/args.mjs";
-import { discoverPluginSourcePackages } from "./lib/validate.mjs";
+import { discoverSourcePackages } from "./lib/validate.mjs";
 import { runProcess } from "./process.mjs";
 
-// Paths outside plugins/ that can affect every plugin's build or publish
+// Paths outside plugins/ and iconsets/ that can affect every package's build or publish
 // outcome. A change here means every plugin needs a full rebuild, not just
 // whichever plugin directories the diff happens to name.
 const SHARED_PATH_PATTERNS = [
@@ -98,14 +98,14 @@ export function decideChangeScope(changedPaths, existingPluginIds) {
     return {
       mode: "full",
       only: [],
-      reason: "a change outside plugins/ could affect every plugin: building every plugin",
+      reason: "a change outside plugins/ could affect every package: building every package",
     };
   }
 
   const existingIds = new Set(existingPluginIds);
   const touchedIds = new Set();
   for (const changedPath of changedPaths) {
-    const match = /^plugins\/([^/]+)\//.exec(changedPath);
+    const match = /^(?:plugins|iconsets)\/([^/]+)\//.exec(changedPath);
     if (match && existingIds.has(match[1])) {
       touchedIds.add(match[1]);
     }
@@ -115,12 +115,12 @@ export function decideChangeScope(changedPaths, existingPluginIds) {
     return {
       mode: "none",
       only: [],
-      reason: "changed files do not touch any existing plugin or shared build tooling",
+      reason: "changed files do not touch any existing package or shared build tooling",
     };
   }
 
   const only = [...touchedIds].sort();
-  return { mode: "only", only, reason: `plugin(s) changed: ${only.join(", ")}` };
+  return { mode: "only", only, reason: `package(s) changed: ${only.join(", ")}` };
 }
 
 async function commitExists(rootDir, sha) {
@@ -150,7 +150,7 @@ async function resolveScope(rootDir, before, after) {
   }
 
   const changedPaths = await diffChangedPaths(rootDir, before, after);
-  const discovered = await discoverPluginSourcePackages(rootDir);
+  const discovered = await discoverSourcePackages(rootDir);
   return decideChangeScope(changedPaths, discovered.map((pkg) => pkg.id));
 }
 

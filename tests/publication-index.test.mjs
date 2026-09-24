@@ -137,6 +137,7 @@ test("validate generates a dry-run Publication Index with schema version, identi
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
         package: "example-plugin",
+        type: "plugin",
         version: "1.2.3",
         pluginFolder: "example-plugin",
         artifact: "artifacts/example-plugin-1.2.3.zip",
