@@ -175,10 +175,11 @@ async function removeTempDir(cleanupDir) {
 
 /**
  * Every immutable object this run plans to write: the Plugin and Iconset
- * artifacts, then each Iconset Preview icon (ADR-0044). Previews go through
- * exactly the artifacts' rules — never overwritten, identical content is a
- * no-op — since a published version's preview is as fixed as its artifact.
- * `localPath` is where the build staged the bytes.
+ * artifacts, then each Iconset Preview icon (ADR-0044) and each plugin's own
+ * icon (ADR-0047). Icons go through exactly the artifacts' rules — never
+ * overwritten, identical content is a no-op — since a published version's
+ * icons are as fixed as its artifact. `localPath` is where the build staged
+ * the bytes.
  */
 function plannedObjectWrites(validation) {
   return [
@@ -190,6 +191,11 @@ function plannedObjectWrites(validation) {
     ...(validation.publicationPlan.previewWrites ?? []).map((write) => ({
       ...write,
       kind: "preview",
+      localPath: write.objectKey,
+    })),
+    ...(validation.publicationPlan.iconWrites ?? []).map((write) => ({
+      ...write,
+      kind: "icon",
       localPath: write.objectKey,
     })),
   ];
@@ -232,11 +238,13 @@ async function uploadArtifactWrites(run, classified) {
     const label =
       kind === "preview"
         ? "Iconset Preview icon"
-        : write.type === "iconset"
-          ? "Iconset artifact"
-          : "Plugin Artifact";
+        : kind === "icon"
+          ? "plugin icon"
+          : write.type === "iconset"
+            ? "Iconset artifact"
+            : "Plugin Artifact";
     const metadata =
-      kind === "preview"
+      kind !== "artifact"
         ? {}
         : (artifactMetadataFromIndex(validation.publicationIndex, write.package, write.version) ??
           {});
@@ -272,7 +280,7 @@ async function uploadArtifactWrites(run, classified) {
       return { abort: true, result: failPublication(run, [put.error]) };
     }
     if (put.status === "written") {
-      (kind === "preview" ? publication.previewWrites : publication.artifactWrites).push({
+      PUBLICATION_WRITES[kind](publication).push({
         ...write,
         ...metadata,
       });
@@ -361,6 +369,13 @@ const IMMUTABLE_ARTIFACT_RULE =
   "An existing Plugin Artifact for the same (manifest.name, manifest.version) " +
   "is never overwritten.";
 
+/** Which list of the publication result each kind of written object goes to. */
+const PUBLICATION_WRITES = {
+  artifact: (publication) => publication.artifactWrites,
+  preview: (publication) => publication.previewWrites,
+  icon: (publication) => publication.iconWrites,
+};
+
 function overwriteRefusal(write, reason) {
   return {
     package: write.package,
@@ -377,6 +392,7 @@ function emptyPublication(publisherName, previousIndexSource) {
     previousIndexSource,
     artifactWrites: [],
     previewWrites: [],
+    iconWrites: [],
     alreadyPublished: [],
     refusals: [],
     indexWrite: null,

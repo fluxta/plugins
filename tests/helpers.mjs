@@ -192,8 +192,18 @@ export async function writeSourceFiles(root, packageId, relativeFiles) {
   for (const relativePath of relativeFiles) {
     const fullPath = path.join(packageDir, relativePath);
     await mkdir(path.dirname(fullPath), { recursive: true });
-    await writeFile(fullPath, `source of ${relativePath}\n`);
+    await writeFile(fullPath, sourceFileContents(relativePath));
   }
+}
+
+/**
+ * A placeholder SVG is still a well-formed one, since the CLI seam checks an
+ * icon's bytes against its extension; anything else is a line of text.
+ */
+function sourceFileContents(relativePath) {
+  return relativePath.endsWith(".svg")
+    ? `<svg xmlns="http://www.w3.org/2000/svg"><desc>source of ${relativePath}</desc></svg>\n`
+    : `source of ${relativePath}\n`;
 }
 
 export function simpleBuildScript(packageId, copiedDirs = []) {

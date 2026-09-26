@@ -73,20 +73,30 @@ function normalizeVersionEntry(entry, type = "plugin") {
     };
   }
 
+  const details = pluginDetails(entry.details);
   return {
     version: entry.version,
     manifest: pickFields(entry.manifest, INDEX_ENTRY_MANIFEST_FIELDS),
     artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
+    ...(details ? { details } : {}),
     status,
     reason: stringOrNull(entry.reason),
   };
 }
 
 /**
+ * What a plugin version carries beyond the shared fields: the object key of
+ * its own `icon` (ADR-0047). A version published without one has no
+ * `details` at all, so its entry is byte-identical to before plugin icons.
+ */
+function pluginDetails(details) {
+  return isNonEmptyString(details?.icon) ? { icon: details.icon } : null;
+}
+
+/**
  * What only an Iconset version carries, kept apart from the fields every
  * package shares (ADR-0044): the Iconset Preview's object keys, in display
- * order, and the icon count the Marketplace card shows. A plugin version has
- * no `details` at all, so its entry is byte-identical to before Iconsets.
+ * order, and the icon count the Marketplace card shows.
  */
 function iconsetDetails(details) {
   return {
@@ -197,10 +207,13 @@ export function buildPublicationIndex(
               sourceCommit,
               publishedAt,
             },
-            details: {
-              preview: pkg.build.preview?.map((entry) => entry.objectKey),
-              iconCount: pkg.build.iconCount,
-            },
+            details:
+              type === "iconset"
+                ? {
+                    preview: pkg.build.preview?.map((entry) => entry.objectKey),
+                    iconCount: pkg.build.iconCount,
+                  }
+                : { icon: pkg.build.icon?.objectKey },
           },
           type,
         ),
@@ -251,6 +264,18 @@ export function buildPublicationIndex(
 
 export function artifactObjectKey(packageId, version) {
   return `${ARTIFACTS_OUTPUT_DIR}/${packageId}-${sanitizeArtifactFileName(version)}.zip`;
+}
+
+/**
+ * Where a plugin's own `icon` is published: beside the artifacts, under a
+ * per-version folder like an Iconset Preview, so it is as immutable as the
+ * version's artifact (ADR-0047).
+ */
+export function pluginIconObjectKey(packageId, version, iconPath) {
+  return (
+    `${ARTIFACTS_OUTPUT_DIR}/icons/${packageId}/` +
+    `${sanitizeArtifactFileName(version)}/${path.basename(iconPath)}`
+  );
 }
 
 /**
