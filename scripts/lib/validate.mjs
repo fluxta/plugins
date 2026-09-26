@@ -576,6 +576,18 @@ function validationResult({ rootDir, packages, errors, publicationInput, publica
     })),
   );
 
+  const iconWrites = newVersions
+    .filter(({ pkg }) => pkg.build.icon)
+    .map(({ pkg }) => ({
+      package: pkg.id,
+      version: pkg.manifest.version,
+      icon: pkg.build.icon.icon,
+      objectKey: pkg.build.icon.objectKey,
+      size: pkg.build.icon.size,
+      checksum: pkg.build.icon.checksum,
+      contentType: pkg.build.icon.contentType,
+    }));
+
   const artifactWrites = newVersions
     .map(({ pkg }) => ({
       package: pkg.id,
@@ -632,6 +644,7 @@ function validationResult({ rootDir, packages, errors, publicationInput, publica
       ...emptyPublicationPlan(),
       artifactWrites,
       previewWrites,
+      iconWrites,
       indexWrites,
       recommendations,
     },

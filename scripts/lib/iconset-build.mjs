@@ -1,18 +1,10 @@
 import { createHash } from "node:crypto";
-import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { buildIconsetArtifactZip } from "@fluxta/cli/iconset/artifact";
+import { stageIconObject } from "./icon-object.mjs";
 import { artifactObjectKey, previewObjectKey } from "./publication-index.mjs";
 import { isNonEmptyString, packageError } from "./shared.mjs";
-
-const PREVIEW_CONTENT_TYPES = {
-  gif: "image/gif",
-  jpeg: "image/jpeg",
-  jpg: "image/jpeg",
-  png: "image/png",
-  svg: "image/svg+xml",
-  webp: "image/webp",
-};
 
 /**
  * Packages an Iconset that already passed the CLI seam (ADR-0043). There is
@@ -38,18 +30,15 @@ export async function buildIconsetArtifact(rootDir, sourcePackage, manifest, fil
     const preview = [];
     for (const iconPath of manifest.preview) {
       const objectKey = previewObjectKey(sourcePackage.id, version, iconPath);
-      const target = path.join(rootDir, objectKey);
-      staged.push(target);
-      const bytes = await readFile(path.join(sourcePackage.absolutePath, iconPath));
-      await mkdir(path.dirname(target), { recursive: true });
-      await writeFile(target, bytes);
-      preview.push({
-        icon: iconPath,
-        objectKey,
-        size: bytes.length,
-        checksum: sha256(bytes),
-        contentType: previewContentType(iconPath),
-      });
+      staged.push(path.join(rootDir, objectKey));
+      preview.push(
+        await stageIconObject(
+          rootDir,
+          path.join(sourcePackage.absolutePath, iconPath),
+          iconPath,
+          objectKey,
+        ),
+      );
     }
 
     return {
@@ -79,11 +68,6 @@ export async function buildIconsetArtifact(rootDir, sourcePackage, manifest, fil
     );
     return { build: null, errors };
   }
-}
-
-function previewContentType(iconPath) {
-  const extension = path.extname(iconPath).slice(1).toLowerCase();
-  return PREVIEW_CONTENT_TYPES[extension] ?? "application/octet-stream";
 }
 
 function sha256(bytes) {
