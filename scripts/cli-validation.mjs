@@ -13,7 +13,8 @@
  * so a package that passes locally passes here.
  */
 
-import { validatePackage } from "@fluxta/cli/validation";
+import { validatePluginPackage } from "@fluxta/cli/plugin/validation";
+import { validateIconsetPackage } from "@fluxta/cli/iconset/validation";
 
 /**
  * Runs the seam against one Plugin Source Package and translates the CLI's
@@ -23,7 +24,7 @@ import { validatePackage } from "@fluxta/cli/validation";
  * `builtFolder` is "exclusive" once the package has been built, "skip" before.
  */
 export async function validateSourcePackageWithCli(sourcePackage, { builtFolder = "skip" } = {}) {
-  const result = await validatePackage(sourcePackage.absolutePath, {
+  const result = await validatePluginPackage(sourcePackage.absolutePath, {
     builtFolder,
     mode: "strict",
   });
@@ -31,6 +32,25 @@ export async function validateSourcePackageWithCli(sourcePackage, { builtFolder 
   return {
     manifest: result.manifest,
     builtFolder: result.built?.folder ?? null,
+    errors: result.report.errors.map((issue) => toPackageError(sourcePackage, issue)),
+    warnings: result.report.warnings.map((issue) => toPackageError(sourcePackage, issue)),
+  };
+}
+
+/**
+ * Runs the Iconset half of the seam (ADR-0043) against one package under
+ * iconsets/. An Iconset has no build, so this one call covers everything the
+ * CLI knows about it — manifest, licence, every icon, the preview — and also
+ * returns the exact files its artifact is made of.
+ */
+export async function validateIconsetWithCli(sourcePackage) {
+  const result = await validateIconsetPackage(sourcePackage.absolutePath, {
+    mode: "strict",
+  });
+
+  return {
+    manifest: result.manifest,
+    files: result.files,
     errors: result.report.errors.map((issue) => toPackageError(sourcePackage, issue)),
     warnings: result.report.warnings.map((issue) => toPackageError(sourcePackage, issue)),
   };

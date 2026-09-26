@@ -1,0 +1,9 @@
+# Dependency and build outputs
+node_modules/
+dist/
+.turbo/
+*.log
+
+# Packaged plugin artifacts
+artifacts/
+*.zip

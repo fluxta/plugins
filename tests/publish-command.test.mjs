@@ -101,6 +101,7 @@ test("publish writes new Plugin Artifacts and the Publication Index through the 
     assert.deepEqual(output.publication.artifactWrites, [
       {
         package: "example-plugin",
+        type: "plugin",
         version: "1.2.3",
         pluginFolder: "example-plugin",
         artifact: "artifacts/example-plugin-1.2.3.zip",

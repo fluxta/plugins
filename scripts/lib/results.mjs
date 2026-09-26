@@ -8,6 +8,8 @@ export function emptyPublicationPlan({ mode = "dry-run", notes } = {}) {
     mode,
     networkWrites: [],
     artifactWrites: [],
+    previewWrites: [],
+    iconWrites: [],
     indexWrites: [],
     recommendations: [],
     notes:

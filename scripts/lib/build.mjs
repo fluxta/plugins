@@ -1,10 +1,11 @@
 import { createHash } from "node:crypto";
 import { mkdir, readFile, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
-import { buildArtifactZip } from "@fluxta/cli/artifact";
+import { buildPluginArtifactZip } from "@fluxta/cli/plugin/artifact";
 import { validateSourcePackageWithCli } from "../cli-validation.mjs";
 import { runProcess } from "../process.mjs";
-import { artifactObjectKey } from "./publication-index.mjs";
+import { stageIconObject } from "./icon-object.mjs";
+import { artifactObjectKey, pluginIconObjectKey } from "./publication-index.mjs";
 import { hasPackageErrors, isNonEmptyString, packageError, tail } from "./shared.mjs";
 
 const BUILD_OUTPUT_DIR = "dist";
@@ -43,15 +44,56 @@ export async function buildAndValidatePluginArtifact(rootDir, sourcePackage, man
     return { build: null, errors };
   }
 
+  const icon = await stagePluginIcon(rootDir, sourcePackage, built.builtFolder, manifest, errors);
+  if (icon === undefined) {
+    await rm(path.join(rootDir, artifact.path), { force: true }).catch(() => {});
+    return { build: null, errors };
+  }
+
   return {
     build: {
       status: "built",
       outputDir: path.join(sourcePackage.path, BUILD_OUTPUT_DIR),
       pluginFolder,
       artifact,
+      ...(icon ? { icon } : {}),
     },
     errors,
   };
+}
+
+/**
+ * Stages the plugin's own `icon` from the Built Plugin Folder — where the CLI
+ * seam just checked it — as an object beside the artifact, for its
+ * Marketplace card (ADR-0047). `null` when the manifest names no icon;
+ * `undefined` when staging failed, with the error recorded.
+ */
+async function stagePluginIcon(rootDir, sourcePackage, builtFolder, manifest, errors) {
+  if (!isNonEmptyString(manifest.icon)) {
+    return null;
+  }
+
+  const version = isNonEmptyString(manifest.version) ? manifest.version : "0.0.0";
+  const objectKey = pluginIconObjectKey(sourcePackage.id, version, manifest.icon);
+  try {
+    return await stageIconObject(
+      rootDir,
+      path.join(builtFolder, manifest.icon),
+      manifest.icon,
+      objectKey,
+    );
+  } catch (error) {
+    await rm(path.join(rootDir, objectKey), { force: true }).catch(() => {});
+    errors.push(
+      packageError(
+        sourcePackage,
+        "ARTIFACT_CREATION_FAILED",
+        "build",
+        `Could not stage the icon of '${sourcePackage.id}': ${error.message}`,
+      ),
+    );
+    return undefined;
+  }
 }
 
 async function runPackageBuild(sourcePackage, errors) {
@@ -113,7 +155,7 @@ async function createPluginArtifact(
 
   try {
     await mkdir(path.dirname(artifactPath), { recursive: true });
-    const archive = await buildArtifactZip(pluginDir, pluginFolder);
+    const archive = await buildPluginArtifactZip(pluginDir, pluginFolder);
     await writeFile(artifactPath, archive);
     return {
       path: relativePath,

@@ -15,3 +15,5 @@
 * @inferst
 /plugins/obs/ @inferst
 /plugins/test/ @inferst
+/plugins/platforms/ @inferst
+/iconsets/super-tiny-icons/ @inferst

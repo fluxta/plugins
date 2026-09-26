@@ -1,0 +1,22 @@
+{
+  "type": "iconset",
+  "name": "super-tiny-icons",
+  "title": "Super Tiny Icons",
+  "description": "Super Tiny Icons are miniscule SVG versions of your favourite website and app logos",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/edent/SuperTinyIcons",
+  "repository": "",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.7.0",
+  "color": "original",
+  "preview": [
+    "icons/github.svg",
+    "icons/twitch.svg",
+    "icons/discord.svg",
+    "icons/youtube.svg",
+    "icons/spotify.svg",
+    "icons/obs.svg"
+  ]
+}

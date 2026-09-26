@@ -271,6 +271,7 @@ test("a version bump with changed artifacts plans a new publication and preserve
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
         package: "example-plugin",
+        type: "plugin",
         version: "1.2.4",
         pluginFolder: "example-plugin",
         artifact: "artifacts/example-plugin-1.2.4.zip",

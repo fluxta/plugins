@@ -116,6 +116,7 @@ test("a successful package build produces a valid zip Plugin Artifact with check
     assert.deepEqual(output.publicationPlan.artifactWrites, [
       {
         package: "example-plugin",
+        type: "plugin",
         version: "1.2.3",
         pluginFolder: "example-plugin",
         artifact: "artifacts/example-plugin-1.2.3.zip",
