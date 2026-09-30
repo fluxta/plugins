@@ -75,6 +75,8 @@ test("validate accepts a Plugin Source Package with identity, Package Metadata, 
         homepage: null,
         minAppVersion: "0.1.0",
         maintainers: ["inferst"],
+        platforms: ["windows", "macos", "linux"],
+        categories: ["utilities"],
       },
       ownership: {
         status: "matched",
