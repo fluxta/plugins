@@ -14,6 +14,12 @@ const ARTIFACTS_OUTPUT_DIR = "artifacts";
 // parses back (`PublishedVersion.manifest`, no separate `packageMetadata`).
 const INDEX_MANIFEST_FIELDS = ["name", "version", "apiVersion", "title", "description"];
 const INDEX_ENTRY_MANIFEST_FIELDS = [...INDEX_MANIFEST_FIELDS, ...PACKAGE_METADATA_FIELDS];
+// Package Metadata only a plugin carries (ADR-0051). The desktop reads both
+// off the version's `manifest` the Registry mirrors, so they must reach the
+// index; @fluxta/cli validates them but does not export their field list.
+// Versions published before they were required carry neither, and keep their
+// entries byte-for-byte rather than gaining nulls.
+export const PLUGIN_METADATA_FIELDS = ["platforms", "categories"];
 // An Iconset has no `apiVersion`; it has an Icon Color Mode instead (ADR-0043).
 const INDEX_ICONSET_MANIFEST_FIELDS = [
   "name",
@@ -76,7 +82,7 @@ function normalizeVersionEntry(entry, type = "plugin") {
   const details = pluginDetails(entry.details);
   return {
     version: entry.version,
-    manifest: pickFields(entry.manifest, INDEX_ENTRY_MANIFEST_FIELDS),
+    manifest: pluginManifest(entry.manifest),
     artifact: pickFields(entry.artifact, INDEX_ARTIFACT_FIELDS),
     ...(details ? { details } : {}),
     status,
@@ -103,6 +109,21 @@ function iconsetDetails(details) {
     preview: Array.isArray(details?.preview) ? details.preview.filter(isNonEmptyString) : [],
     iconCount: Number.isInteger(details?.iconCount) ? details.iconCount : 0,
   };
+}
+
+/** A plugin version's `manifest`, with its plugin-only fields when it has them. */
+function pluginManifest(source) {
+  const manifest = pickFields(source, INDEX_ENTRY_MANIFEST_FIELDS);
+  if (manifest === null) {
+    return null;
+  }
+
+  for (const field of PLUGIN_METADATA_FIELDS) {
+    if (source[field] != null) {
+      manifest[field] = source[field];
+    }
+  }
+  return manifest;
 }
 
 /** Rebuilds a nested index object with a fixed field set and key order. */

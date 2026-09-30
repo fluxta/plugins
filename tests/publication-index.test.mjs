@@ -123,6 +123,8 @@ test("validate generates a dry-run Publication Index with schema version, identi
       license: "MIT",
       minAppVersion: "0.1.0",
       maintainers: ["inferst"],
+      platforms: ["windows", "macos", "linux"],
+      categories: ["utilities"],
     });
     assert.deepEqual(entry.artifact, {
       objectKey: "artifacts/example-plugin-1.2.3.zip",

@@ -2,7 +2,7 @@
   "name": "test",
   "title": "Test",
   "description": "Test",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "",
@@ -11,6 +11,14 @@
     "inferst"
   ],
   "minAppVersion": "0.1.0",
+  "platforms": [
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "categories": [
+    "development"
+  ],
   "apiVersion": 1,
   "main": "index.mjs",
   "actions": [

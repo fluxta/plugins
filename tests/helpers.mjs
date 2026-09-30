@@ -129,6 +129,8 @@ export function validManifest(overrides = {}) {
     repository: "https://github.com/example/example-plugin",
     minAppVersion: "0.1.0",
     maintainers: ["inferst"],
+    platforms: ["windows", "macos", "linux"],
+    categories: ["utilities"],
     ...overrides,
   };
 }

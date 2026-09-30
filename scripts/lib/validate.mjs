@@ -12,6 +12,7 @@ import { buildAndValidatePluginArtifact } from "./build.mjs";
 import { buildIconsetArtifact } from "./iconset-build.mjs";
 import {
   INDEX_OBJECT_KEY,
+  PLUGIN_METADATA_FIELDS,
   artifactObjectKey,
   buildPublicationIndex,
   deriveRecommendations,
@@ -434,10 +435,22 @@ function packageSummary(sourcePackage, manifest, isValid, ownership, build) {
       maintainers: Array.isArray(manifest.maintainers)
         ? manifest.maintainers.filter(isNonEmptyString)
         : [],
+      ...(sourcePackage.type === "iconset" ? {} : pluginMetadataFields(manifest)),
     },
     ownership,
     build,
   };
+}
+
+// `platforms` and `categories` as the manifest lists them, or null when a field
+// is not a list; @fluxta/cli has already judged their values.
+function pluginMetadataFields(manifest) {
+  return Object.fromEntries(
+    PLUGIN_METADATA_FIELDS.map((field) => [
+      field,
+      Array.isArray(manifest[field]) ? manifest[field].filter(isNonEmptyString) : null,
+    ]),
+  );
 }
 
 function analyzePublishedChange(pkg, publishedVersions, effectiveStatus) {
