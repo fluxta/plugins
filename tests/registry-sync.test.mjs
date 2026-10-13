@@ -36,10 +36,10 @@ const SAMPLE_INDEX = {
 };
 
 /**
- * Stands in for the Registry's `POST /v1/sync` (crates/registry/src/routes.rs
- * in the Fluxta repository): records every request it receives and answers
- * with whatever `respond` decides, so tests can drive both the happy path and
- * a rejected or broken response without a real Registry.
+ * Stands in for the Registry's `POST /v1/sync`: records every request it
+ * receives and answers with whatever `respond` decides, so tests can drive
+ * both the happy path and a rejected or broken response without a real
+ * Registry.
  */
 async function withStubRegistry(respond, run) {
   const requests = [];

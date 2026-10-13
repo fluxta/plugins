@@ -33,7 +33,7 @@ import {
 } from "./shared.mjs";
 
 /**
- * The directory each Package Type is published under (ADR-0043). A package's
+ * The directory each Package Type is published under. A package's
  * type is decided by where it lives; its manifest must agree.
  */
 export const PACKAGE_ROOTS = { plugin: "plugins", iconset: "iconsets" };
@@ -285,7 +285,7 @@ async function validatePluginSourcePackages(rootDir, discoveredPackages, codeown
 }
 
 /**
- * The Iconset counterpart of the plugin loop above (ADR-0043): the CLI seam
+ * The Iconset counterpart of the plugin loop above: the CLI seam
  * checks the whole package in one call, the repository adds its own rules —
  * directory identity and type, CODEOWNERS ownership — and, with no build to
  * run, packages the artifact and stages its preview straight away.
@@ -326,7 +326,7 @@ async function validateIconsetSourcePackage(rootDir, sourcePackage, codeowners, 
 }
 
 /**
- * A package's directory decides its Package Type (ADR-0043); the manifest's
+ * A package's directory decides its Package Type; the manifest's
  * `type` must say the same, so an Iconset cannot be slipped in under plugins/
  * or the other way round.
  */

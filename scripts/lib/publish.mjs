@@ -175,8 +175,8 @@ async function removeTempDir(cleanupDir) {
 
 /**
  * Every immutable object this run plans to write: the Plugin and Iconset
- * artifacts, then each Iconset Preview icon (ADR-0044) and each plugin's own
- * icon (ADR-0047). Icons go through exactly the artifacts' rules — never
+ * artifacts, then each Iconset Preview icon and each plugin's own
+ * icon. Icons go through exactly the artifacts' rules — never
  * overwritten, identical content is a no-op — since a published version's
  * icons are as fixed as its artifact. `localPath` is where the build staged
  * the bytes.

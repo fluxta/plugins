@@ -14,13 +14,13 @@ const ARTIFACTS_OUTPUT_DIR = "artifacts";
 // parses back (`PublishedVersion.manifest`, no separate `packageMetadata`).
 const INDEX_MANIFEST_FIELDS = ["name", "version", "apiVersion", "title", "description"];
 const INDEX_ENTRY_MANIFEST_FIELDS = [...INDEX_MANIFEST_FIELDS, ...PACKAGE_METADATA_FIELDS];
-// Package Metadata only a plugin carries (ADR-0051). The desktop reads both
+// Package Metadata only a plugin carries. The desktop reads both
 // off the version's `manifest` the Registry mirrors, so they must reach the
 // index; @fluxta/cli validates them but does not export their field list.
 // Versions published before they were required carry neither, and keep their
 // entries byte-for-byte rather than gaining nulls.
 export const PLUGIN_METADATA_FIELDS = ["platforms", "categories"];
-// An Iconset has no `apiVersion`; it has an Icon Color Mode instead (ADR-0043).
+// An Iconset has no `apiVersion`; it has an Icon Color Mode instead.
 const INDEX_ICONSET_MANIFEST_FIELDS = [
   "name",
   "version",
@@ -92,7 +92,7 @@ function normalizeVersionEntry(entry, type = "plugin") {
 
 /**
  * What a plugin version carries beyond the shared fields: the object key of
- * its own `icon` (ADR-0047). A version published without one has no
+ * its own `icon`. A version published without one has no
  * `details` at all, so its entry is byte-identical to before plugin icons.
  */
 function pluginDetails(details) {
@@ -101,7 +101,7 @@ function pluginDetails(details) {
 
 /**
  * What only an Iconset version carries, kept apart from the fields every
- * package shares (ADR-0044): the Iconset Preview's object keys, in display
+ * package shares: the Iconset Preview's object keys, in display
  * order, and the icon count the Marketplace card shows.
  */
 function iconsetDetails(details) {
@@ -290,7 +290,7 @@ export function artifactObjectKey(packageId, version) {
 /**
  * Where a plugin's own `icon` is published: beside the artifacts, under a
  * per-version folder like an Iconset Preview, so it is as immutable as the
- * version's artifact (ADR-0047).
+ * version's artifact.
  */
 export function pluginIconObjectKey(packageId, version, iconPath) {
   return (
@@ -302,7 +302,7 @@ export function pluginIconObjectKey(packageId, version, iconPath) {
 /**
  * Where one Iconset Preview icon is published: beside the artifacts, under a
  * per-version folder, so a published version's preview is as immutable as its
- * artifact (ADR-0044).
+ * artifact.
  */
 export function previewObjectKey(packageId, version, iconPath) {
   return (

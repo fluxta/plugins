@@ -16,7 +16,7 @@ import {
 } from "./helpers.mjs";
 
 // A plugin's own `icon` is published beside its artifact for its Marketplace
-// card, per version, under the same immutability rules (ADR-0047).
+// card, per version, under the same immutability rules.
 
 const SOURCE_COMMIT = "c".repeat(40);
 const PUBLISHED_AT = "2026-08-06T12:00:00.000Z";

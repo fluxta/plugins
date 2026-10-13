@@ -14,7 +14,7 @@ const ICON_CONTENT_TYPES = {
 /**
  * Stages one icon as its own file next to the artifacts, to be uploaded as an
  * individual object the Marketplace loads before anything is installed — an
- * Iconset Preview icon (ADR-0044) or a plugin's own `icon` (ADR-0047). The
+ * Iconset Preview icon or a plugin's own `icon`. The
  * local path is the object key itself, so the two can never drift. Returns
  * the planned write: where it came from, where it goes, and its checksum.
  */
