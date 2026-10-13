@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Adapter over the Plugin Package Validation Seam published by @fluxta/cli.
+ * Adapter over the Package Validation Seam published by @fluxta/cli.
  *
  * The CLI owns everything that is true of a single Plugin Source Package in
  * isolation: manifest shape, package id rules, Package Metadata, SemVer, the
