@@ -186,7 +186,7 @@ export function validatePackageOwnership(sourcePackage, manifest, codeowners) {
 
 /**
  * The pattern spellings that cover a package's directory — `plugins/<id>` or
- * `iconsets/<id>`, whichever it lives under (ADR-0043). A discovered package
+ * `iconsets/<id>`, whichever it lives under. A discovered package
  * always carries its repository-relative path; a bare id is a plugin's.
  */
 function codeownersPatternsForPackage(sourcePackage) {

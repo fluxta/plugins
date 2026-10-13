@@ -116,7 +116,7 @@ export function createR2Publisher(env) {
   // `contentType` rides as an ordinary, unsigned header: SigV4 only has to
   // sign `host` and the `x-amz-*` headers, and R2 stores whatever Content-Type
   // a PUT carries and serves it back — which is what lets a browser render an
-  // Iconset Preview SVG straight from the CDN (ADR-0044).
+  // Iconset Preview SVG straight from the CDN.
   async function signedRequest(method, objectKey, bytes, contentType) {
     const payloadHash = bytes === undefined ? EMPTY_SHA256 : sha256Hex(bytes);
     const amzDate = new Date().toISOString().replace(/[:-]|\.\d{3}/g, "");

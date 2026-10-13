@@ -38,7 +38,7 @@ export async function validateSourcePackageWithCli(sourcePackage, { builtFolder 
 }
 
 /**
- * Runs the Iconset half of the seam (ADR-0043) against one package under
+ * Runs the Iconset half of the seam against one package under
  * iconsets/. An Iconset has no build, so this one call covers everything the
  * CLI knows about it — manifest, licence, every icon, the preview — and also
  * returns the exact files its artifact is made of.

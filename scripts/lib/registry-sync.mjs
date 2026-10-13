@@ -10,10 +10,9 @@ const RESPONSE_BODY_PREVIEW_LENGTH = 500;
 
 /**
  * Posts the whole Publication Index to the Fluxta Plugin Registry's
- * `POST /v1/sync` endpoint (`crates/registry` in the Fluxta repository).
- * The post is the full index rather than a delta and syncing is idempotent
- * on the Registry side, so this is safe to call after every successful
- * publication whether or not the index changed.
+ * `POST /v1/sync` endpoint. The post is the full index rather than a delta
+ * and syncing is idempotent on the Registry side, so this is safe to call
+ * after every successful publication whether or not the index changed.
  *
  * Never throws. Every outcome — unconfigured credentials, an unreachable
  * Registry, a non-200 response — comes back as `{ ok: false, reason }` so the

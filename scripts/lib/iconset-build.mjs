@@ -7,13 +7,12 @@ import { artifactObjectKey, previewObjectKey } from "./publication-index.mjs";
 import { isNonEmptyString, packageError } from "./shared.mjs";
 
 /**
- * Packages an Iconset that already passed the CLI seam (ADR-0043). There is
+ * Packages an Iconset that already passed the CLI seam. There is
  * no build to run: the artifact is zipped straight from the files the seam
  * selected, with the same deterministic archiver `fluxta package` uses, so an
  * author can reproduce the published checksum locally. Each Iconset Preview
  * icon is also staged as its own file next to the artifact, to be uploaded as
- * an individual object the Marketplace can show before anything is installed
- * (ADR-0044).
+ * an individual object the Marketplace can show before anything is installed.
  */
 export async function buildIconsetArtifact(rootDir, sourcePackage, manifest, files) {
   const errors = [];

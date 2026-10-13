@@ -65,7 +65,7 @@ export async function buildAndValidatePluginArtifact(rootDir, sourcePackage, man
 /**
  * Stages the plugin's own `icon` from the Built Plugin Folder — where the CLI
  * seam just checked it — as an object beside the artifact, for its
- * Marketplace card (ADR-0047). `null` when the manifest names no icon;
+ * Marketplace card. `null` when the manifest names no icon;
  * `undefined` when staging failed, with the error recorded.
  */
 async function stagePluginIcon(rootDir, sourcePackage, builtFolder, manifest, errors) {
