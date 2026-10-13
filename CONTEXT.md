@@ -5,10 +5,12 @@ is reviewed, built into an artifact, published to the artifact store, and
 announced to the Plugin Registry. This glossary covers what happens to a
 package between a pull request and the Registry.
 
-Fluxta's own vocabulary — Plugin Source Package, Built Plugin Folder, Iconset,
-Iconset Preview, Package Type, Package Metadata, Package Validation Seam,
-Publication Preparation, Plugin Registry, Registry Listing, Recommended
-Version — is defined in the host's glossary and is not redefined here.
+Fluxta's own words — Marketplace, Iconset and its Iconset Preview (the
+manifest's `preview`), Package Metadata — mean what Fluxta's plugin docs say
+([Terminology](https://fluxta.app/docs/plugins/getting-started/terminology),
+[Iconsets](https://fluxta.app/docs/plugins/guides/iconsets),
+[manifest reference](https://fluxta.app/docs/plugins/reference/manifest)) and
+are not redefined here.
 
 ## Language
 
@@ -18,14 +20,15 @@ Version — is defined in the host's glossary and is not redefined here.
 This repository. Holds a copy of every published package's sources under
 `plugins/<id>/` or `iconsets/<id>/`, and is the only source the artifact store
 and the Plugin Registry are fed from.
-_Avoid_: Plugin Catalog (Fluxta's name for the desktop's local on-disk list of
-packages), marketplace (the in-app surface), registry, store.
+_Avoid_: registry (the Plugin Registry is fed from here), marketplace (the
+in-app surface), store.
 
 **Author Publish**:
 A package version arriving as a pull request that `fluxta publish` opened from
-its author's own Plugin Source Package (Fluxta ADR-0028, ADR-0034). Before
-opening it, `publish` merges the author's files against what this repository
-already holds, so a Trusted-Repo Migration made since is kept (ADR-0039).
+its author's own sources (see Fluxta's
+[Publishing](https://fluxta.app/docs/plugins/getting-started/publishing)
+guide). Before opening it, `publish` merges the author's files against what
+this repository already holds, so a Trusted-Repo Migration made since is kept.
 _Avoid_: upload, submission, release.
 
 **Trusted-Repo Migration**:
@@ -34,13 +37,17 @@ through their authors — most often a shared dependency bump across every
 plugin, which `scripts/migrate.mjs` runs through `@fluxta/cli`'s migration.
 Every package it touches gets its own version bump, and the change reaches the
 store through the same pull request CI and Publication as an Author Publish;
-the author's next `fluxta publish` merges it in rather than overwriting it
-(ADR-0039).
+the author's next `fluxta publish` merges it in rather than overwriting it.
 _Avoid_: hotfix, sync, patch.
 
 **Origin Marker**:
 A package's `.origin.json`: `author` when an Author Publish wrote it,
 `migration` when the migration tool did. Written by the CLI, never by hand.
+
+**Package Type**:
+Plugin or Iconset — decided by the directory a package lives in (`plugins/` or
+`iconsets/`); its manifest must say the same.
+_Avoid_: kind (a manifest kind is an Action or Event `type`).
 
 ### Ownership
 
@@ -58,7 +65,7 @@ _Avoid_: code owner, reviewer list.
 ### Publication
 
 **Plugin Artifact**:
-The zip of one plugin version's Built Plugin Folder, made by the CLI's
+The zip of one plugin version's build output (`dist/<id>/`), made by the CLI's
 deterministic archiver so `fluxta package` reproduces its checksum. An
 Iconset's artifact is zipped straight from its source files, with no build.
 Stored under an object key beside the package's own icon and, for an Iconset,
@@ -68,7 +75,7 @@ _Avoid_: bundle, package (the source tree), release asset.
 **Publication**:
 CI on `main` writing a merged package version's artifact and icons to the
 artifact store and recording it in the Publication Index. Only CI publishes;
-an author's `fluxta publish` is Publication Preparation.
+an author's `fluxta publish` only opens the pull request.
 _Avoid_: publish (the author's command), deploy, release.
 
 **Publication Index**:
@@ -91,8 +98,17 @@ _Avoid_: republish, overwrite.
 **Publication State**:
 A published version's status: `published`, `yanked`, or `unlisted`, set in a
 package's `publication-state.json`. A yanked or unlisted version stays in the
-Publication Index but is never a Recommended Version.
+Publication Index but is never offered for install in the Marketplace.
 _Avoid_: deleted, deprecated, hidden.
+
+### Outside this repository
+
+**Plugin Registry**:
+Fluxta's service the in-app Marketplace reads to learn which packages exist
+and where to get them. It mirrors the Publication Index this repository posts
+to it after every Publication; the artifact store, not the Registry, stays
+authoritative.
+_Avoid_: registry sync (that is the post), store, backend.
 
 ### CI
 

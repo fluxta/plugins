@@ -5,24 +5,19 @@ How the engineering skills should consume this repo's domain documentation when 
 ## Before exploring, read these
 
 - **`CONTEXT.md`** at the repo root — this repository's own glossary: what happens to a package between a pull request and the Plugin Registry.
-- **Fluxta's glossary and ADRs.** Fluxta owns the package model this repository conforms to (Plugin Source Package, Built Plugin Folder, Iconset, Package Type, Package Metadata, Package Validation Seam, Publication Preparation, Plugin Registry, Registry Listing, Recommended Version …) and every decision about it. They live in the private repository `fluxta/fluxta`: [`CONTEXT.md`](https://github.com/fluxta/fluxta/blob/main/CONTEXT.md) and [`docs/adr/`](https://github.com/fluxta/fluxta/tree/main/docs/adr). Read one with `gh api repos/fluxta/fluxta/contents/<path> -H "Accept: application/vnd.github.raw"`; list the ADRs with `gh api repos/fluxta/fluxta/contents/docs/adr --jq '.[].name'`.
-- **The installed CLI** — `node_modules/@fluxta/cli/dist/` holds the Package Validation Seam this repository imports, at the version `package.json` pins.
+- **Fluxta's plugin docs** at [fluxta.app/docs/plugins](https://fluxta.app/docs/plugins) — what authors are told about the packages that arrive here. Fluxta owns the package format and every rule about a single package.
+- **The installed CLI** — `node_modules/@fluxta/cli/dist/` holds the validation this repository imports, at the version `package.json` pins. Where the docs and the CLI disagree, the CLI is what CI actually runs.
 
-If any of these files don't exist, or you have no access to `fluxta/fluxta`, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill creates this repo's own docs lazily when terms or decisions actually get resolved.
+If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill creates this repo's own docs lazily when terms or decisions actually get resolved.
 
-### Fluxta ADRs that shape this repository
+### Fluxta pages that shape this repository
 
-- ADR-0027 — Package Metadata lives in the manifest; the CLI owns trusted tooling
-- ADR-0028 — `fluxta publish` opens a pull request via local git
-- ADR-0032 — the Marketplace reads a Plugin Registry service
-- ADR-0034 — `fluxta publish` forks the trusted repository
-- ADR-0035 — `fluxta publish` selects files by a fixed package-structure allowlist
-- ADR-0039 — `fluxta publish` merges against the trusted repository; Trusted-Repo Migrations
-- ADR-0043 — an Iconset is a Package Type in the plugin pipeline
-- ADR-0044 — Iconset Previews are served from the CDN
-- ADR-0046 — Package Types share one lifecycle, link and error model
-- ADR-0047 — plugin icons are served from the CDN
-- ADR-0051 — plugins declare their platforms and categories
+- [Publishing](https://fluxta.app/docs/plugins/getting-started/publishing) — how a package reaches this repository and what happens after merge
+- [Manifest](https://fluxta.app/docs/plugins/reference/manifest) — every field, Package Metadata, and the naming rule for kinds and keys
+- [Iconsets](https://fluxta.app/docs/plugins/guides/iconsets) — the Iconset package, its `preview` and `color`
+- [CLI](https://fluxta.app/docs/plugins/reference/cli) — `fluxta publish`, `fluxta package` and the other commands authors run
+- [Versioning](https://fluxta.app/docs/plugins/reference/versioning) — how package versions and `minAppVersion` are read
+- [Terminology](https://fluxta.app/docs/plugins/getting-started/terminology) — Fluxta's words, as authors meet them
 
 ## File structure
 
@@ -39,20 +34,20 @@ Single-context repo:
 
 - A term this repository owns → `CONTEXT.md` here.
 - A decision about how this repository validates, builds or publishes → `docs/adr/` here.
-- A term or decision about the package model, `fluxta publish` or the Plugin Registry belongs to Fluxta: open an issue in `fluxta/fluxta` (see `docs/agents/issue-tracker.md`).
+- Anything about the package format, `fluxta publish` or the Plugin Registry belongs to Fluxta: record it in an issue here, labelled `ready-for-human` (see `docs/agents/issue-tracker.md`).
 
 ## Use the glossary's vocabulary
 
-When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`, or in Fluxta's glossary for the host's terms. Don't drift to synonyms the glossaries explicitly avoid.
+When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`, or as Fluxta's docs use it for Fluxta's words. Don't drift to synonyms the glossary explicitly avoids.
 
-Key terms from `CONTEXT.md`: **Trusted Repository**, **Author Publish**, **Trusted-Repo Migration**, **Origin Marker**, **Package Maintainers**, **Ownership Entry**, **Plugin Artifact**, **Publication**, **Publication Index**, **Immutable Version**, **Publication State**, **Build Snapshot**, **Build Scope**.
+Key terms from `CONTEXT.md`: **Trusted Repository**, **Author Publish**, **Trusted-Repo Migration**, **Origin Marker**, **Package Type**, **Package Maintainers**, **Ownership Entry**, **Plugin Artifact**, **Publication**, **Publication Index**, **Immutable Version**, **Publication State**, **Plugin Registry**, **Build Snapshot**, **Build Scope**.
 
-Watch the collisions with Fluxta's glossary: Fluxta's **Plugin Catalog** is the desktop's local on-disk list of packages, not this repository; and **Publication** is what CI does here after merge, while an author's `fluxta publish` is Fluxta's **Publication Preparation**.
+Watch the collision: **Publication** is what CI does here after merge; an author's `fluxta publish` only opens the pull request.
 
 If the concept you need isn't in the glossary yet, that's a signal — either you're inventing language the project doesn't use (reconsider) or there's a real gap (note it for `/domain-modeling`).
 
-## Flag ADR conflicts
+## Flag conflicts
 
-If your output contradicts an existing ADR — this repo's or Fluxta's — surface it explicitly rather than silently overriding:
+If your output contradicts an ADR of this repo, or a rule in Fluxta's plugin docs, surface it explicitly rather than silently overriding:
 
-> _Contradicts Fluxta ADR-0039 (publish-merges-against-the-trusted-repository-instead-of-overwriting-it) — but worth reopening because…_
+> _Contradicts the Immutable Version rule — but worth reopening because…_

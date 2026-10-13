@@ -6,7 +6,7 @@ This document provides instructions for agentic coding agents working in this re
 
 This is Fluxta's **Trusted Repository**: the one place a [Fluxta](https://fluxta.app) plugin or Iconset becomes installable. Packages arrive here as pull requests — an author's `fluxta publish` (an Author Publish) or Fluxta's own Trusted-Repo Migration. Pull request CI validates and builds them without credentials; after merge, CI on `main` builds every changed package into a Plugin Artifact, writes it to the artifact store (Cloudflare R2) together with the Publication Index, and syncs that index to the Plugin Registry the desktop reads. Terms are in `CONTEXT.md`.
 
-The repository's own code is plain Node.js ESM scripts with no build step. What makes a single package valid — manifest shape, Package Metadata, SemVer, the build contract, Built Plugin Folder checks, the deterministic zip — is not decided here: it is `@fluxta/cli`'s Package Validation Seam, which these scripts import.
+The repository's own code is plain Node.js ESM scripts with no build step. What makes a single package valid — manifest shape, Package Metadata, SemVer, the build contract, build-output checks, the deterministic zip — is not decided here: `@fluxta/cli` decides it, and these scripts import its validation. The rules authors see are in Fluxta's [manifest reference](https://fluxta.app/docs/plugins/reference/manifest) and [Publishing](https://fluxta.app/docs/plugins/getting-started/publishing) guide.
 
 ## Commands
 
@@ -53,7 +53,7 @@ Run a migration only when the user asks for one, and add `--push` / `--open-pr` 
 ## Architecture
 
 ```
-plugins/<id>/          one Plugin Source Package per directory — its own pnpm workspace, copied here by publish
+plugins/<id>/          one plugin's sources per directory — its own pnpm workspace, copied here by publish
 iconsets/<id>/         one Iconset per directory
 scripts/
   plugins.mjs          validate | build | publish: the repository side of the seam
@@ -61,7 +61,7 @@ scripts/
   changed-plugins.mjs  push CI: the packages a push changed (every one, when scripts/ or the root config changed)
   registry-sync.mjs    posts the Publication Index to the Plugin Registry; never fails a publication
   migrate.mjs          a Trusted-Repo Migration across plugins/*
-  cli-validation.mjs   the adapter over @fluxta/cli's Package Validation Seam
+  cli-validation.mjs   the adapter over @fluxta/cli's validation
   publisher.mjs        the artifact store: `fake` (a local directory) or `r2`
   process.mjs          child processes that always resolve
   lib/                 the seam itself: validate, build, iconset-build, build-snapshot, publish,
@@ -75,7 +75,7 @@ tests/                 node:test suites; helpers.mjs builds throwaway checkouts 
 
 ### The split with `@fluxta/cli`
 
-The CLI owns everything true of one package in isolation; this repository owns everything only the repository knows — discovering packages, CODEOWNERS ownership, running each build, immutability against what is already published, the Publication Index and the artifact store. A rule about a single package belongs in Fluxta's CLI, not in `scripts/`: open an issue in `fluxta/fluxta`, and adopt the new CLI here once it is released.
+The CLI owns everything true of one package in isolation; this repository owns everything only the repository knows — discovering packages, CODEOWNERS ownership, running each build, immutability against what is already published, the Publication Index and the artifact store. A rule about a single package belongs in Fluxta's CLI, not in `scripts/`: record the need in an issue here labelled `ready-for-human` (see `docs/agents/issue-tracker.md`), and adopt the new CLI here once a release provides it.
 
 ### Build, then publish
 
@@ -83,14 +83,14 @@ On `main`, the build job runs package-owned code (each package's `pnpm install` 
 
 ## Key Conventions
 
-- **`plugins/<id>/` and `iconsets/<id>/` are not edited like the rest of the repo.** A package changes through an Author Publish (a `fluxta publish` pull request from its author) or a Trusted-Repo Migration — a change Fluxta itself makes to published packages, in which every touched package bumps its own version (Fluxta ADR-0039). A dependency bump across packages runs through `scripts/migrate.mjs`; any other migration is the user's call. Never touch a package directory as a side effect of other work. Its `.origin.json` (`author` or `migration`) is written by the CLI.
+- **`plugins/<id>/` and `iconsets/<id>/` are not edited like the rest of the repo.** A package changes through an Author Publish (a `fluxta publish` pull request from its author) or a Trusted-Repo Migration — a change Fluxta itself makes to published packages, in which every touched package bumps its own version; the author's next `fluxta publish` merges it in rather than overwriting it. A dependency bump across packages runs through `scripts/migrate.mjs`; any other migration is the user's call. Never touch a package directory as a side effect of other work. Its `.origin.json` (`author` or `migration`) is written by the CLI.
 - **A published version is immutable.** Its artifact and icons are never overwritten; publication refuses a conflicting object before uploading anything, and identical bytes are a no-op. A change ships as a new version. To withdraw one, mark it `yanked` or `unlisted` in the package's `publication-state.json` — never delete it from the index.
 - **Every package needs an ownership entry.** `.github/CODEOWNERS` must have a line for exactly `/plugins/<id>/` or `/iconsets/<id>/` naming exactly the package's declared `maintainers`. Wildcards and the default `*` entry do not count.
 - **The Publication Index's bytes are part of its contract.** It is compared by checksum, so entries are built in a canonical key order (`lib/publication-index.mjs`) and an unchanged index is never rewritten. A version published before a field existed keeps its entry byte-for-byte rather than gaining `null`s.
 - **Machine-readable results.** `plugins.mjs`, `changed-plugins.mjs` and `migrate.mjs` report `--json`; a validation failure is a structured error with a `code`, a `package` and a `field` (`packageError` in `lib/shared.mjs`), never a bare throw. Tests assert on those codes (`errorCodes` in `tests/helpers.mjs`).
-- **Package Types live where they live.** A package's type is decided by its directory (`plugins/` or `iconsets/`, Fluxta ADR-0043), and its manifest must agree.
+- **Package Types live where they live.** A package's type is decided by its directory (`plugins/` or `iconsets/`), and its manifest must agree.
 - **Tests**: `node:test` with `node:assert/strict`, one suite per behaviour in `tests/`. Build a throwaway checkout with the helpers (`withTempDir`, `writeManifest`, `writeCodeowners`, `writeBuildContract` …), run the real script with `runCli` / `runPrValidate` / `runMigrate`, and assert on its JSON output.
-- **Style**: ESM `.mjs`, Node built-ins only beyond `@fluxta/cli` — no new dependencies. Comments say why, and use the capitalized terms of `CONTEXT.md` and Fluxta's glossary.
+- **Style**: ESM `.mjs`, Node built-ins only beyond `@fluxta/cli` — no new dependencies. Comments say why, and use the capitalized terms of `CONTEXT.md` and Fluxta's [Terminology](https://fluxta.app/docs/plugins/getting-started/terminology).
 - **Adopting a new `@fluxta/cli`**: bump it in `package.json`, add the exact version to `minimumReleaseAgeExclude` in `pnpm-workspace.yaml` (pnpm refuses a release younger than its minimum age otherwise), `pnpm install`, and commit all three together.
 
 ## Commits
@@ -102,4 +102,4 @@ On `main`, the build job runs package-owned code (each package's `pnpm install` 
 
 - Issues: GitHub Issues at `fluxta/plugins`. See `docs/agents/issue-tracker.md`.
 - Triage labels: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `wontfix`. See `docs/agents/triage-labels.md`.
-- Domain: `CONTEXT.md`, plus Fluxta's glossary and ADRs. See `docs/agents/domain.md`.
+- Domain: `CONTEXT.md`, plus Fluxta's plugin docs. See `docs/agents/domain.md`.
