@@ -6,7 +6,7 @@ How the engineering skills should consume this repo's domain documentation when 
 
 - **`CONTEXT.md`** at the repo root — this repository's own glossary: what happens to a package between a pull request and the Plugin Registry.
 - **Fluxta's plugin docs** at [fluxta.app/docs/plugins](https://fluxta.app/docs/plugins) — what authors are told about the packages that arrive here. Fluxta owns the package format and every rule about a single package.
-- **The installed CLI** — `node_modules/@fluxta/cli/dist/` holds the validation this repository imports, at the version `package.json` pins. Where the docs and the CLI disagree, the CLI is what CI actually runs.
+- **The installed CLI** — `node_modules/@fluxta/cli/dist/` holds the Package Validation Seam this repository imports, at the version `package.json` pins. Where the docs and the CLI disagree, the CLI is what CI actually runs.
 
 If any of these files don't exist, **proceed silently**. Don't flag their absence; don't suggest creating them upfront. The `/domain-modeling` skill creates this repo's own docs lazily when terms or decisions actually get resolved.
 
@@ -40,7 +40,7 @@ Single-context repo:
 
 When your output names a domain concept (in an issue title, a refactor proposal, a hypothesis, a test name), use the term as defined in `CONTEXT.md`, or as Fluxta's docs use it for Fluxta's words. Don't drift to synonyms the glossary explicitly avoids.
 
-Key terms from `CONTEXT.md`: **Trusted Repository**, **Author Publish**, **Trusted-Repo Migration**, **Origin Marker**, **Package Type**, **Package Maintainers**, **Ownership Entry**, **Plugin Artifact**, **Publication**, **Publication Index**, **Immutable Version**, **Publication State**, **Plugin Registry**, **Build Snapshot**, **Build Scope**.
+Key terms from `CONTEXT.md`: **Plugin Source Package**, **Built Plugin Folder**, **Package Type**, **Package Validation Seam**, **Trusted Repository**, **Author Publish**, **Trusted-Repo Migration**, **Origin Marker**, **Package Maintainers**, **Ownership Entry**, **Plugin Artifact**, **Publication**, **Publication Index**, **Immutable Version**, **Publication State**, **Plugin Registry**, **Build Snapshot**, **Build Scope**.
 
 Watch the collision: **Publication** is what CI does here after merge; an author's `fluxta publish` only opens the pull request.
 

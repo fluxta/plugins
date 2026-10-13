@@ -15,7 +15,7 @@ Infer the repo from `git remote -v` — `gh` does this automatically when run in
 
 ## Issues that belong elsewhere
 
-- **A rule about a single package** (manifest shape, Package Metadata, the build contract, build-output checks), **`fluxta publish`** or **the Plugin Registry** belongs to Fluxta, not to this repo. Keep the issue here: say in its body what is needed from Fluxta and why, apply `ready-for-human`, and do not reimplement the rule in `scripts/`. A person takes it to Fluxta; the issue continues once a released `@fluxta/cli` provides it.
+- **A rule about a single package** (manifest shape, Package Metadata, the build contract, Built Plugin Folder checks — the Package Validation Seam), **`fluxta publish`** or **the Plugin Registry** belongs to Fluxta, not to this repo. Keep the issue here: say in its body what is needed from Fluxta and why, apply `ready-for-human`, and do not reimplement the rule in `scripts/`. A person takes it to Fluxta; the issue continues once a released `@fluxta/cli` provides it.
 - **A bug in a published plugin or Iconset** belongs to that package's own repository — its manifest's `repository` field. A fix reaches this repo as its next Author Publish.
 
 Always write the full `owner/repo#<n>` for an issue outside this repo — a bare `#<n>` means this repo.

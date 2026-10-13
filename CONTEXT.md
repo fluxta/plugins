@@ -14,6 +14,44 @@ are not redefined here.
 
 ## Language
 
+### Packages
+
+**Plugin Source Package**:
+One plugin's sources as its author edits and builds them: a pnpm workspace with
+`manifest.json` at its root, whose own `build` script produces its Built Plugin
+Folder. `plugins/<id>/` holds a copy of one, as its last Author Publish or
+Trusted-Repo Migration left it.
+_Avoid_: Plugin Artifact (the zip built from it), plugin repository (the
+author's repository may hold more than the package).
+
+**Built Plugin Folder**:
+`dist/<id>/` — what a Plugin Source Package's build produces and Fluxta loads:
+`manifest.json` and every runtime asset it names. The Package Validation Seam
+checks it, then zips it into the Plugin Artifact.
+_Avoid_: dist (the directory, not what it must contain), build output, Plugin
+Artifact (the zip).
+
+**Package Type**:
+Plugin or Iconset — decided by the directory a package lives in (`plugins/` or
+`iconsets/`); its manifest must say the same.
+_Avoid_: kind (a manifest kind is an Action or Event `type`).
+
+### Validation
+
+**Package Validation Seam**:
+The validation `@fluxta/cli` exports and this repository imports
+(`scripts/cli-validation.mjs`): everything true of one package in isolation —
+manifest shape, package id, Package Metadata, SemVer, the build contract,
+Built Plugin Folder checks, the deterministic zip. It is the single source of
+truth for whether a package is publishable, so an author's `fluxta validate` /
+`fluxta publish` and this repository's CI cannot drift. Around it, this
+repository runs its own **repository validation seam** (`scripts/plugins.mjs
+validate`, `scripts/pr-validate.mjs`) for what only it knows: discovering
+packages, ownership, running each build, immutability against the Publication
+Index.
+_Avoid_: validator, CI rules, Plugin Package Validation Seam (the name from
+before Iconsets shared it).
+
 ### The repository
 
 **Trusted Repository**:
@@ -25,7 +63,7 @@ in-app surface), store.
 
 **Author Publish**:
 A package version arriving as a pull request that `fluxta publish` opened from
-its author's own sources (see Fluxta's
+its author's Plugin Source Package (see Fluxta's
 [Publishing](https://fluxta.app/docs/plugins/getting-started/publishing)
 guide). Before opening it, `publish` merges the author's files against what
 this repository already holds, so a Trusted-Repo Migration made since is kept.
@@ -44,11 +82,6 @@ _Avoid_: hotfix, sync, patch.
 A package's `.origin.json`: `author` when an Author Publish wrote it,
 `migration` when the migration tool did. Written by the CLI, never by hand.
 
-**Package Type**:
-Plugin or Iconset — decided by the directory a package lives in (`plugins/` or
-`iconsets/`); its manifest must say the same.
-_Avoid_: kind (a manifest kind is an Action or Event `type`).
-
 ### Ownership
 
 **Package Maintainers**:
@@ -65,12 +98,12 @@ _Avoid_: code owner, reviewer list.
 ### Publication
 
 **Plugin Artifact**:
-The zip of one plugin version's build output (`dist/<id>/`), made by the CLI's
+The zip of one plugin version's Built Plugin Folder, made by the CLI's
 deterministic archiver so `fluxta package` reproduces its checksum. An
 Iconset's artifact is zipped straight from its source files, with no build.
 Stored under an object key beside the package's own icon and, for an Iconset,
 its Iconset Preview icons.
-_Avoid_: bundle, package (the source tree), release asset.
+_Avoid_: bundle, package (the Plugin Source Package), release asset.
 
 **Publication**:
 CI on `main` writing a merged package version's artifact and icons to the

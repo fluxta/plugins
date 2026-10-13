@@ -6,7 +6,7 @@ This document provides instructions for agentic coding agents working in this re
 
 This is Fluxta's **Trusted Repository**: the one place a [Fluxta](https://fluxta.app) plugin or Iconset becomes installable. Packages arrive here as pull requests — an author's `fluxta publish` (an Author Publish) or Fluxta's own Trusted-Repo Migration. Pull request CI validates and builds them without credentials; after merge, CI on `main` builds every changed package into a Plugin Artifact, writes it to the artifact store (Cloudflare R2) together with the Publication Index, and syncs that index to the Plugin Registry the desktop reads. Terms are in `CONTEXT.md`.
 
-The repository's own code is plain Node.js ESM scripts with no build step. What makes a single package valid — manifest shape, Package Metadata, SemVer, the build contract, build-output checks, the deterministic zip — is not decided here: `@fluxta/cli` decides it, and these scripts import its validation. The rules authors see are in Fluxta's [manifest reference](https://fluxta.app/docs/plugins/reference/manifest) and [Publishing](https://fluxta.app/docs/plugins/getting-started/publishing) guide.
+The repository's own code is plain Node.js ESM scripts with no build step. What makes a single package valid — manifest shape, Package Metadata, SemVer, the build contract, Built Plugin Folder checks, the deterministic zip — is not decided here: it is `@fluxta/cli`'s Package Validation Seam, which these scripts import. The rules authors see are in Fluxta's [manifest reference](https://fluxta.app/docs/plugins/reference/manifest) and [Publishing](https://fluxta.app/docs/plugins/getting-started/publishing) guide.
 
 ## Commands
 
@@ -53,7 +53,7 @@ Run a migration only when the user asks for one, and add `--push` / `--open-pr` 
 ## Architecture
 
 ```
-plugins/<id>/          one plugin's sources per directory — its own pnpm workspace, copied here by publish
+plugins/<id>/          one Plugin Source Package per directory — its own pnpm workspace, copied here by publish
 iconsets/<id>/         one Iconset per directory
 scripts/
   plugins.mjs          validate | build | publish: the repository side of the seam
@@ -61,7 +61,7 @@ scripts/
   changed-plugins.mjs  push CI: the packages a push changed (every one, when scripts/ or the root config changed)
   registry-sync.mjs    posts the Publication Index to the Plugin Registry; never fails a publication
   migrate.mjs          a Trusted-Repo Migration across plugins/*
-  cli-validation.mjs   the adapter over @fluxta/cli's validation
+  cli-validation.mjs   the adapter over @fluxta/cli's Package Validation Seam
   publisher.mjs        the artifact store: `fake` (a local directory) or `r2`
   process.mjs          child processes that always resolve
   lib/                 the seam itself: validate, build, iconset-build, build-snapshot, publish,
