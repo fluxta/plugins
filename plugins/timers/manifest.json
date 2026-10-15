@@ -1,0 +1,235 @@
+{
+  "name": "timers",
+  "title": "Timers",
+  "description": "Countdown timers that fire Events, and stopwatches that count across pauses",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/inferst/fluxta-timers",
+  "repository": "https://github.com/inferst/fluxta-timers",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.9.0",
+  "platforms": ["windows", "macos", "linux"],
+  "categories": ["utilities", "streaming"],
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "icon": "icons/timer.svg",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "settings",
+  "actions": [
+    {
+      "name": "Start Timer",
+      "type": "start-timer",
+      "icon": "icons/hourglass.svg",
+      "context": "standalone",
+      "editor": "editor/start-timer.html"
+    },
+    {
+      "name": "Cancel Timer",
+      "type": "cancel-timer",
+      "icon": "icons/timer-off.svg",
+      "context": "standalone",
+      "editor": "editor/timer.html"
+    },
+    {
+      "name": "Add Time",
+      "type": "add-time",
+      "icon": "icons/alarm-clock-plus.svg",
+      "context": "standalone",
+      "editor": "editor/add-time.html"
+    },
+    {
+      "name": "Start Stopwatch",
+      "type": "start-stopwatch",
+      "icon": "icons/play.svg",
+      "context": "standalone",
+      "editor": "editor/stopwatch.html"
+    },
+    {
+      "name": "Pause Stopwatch",
+      "type": "pause-stopwatch",
+      "icon": "icons/pause.svg",
+      "context": "standalone",
+      "editor": "editor/stopwatch.html",
+      "produces": [
+        {
+          "key": "elapsed",
+          "name": "Elapsed",
+          "type": "string"
+        },
+        {
+          "key": "hours",
+          "name": "Hours",
+          "type": "number"
+        },
+        {
+          "key": "minutes",
+          "name": "Minutes (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "seconds",
+          "name": "Seconds (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "totalSeconds",
+          "name": "Total Seconds",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Reset Stopwatch",
+      "type": "reset-stopwatch",
+      "icon": "icons/timer-reset.svg",
+      "context": "standalone",
+      "editor": "editor/stopwatch.html",
+      "produces": [
+        {
+          "key": "elapsed",
+          "name": "Elapsed",
+          "type": "string"
+        },
+        {
+          "key": "hours",
+          "name": "Hours",
+          "type": "number"
+        },
+        {
+          "key": "minutes",
+          "name": "Minutes (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "seconds",
+          "name": "Seconds (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "totalSeconds",
+          "name": "Total Seconds",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Read Stopwatch",
+      "type": "read-stopwatch",
+      "icon": "icons/clock.svg",
+      "context": "standalone",
+      "editor": "editor/stopwatch.html",
+      "produces": [
+        {
+          "key": "elapsed",
+          "name": "Elapsed",
+          "type": "string"
+        },
+        {
+          "key": "hours",
+          "name": "Hours",
+          "type": "number"
+        },
+        {
+          "key": "minutes",
+          "name": "Minutes (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "seconds",
+          "name": "Seconds (0–59)",
+          "type": "number"
+        },
+        {
+          "key": "totalSeconds",
+          "name": "Total Seconds",
+          "type": "number"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "key": "timerState",
+      "name": "Timer State",
+      "type": "string",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "timer",
+          "name": "Timer",
+          "editor": "select",
+          "options": "timers"
+        }
+      ],
+      "operand": {
+        "editor": "select",
+        "options": "timerStates"
+      }
+    },
+    {
+      "key": "remainingSeconds",
+      "name": "Timer Remaining Seconds",
+      "type": "number",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "timer",
+          "name": "Timer",
+          "editor": "select",
+          "options": "timers"
+        }
+      ]
+    },
+    {
+      "key": "stopwatchState",
+      "name": "Stopwatch State",
+      "type": "string",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "stopwatch",
+          "name": "Stopwatch",
+          "editor": "select",
+          "options": "stopwatches"
+        }
+      ],
+      "operand": {
+        "editor": "select",
+        "options": "stopwatchStates"
+      }
+    }
+  ],
+  "events": [
+    {
+      "type": "timer-elapsed",
+      "name": "Timer Elapsed",
+      "fields": [
+        {
+          "key": "timer",
+          "name": "Timer",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "timers"
+          }
+        },
+        {
+          "key": "count",
+          "name": "Count",
+          "type": "number"
+        },
+        {
+          "key": "lateSeconds",
+          "name": "Seconds Late",
+          "type": "number"
+        },
+        {
+          "key": "missed",
+          "name": "Missed",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}
