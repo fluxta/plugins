@@ -1,0 +1,59 @@
+{
+  "name": "tts",
+  "title": "Text to Speech",
+  "description": "Reads chat and deck text aloud with this computer's voices",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/inferst/fluxta-tts",
+  "repository": "https://github.com/inferst/fluxta-tts",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.9.0",
+  "platforms": ["windows", "macos"],
+  "categories": ["streaming", "audio"],
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "icon": "icons/speech.svg",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "settings",
+  "actions": [
+    {
+      "name": "Speak",
+      "type": "speak",
+      "icon": "icons/audio-lines.svg",
+      "context": "standalone",
+      "editor": "editor/speak.html"
+    },
+    {
+      "name": "Stop Speech",
+      "type": "stop-speech",
+      "icon": "icons/volume-off.svg",
+      "context": "standalone",
+      "editor": "editor/stop-speech.html"
+    }
+  ],
+  "sources": [
+    {
+      "key": "speaking",
+      "name": "Speaking",
+      "type": "boolean",
+      "resolve": "query"
+    },
+    {
+      "key": "waiting",
+      "name": "Phrases Waiting",
+      "type": "number",
+      "resolve": "query"
+    }
+  ],
+  "events": [
+    {
+      "type": "phrase-started",
+      "name": "Phrase Started"
+    },
+    {
+      "type": "phrase-finished",
+      "name": "Phrase Finished"
+    }
+  ]
+}
