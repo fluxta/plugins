@@ -1,0 +1,427 @@
+// The macOS Player's engine: AVAudioEngine driven from a long-lived
+// `osascript -l JavaScript`. Requests arrive as JSON lines on stdin (ASCII
+// only — the sidecar escapes everything else), answers leave as JSON lines on
+// stdout; stderr is the plugin's log.
+//
+// It rests on undocumented JXA behaviour: a JS function passed where an
+// Objective-C block is expected (a player node's completion handler, the
+// stdin observer) is called as that block, on this thread, when the run loop
+// below yields.
+
+ObjC.import("Foundation");
+ObjC.import("AVFoundation");
+ObjC.import("CoreAudio");
+ObjC.import("stdlib");
+
+const stdout = $.NSFileHandle.fileHandleWithStandardOutput;
+const stdin = $.NSFileHandle.fileHandleWithStandardInput;
+const center = $.NSNotificationCenter.defaultCenter;
+
+function send(message) {
+  stdout.writeData(
+    $(JSON.stringify(message) + "\n").dataUsingEncoding($.NSUTF8StringEncoding),
+  );
+}
+
+function fail(id, kind, reason) {
+  send({ id: id, error: { kind: kind, reason: reason } });
+}
+
+// ---- Core Audio devices ----------------------------------------------------
+//
+// Core Audio has no Objective-C API for its devices, and JXA cannot call its
+// C functions as BridgeSupport declares them: a struct pointer crashes
+// osascript. Rebound with plain pointers they work. A property's address and
+// sizes are UInt32s in an NSMutableData; numbers come back through base64,
+// strings through a Ref.
+
+ObjC.bindFunction("AudioObjectGetPropertyDataSize",
+  ["int", ["unsigned int", "pointer", "unsigned int", "pointer", "pointer"]]);
+ObjC.bindFunction("AudioObjectGetPropertyData",
+  ["int", ["unsigned int", "pointer", "unsigned int", "pointer", "pointer", "pointer"]]);
+
+function fourCharCode(chars) {
+  return ((chars.charCodeAt(0) << 24) | (chars.charCodeAt(1) << 16) |
+    (chars.charCodeAt(2) << 8) | chars.charCodeAt(3)) >>> 0;
+}
+
+const SYSTEM_OBJECT = 1;
+const SCOPE_GLOBAL = fourCharCode("glob");
+const SCOPE_OUTPUT = fourCharCode("outp");
+const ELEMENT_MAIN = 0;
+
+// JXA has neither btoa nor atob.
+const BASE64 = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+function base64Of(bytes) {
+  let text = "";
+  for (let i = 0; i < bytes.length; i += 3) {
+    const bits = (bytes[i] << 16) | ((bytes[i + 1] || 0) << 8) | (bytes[i + 2] || 0);
+    text += BASE64[(bits >> 18) & 63] + BASE64[(bits >> 12) & 63] +
+      (i + 1 < bytes.length ? BASE64[(bits >> 6) & 63] : "=") +
+      (i + 2 < bytes.length ? BASE64[bits & 63] : "=");
+  }
+  return text;
+}
+
+function bytesOf(text) {
+  const bytes = [];
+  let bits = 0;
+  let pending = 0;
+  for (let i = 0; i < text.length && text[i] !== "="; i++) {
+    pending = ((pending << 6) | BASE64.indexOf(text[i])) & 0xffffff;
+    bits += 6;
+    if (bits >= 8) {
+      bits -= 8;
+      bytes.push((pending >> bits) & 255);
+    }
+  }
+  return bytes;
+}
+
+/** Little-endian UInt32s, as Core Audio reads them. */
+function uint32Data(values) {
+  const bytes = [];
+  for (let i = 0; i < values.length; i++) {
+    for (let shift = 0; shift < 32; shift += 8) bytes.push((values[i] >>> shift) & 255);
+  }
+  return $.NSMutableData.alloc.initWithBase64EncodedStringOptions(base64Of(bytes), 0);
+}
+
+function uint32sOf(data, count) {
+  const bytes = bytesOf(data.base64EncodedStringWithOptions(0).js);
+  const values = [];
+  for (let i = 0; i < count; i++) {
+    values.push((bytes[i * 4] | (bytes[i * 4 + 1] << 8) |
+      (bytes[i * 4 + 2] << 16) | (bytes[i * 4 + 3] << 24)) >>> 0);
+  }
+  return values;
+}
+
+function address(selector, scope) {
+  return uint32Data([fourCharCode(selector), scope, ELEMENT_MAIN]);
+}
+
+// Built once: the default output is read every few passes while playing.
+const DEVICES = address("dev#", SCOPE_GLOBAL);
+const DEFAULT_OUTPUT = address("dOut", SCOPE_GLOBAL);
+const TRANSLATE_UID = address("uidd", SCOPE_GLOBAL);
+const NAME = address("lnam", SCOPE_GLOBAL);
+const UID = address("uid ", SCOPE_GLOBAL);
+const OUTPUT_STREAMS = address("stm#", SCOPE_OUTPUT);
+
+/** The size of a property in bytes, or 0 when the object has none. */
+function propertySize(object, property) {
+  const size = uint32Data([0]);
+  const status = $.AudioObjectGetPropertyDataSize(
+    object, property.mutableBytes, 0, $(), size.mutableBytes);
+  return status === 0 ? uint32sOf(size, 1)[0] : 0;
+}
+
+/** `count` UInt32s of a property, or null when it cannot be read. */
+function uint32Property(object, property, count, qualifier) {
+  const size = uint32Data([count * 4]);
+  const data = $.NSMutableData.dataWithLength(count * 4);
+  const status = $.AudioObjectGetPropertyData(
+    object, property.mutableBytes,
+    qualifier ? 8 : 0, qualifier || $(),
+    size.mutableBytes, data.mutableBytes);
+  return status === 0 ? uint32sOf(data, uint32sOf(size, 1)[0] / 4) : null;
+}
+
+function stringProperty(object, property) {
+  const size = uint32Data([8]);
+  const value = Ref("id");
+  const status = $.AudioObjectGetPropertyData(
+    object, property.mutableBytes, 0, $(), size.mutableBytes, value);
+  return status === 0 ? ObjC.unwrap(value[0]) : null;
+}
+
+/** The OS's default output's AudioDeviceID, 0 when there is none. */
+function defaultOutput() {
+  const values = uint32Property(SYSTEM_OBJECT, DEFAULT_OUTPUT, 1);
+  return values ? values[0] : 0;
+}
+
+/**
+ * The AudioDeviceID of the device with this UID, 0 when it is not here. The
+ * UID is what persists across boots and re-plugging; an AudioDeviceID is a
+ * runtime object id.
+ */
+function deviceWithUid(uid) {
+  const qualifier = Ref("id");
+  qualifier[0] = $(uid);
+  const values = uint32Property(SYSTEM_OBJECT, TRANSLATE_UID, 1, qualifier);
+  return values ? values[0] : 0;
+}
+
+// Every device that can play, in Core Audio's order and under Core Audio's
+// names: the host lists the same for Play Sound, also one entry per name.
+function devices(id) {
+  const all = uint32Property(SYSTEM_OBJECT, DEVICES, propertySize(SYSTEM_OBJECT, DEVICES) / 4) || [];
+  const preferred = defaultOutput();
+  const names = new Set();
+  const list = [];
+  for (let i = 0; i < all.length; i++) {
+    if (propertySize(all[i], OUTPUT_STREAMS) === 0) continue;
+    const name = stringProperty(all[i], NAME);
+    const uid = stringProperty(all[i], UID);
+    if (name === null || uid === null || names.has(name)) continue;
+    names.add(name);
+    const entry = { id: uid, name: name };
+    if (all[i] === preferred) entry.isDefault = true;
+    list.push(entry);
+  }
+  send({ id: id, devices: list });
+}
+
+// ---- Playing ---------------------------------------------------------------
+
+// An engine left running renders silence and holds the device, so it stops
+// once nothing has played on it for a while — as the host's own audio does.
+const IDLE_SECONDS = 10;
+
+// How often a play on the default output checks that it still is the default.
+const DEFAULT_CHECK_MS = 20;
+
+// One engine per output device, by AudioDeviceID: { engine, device, idleSince }.
+const outputs = new Map();
+// Plays under way, by request id: { node, output, uid, named, done }; `uid`
+// is absent for a play on the default output.
+const plays = new Map();
+// Nodes to detach once their completion handler has returned: { engine, node }.
+const finished = [];
+let defaultCheckedAt = 0;
+
+/** The engine that plays on `device`, or null when it cannot be set to it. */
+function outputOn(device) {
+  let output = outputs.get(device);
+  if (output && lost(output)) {
+    discard(output);
+    output = undefined;
+  }
+  if (output) return output;
+  const engine = $.AVAudioEngine.alloc.init;
+  const unit = engine.outputNode.AUAudioUnit;
+  if (!unit.setDeviceIDError(device, $()) || Number(unit.deviceID) !== device) {
+    return null;
+  }
+  output = { engine: engine, device: device, idleSince: Date.now() };
+  outputs.set(device, output);
+  return output;
+}
+
+// An engine whose device went away moves to the default output by itself —
+// the speakers, possibly the stream — and then stops. What was playing never
+// completes, or completes at once as if it had ended. Measured with a device
+// destroyed mid-play: nothing more was rendered after the move, and the
+// configuration-change notification came ~100 ms after it, so the engine is
+// watched directly instead.
+function lost(output) {
+  return Number(output.engine.outputNode.AUAudioUnit.deviceID) !== output.device;
+}
+
+/** The engine can play no more: it lost its device, or stopped by itself. */
+function gone(output) {
+  return lost(output) || !output.engine.running;
+}
+
+function discard(output) {
+  output.engine.stop;
+  outputs.delete(output.device);
+}
+
+// `device` is a device's UID, or absent for the default output as it stands
+// when the play starts; `name` is what the user chose it as, for the reasons.
+function play(request) {
+  const named = request.device
+    ? request.name || "The output device"
+    : "The system default output";
+  const device = request.device ? deviceWithUid(request.device) : defaultOutput();
+  if (device === 0) {
+    fail(request.id, "device-missing", request.device
+      ? named + " is not connected"
+      : "This Mac has no output device");
+    return;
+  }
+  const url = $.NSURL.fileURLWithPath(request.path);
+  const file = $.AVAudioFile.alloc.initForReadingError(url, $());
+  if (file.isNil()) {
+    fail(request.id, "unavailable", "Cannot read the synthesized audio");
+    return;
+  }
+  const output = outputOn(device);
+  if (!output) {
+    fail(request.id, "device-missing", named + " cannot play sound");
+    return;
+  }
+  const engine = output.engine;
+  const node = $.AVAudioPlayerNode.alloc.init;
+  engine.attachNode(node);
+  engine.connectToFormat(node, engine.mainMixerNode, file.processingFormat);
+  node.volume = request.volume;
+  if (!engine.running && !engine.startAndReturnError($())) {
+    engine.detachNode(node);
+    fail(request.id, "unavailable", named + " cannot be opened");
+    return;
+  }
+  const entry = {
+    node: node, output: output, uid: request.device, named: named, done: false,
+  };
+  plays.set(request.id, entry);
+  // `nil`, not JS null, for "as soon as possible": null becomes NSNull.
+  node.scheduleFileAtTimeCompletionCallbackTypeCompletionHandler(
+    file,
+    $(),
+    $.AVAudioPlayerNodeCompletionDataPlayedBack,
+    () => {
+      // `stop` calls this too, synchronously, with the same type as a
+      // natural end — so a play that was stopped has already been answered.
+      if (entry.done) return;
+      // An engine losing its device may end the play early, as if naturally.
+      if (gone(output)) {
+        watch();
+        return;
+      }
+      release(request.id, entry);
+      send({ id: request.id, ended: true });
+    },
+  );
+  node.play;
+  // The node renders from now on: the first samples reach the device some
+  // 40 ms later, which is as close to "the sound starts" as AVAudioEngine
+  // tells without polling.
+  send({ id: request.id, started: true });
+}
+
+function end(id, entry) {
+  entry.done = true;
+  plays.delete(id);
+  entry.output.idleSince = Date.now();
+}
+
+/** Ends a play whose sound has ended: its node is detached once it returns. */
+function release(id, entry) {
+  end(id, entry);
+  finished.push({ engine: entry.output.engine, node: entry.node });
+}
+
+/**
+ * Ends a play and stops its sound. The node of an engine that lost its
+ * device is left alone — its `stop` never returns — and the engine itself is
+ * stopped, which silences every node on it.
+ */
+function silence(id, entry) {
+  const output = entry.output;
+  if (gone(output)) {
+    discard(output);
+    end(id, entry);
+  } else {
+    release(id, entry);
+    entry.node.stop;
+  }
+}
+
+function busy(output) {
+  let found = false;
+  plays.forEach((entry) => {
+    if (entry.output === output) found = true;
+  });
+  return found;
+}
+
+function stop(id) {
+  const entry = plays.get(id);
+  if (!entry) return;
+  silence(id, entry);
+  send({ id: id, stopped: true });
+}
+
+// A Phrase never moves to another device: the device decides who hears it.
+// So a play is cut off when its device goes, and when the default output it
+// started on stops being the default.
+function watch() {
+  const now = Date.now();
+  const checkDefault = now - defaultCheckedAt >= DEFAULT_CHECK_MS;
+  const current = checkDefault ? defaultOutput() : 0;
+  if (checkDefault) defaultCheckedAt = now;
+  plays.forEach((entry, id) => {
+    if (gone(entry.output)) {
+      silence(id, entry);
+      if (!entry.uid) {
+        fail(id, "transient", entry.named + " went away while speaking");
+      } else if (deviceWithUid(entry.uid) === 0) {
+        fail(id, "device-missing", entry.named + " was disconnected while speaking");
+      } else {
+        fail(id, "transient", entry.named + " stopped while speaking");
+      }
+    } else if (!entry.uid && checkDefault && current !== entry.output.device) {
+      silence(id, entry);
+      fail(id, "transient", "The system default output switched to another device while speaking");
+    }
+  });
+}
+
+function handle(line) {
+  let request;
+  try {
+    request = JSON.parse(line);
+  } catch (error) {
+    console.log("player: not a request: " + line);
+    return;
+  }
+  try {
+    if (request.op === "play") play(request);
+    else if (request.op === "stop") stop(request.id);
+    else if (request.op === "devices") devices(request.id);
+    else fail(request.id, "unavailable", "Unknown request " + request.op);
+  } catch (error) {
+    fail(request.id, "unavailable", String(error));
+  }
+}
+
+let pending = "";
+center.addObserverForNameObjectQueueUsingBlock(
+  $.NSFileHandleReadCompletionNotification,
+  stdin,
+  $.NSOperationQueue.mainQueue,
+  (notification) => {
+    const data = notification.userInfo.objectForKey(
+      $.NSFileHandleNotificationDataItem,
+    );
+    // End of input: the sidecar has gone, and so does this process.
+    if (Number(data.length) === 0) $.exit(0);
+    pending += $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js;
+    let newline;
+    while ((newline = pending.indexOf("\n")) !== -1) {
+      const line = pending.slice(0, newline);
+      pending = pending.slice(newline + 1);
+      if (line.trim()) handle(line);
+    }
+    stdin.readInBackgroundAndNotify;
+  },
+);
+stdin.readInBackgroundAndNotify;
+send({ ready: true });
+
+// Completion handlers run only when this loop yields, so it yields often
+// while something plays — or an end arrives late — and rarely when idle.
+while (true) {
+  const slice = plays.size > 0 ? 0.005 : 1;
+  $.NSRunLoop.currentRunLoop.runModeBeforeDate(
+    $.NSDefaultRunLoopMode,
+    $.NSDate.dateWithTimeIntervalSinceNow(slice),
+  );
+  if (plays.size > 0) watch();
+  while (finished.length > 0) {
+    const done = finished.pop();
+    done.engine.detachNode(done.node);
+  }
+  const now = Date.now();
+  outputs.forEach((output) => {
+    if (output.engine.running && now - output.idleSince > IDLE_SECONDS * 1000 &&
+        !busy(output)) {
+      output.engine.stop;
+    }
+  });
+}

@@ -1,0 +1,166 @@
+// The macOS `system` Provider's engine: AVSpeechSynthesizer driven from a
+// long-lived `osascript -l JavaScript`. Requests arrive as JSON lines on stdin
+// (ASCII only — the sidecar escapes everything else), answers leave as JSON
+// lines on stdout; stderr is the plugin's log.
+//
+// It rests on undocumented JXA behaviour: a JS function passed where an
+// Objective-C block is expected (writeUtterance:toBufferCallback:, the stdin
+// observer) is called as that block.
+
+ObjC.import("Foundation");
+ObjC.import("AVFoundation");
+ObjC.import("stdlib");
+
+const stdout = $.NSFileHandle.fileHandleWithStandardOutput;
+const stdin = $.NSFileHandle.fileHandleWithStandardInput;
+
+function send(message) {
+  stdout.writeData(
+    $(JSON.stringify(message) + "\n").dataUsingEncoding($.NSUTF8StringEncoding),
+  );
+}
+
+function fail(id, kind, reason) {
+  send({ id: id, error: { kind: kind, reason: reason } });
+}
+
+const synthesizer = $.AVSpeechSynthesizer.alloc.init;
+
+// AVSpeech's quality: 1 default, 2 enhanced, 3 premium.
+const QUALITY = { 2: "enhanced", 3: "premium" };
+
+function voices(id) {
+  const all = $.AVSpeechSynthesisVoice.speechVoices;
+  // With no language, AVSpeech picks the voice for the UI language — the
+  // voice it would speak with if none were set.
+  const preferred = $.AVSpeechSynthesisVoice.voiceWithLanguage($());
+  const defaultId = preferred.isNil() ? null : preferred.identifier.js;
+  const list = [];
+  for (let i = 0; i < all.count; i++) {
+    const voice = all.objectAtIndex(i);
+    const entry = {
+      id: voice.identifier.js,
+      name: voice.name.js,
+      language: voice.language.js,
+    };
+    const quality = QUALITY[Number(voice.quality)];
+    if (quality) entry.quality = quality;
+    if (entry.id === defaultId) entry.isDefault = true;
+    list.push(entry);
+  }
+  send({ id: id, voices: list });
+}
+
+// The synthesis in flight, if any: AVSpeech serves one utterance at a time and
+// queues the rest itself, so only the current one can be cancelled.
+let current = null;
+const waiting = [];
+
+function synthesize(request) {
+  const voice = $.AVSpeechSynthesisVoice.voiceWithIdentifier(request.voice);
+  if (voice.isNil()) {
+    fail(request.id, "voice-missing", "No voice " + request.voice + " on this Mac");
+    return;
+  }
+  const utterance = $.AVSpeechUtterance.speechUtteranceWithString(request.text);
+  utterance.voice = voice;
+  utterance.rate = request.rate;
+  const job = { id: request.id, cancelled: false, done: false };
+  waiting.push(job);
+  synthesizer.writeUtteranceToBufferCallback(utterance, (buffer) => {
+    // AVSpeech may end an utterance with more than one empty buffer.
+    if (job.cancelled || job.done) return;
+    current = job;
+    const frames = Number(buffer.frameLength);
+    if (frames === 0) {
+      // A zero-length buffer ends the utterance.
+      job.done = true;
+      finish(job);
+      send({ id: job.id, done: true });
+      return;
+    }
+    const format = buffer.format;
+    // Float32, non-interleaved mono (commonFormat 1) for every voice seen;
+    // anything else is not something the sidecar can turn into WAV.
+    if (Number(format.commonFormat) !== 1 || Number(format.channelCount) !== 1) {
+      job.cancelled = true;
+      finish(job);
+      fail(job.id, "rejected", "The voice produced audio in an unexpected format");
+      return;
+    }
+    const pcm = $.NSData.dataWithBytesLength(buffer.floatChannelData[0], frames * 4);
+    send({
+      id: job.id,
+      sampleRate: Number(format.sampleRate),
+      pcm: pcm.base64EncodedStringWithOptions(0).js,
+    });
+  });
+}
+
+function finish(job) {
+  const at = waiting.indexOf(job);
+  if (at !== -1) waiting.splice(at, 1);
+  if (current === job) current = null;
+}
+
+function cancel(id) {
+  const job = waiting.find((each) => each.id === id);
+  if (!job) return;
+  job.cancelled = true;
+  if (current === job) {
+    synthesizer.stopSpeakingAtBoundary($.AVSpeechBoundaryImmediate);
+  }
+  finish(job);
+}
+
+function handle(line) {
+  let request;
+  try {
+    request = JSON.parse(line);
+  } catch (error) {
+    console.log("synthesizer: not a request: " + line);
+    return;
+  }
+  try {
+    if (request.op === "voices") voices(request.id);
+    else if (request.op === "synthesize") synthesize(request);
+    else if (request.op === "cancel") cancel(request.id);
+    else fail(request.id, "rejected", "Unknown request " + request.op);
+  } catch (error) {
+    fail(request.id, "unavailable", String(error));
+  }
+}
+
+let pending = "";
+$.NSNotificationCenter.defaultCenter.addObserverForNameObjectQueueUsingBlock(
+  $.NSFileHandleReadCompletionNotification,
+  stdin,
+  $.NSOperationQueue.mainQueue,
+  (notification) => {
+    const data = notification.userInfo.objectForKey(
+      $.NSFileHandleNotificationDataItem,
+    );
+    // End of input: the sidecar has gone, and so does this process.
+    if (Number(data.length) === 0) $.exit(0);
+    pending += $.NSString.alloc.initWithDataEncoding(data, $.NSUTF8StringEncoding).js;
+    let newline;
+    while ((newline = pending.indexOf("\n")) !== -1) {
+      const line = pending.slice(0, newline);
+      pending = pending.slice(newline + 1);
+      if (line.trim()) handle(line);
+    }
+    stdin.readInBackgroundAndNotify;
+  },
+);
+stdin.readInBackgroundAndNotify;
+send({ ready: true });
+
+// Callbacks from AVFAudio's threads run only when this loop yields, so it
+// yields often while a synthesis is under way and rarely when idle.
+while (true) {
+  const slice = waiting.length > 0 ? 0.005 : 1;
+  $.NSRunLoop.currentRunLoop.runModeBeforeDate(
+    $.NSDefaultRunLoopMode,
+    $.NSDate.dateWithTimeIntervalSinceNow(slice),
+  );
+}

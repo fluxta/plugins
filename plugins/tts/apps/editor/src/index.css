@@ -1,0 +1,58 @@
+/*
+ * Everything the editor needs to look like the rest of the app: the theme,
+ * the components' own styles, and the page itself.
+ *
+ * To write your own utility classes as well, add `tailwindcss` and
+ * `@tailwindcss/vite` to this app, then put `@import "tailwindcss";` and
+ * `@import "@fluxta/sdk/ui/theme.css";` above this line — the theme file
+ * registers Fluxta's colours with your own Tailwind build.
+ */
+@import "@fluxta/sdk/ui/styles.css";
+
+/* Speak's Tags: one field and its Remove button per line. */
+.tags {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.tag {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.tag > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.tags > button {
+  align-self: flex-start;
+}
+
+/* The Plugin Editor's word while the plugin process is silent. */
+.hint {
+  margin: 0;
+  color: var(--muted-foreground);
+  font-size: 0.75rem;
+  line-height: 1.6;
+}
+
+/* A voice field, and under it what Listen says beside its button. */
+.voice-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.with-listen {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.with-listen > :first-child {
+  flex: 1;
+  min-width: 0;
+}
