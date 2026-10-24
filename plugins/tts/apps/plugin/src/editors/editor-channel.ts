@@ -1,14 +1,23 @@
-import type { EditorMessage, PluginMessage, PluginStatus } from "tts-protocol";
+import {
+  PROVIDER_LABELS,
+  type EditorMessage,
+  type PluginMessage,
+  type PluginStatus,
+  type ProviderName,
+  type ProviderOption,
+} from "tts-protocol";
 
-import type { DefaultsStore } from "../settings/defaults-store";
-import type { Listing } from "../speech/listing";
+import type { ElevenLabsAccount } from "../elevenlabs/account";
+import type { Model } from "../elevenlabs/client";
+import type { SettingsStore } from "../settings/settings-store";
+import type { ProviderVoices } from "../settings/synthesis";
+import type { Listing, Settled } from "../speech/listing";
 import type { Device } from "../speech/player";
 import type { Voice } from "../speech/provider";
 import type { SpeechQueue } from "../speech/speech-queue";
-import { osDefaultOf, type Voices } from "../speech/voices";
 import { listenPhrase, type ListenRequest } from "./listen";
 import type { RecentProblems } from "./recent-problems";
-import { voiceName, voiceOptions } from "./voice-options";
+import { voiceOptions } from "./voice-options";
 
 interface EditorSender {
   sendToEditor(message: PluginMessage): void;
@@ -16,54 +25,77 @@ interface EditorSender {
 
 export type EditorChannelOptions = {
   sender: EditorSender;
-  defaults: DefaultsStore;
-  voices: Voices;
+  settings: SettingsStore;
+  voices: ProviderVoices;
   devices: Listing<Device>;
   queue: Pick<SpeechQueue, "enqueue">;
   problems: Pick<RecentProblems, "list">;
+  elevenLabs: Pick<ElevenLabsAccount, "status" | "keyChanged">;
+  /** ElevenLabs' Models that speak text. */
+  models: Listing<Model>;
 };
 
 /**
  * The sidecar's side of the editors: the Plugin Editor and every Action
- * Editor see one status — the defaults, the voices, the output devices and
- * Recent problems — the Plugin Editor changes the defaults through it, and
- * either one Listens.
+ * Editor see one status — the defaults, the Presets, each Provider's voices,
+ * the ElevenLabs account, the output devices and Recent problems — the
+ * Plugin Editor changes the settings through it, and either one Listens.
  */
 export class EditorChannel {
   readonly #sender: EditorSender;
-  readonly #defaults: DefaultsStore;
-  readonly #voices: Voices;
+  readonly #settings: SettingsStore;
+  readonly #voices: ProviderVoices;
   readonly #devices: Listing<Device>;
   readonly #queue: Pick<SpeechQueue, "enqueue">;
   readonly #problems: Pick<RecentProblems, "list">;
+  readonly #elevenLabs: Pick<ElevenLabsAccount, "status" | "keyChanged">;
+  readonly #models: Listing<Model>;
 
   constructor({
     sender,
-    defaults,
+    settings,
     voices,
     devices,
     queue,
     problems,
+    elevenLabs,
+    models,
   }: EditorChannelOptions) {
     this.#sender = sender;
-    this.#defaults = defaults;
+    this.#settings = settings;
     this.#voices = voices;
     this.#devices = devices;
     this.#queue = queue;
     this.#problems = problems;
+    this.#elevenLabs = elevenLabs;
+    this.#models = models;
   }
 
   async handle(message: EditorMessage): Promise<void> {
-    await this.#defaults.loaded;
+    await this.#settings.loaded;
     switch (message.event) {
       case "get-status":
         // An editor opening is when a newly installed voice or a device
         // plugged in since should appear.
         await this.publish({ afresh: true });
         return;
+      // The store announces each change, and every editor hears it.
       case "set-defaults":
-        // The store announces the change, and every editor hears it.
-        await this.#defaults.set(message.defaults);
+        await this.#settings.setDefaults(message.defaults);
+        return;
+      case "save-preset":
+        await this.#settings.savePreset(message.preset);
+        return;
+      case "delete-preset":
+        await this.#settings.deletePreset(message.id);
+        return;
+      case "set-elevenlabs-key":
+        await this.#settings.setElevenLabsKey(message.key);
+        await this.#checkElevenLabs();
+        return;
+      case "remove-elevenlabs-key":
+        await this.#settings.removeElevenLabsKey();
+        await this.#checkElevenLabs();
         return;
       case "listen":
         await this.#listen(message);
@@ -73,8 +105,8 @@ export class EditorChannel {
 
   /**
    * Tells the editor that asked for Listen `id` why it could not be heard:
-   * a Voice or a device that is not here, the Provider or the Player out of
-   * order. A Listen that was heard, or stopped, is not answered.
+   * a Preset, a Voice or a device that is not here, the Provider or the
+   * Player out of order. A Listen that was heard, or stopped, is not answered.
    */
   listenFailed(id: string, error: unknown): void {
     this.#sender.sendToEditor({
@@ -97,8 +129,8 @@ export class EditorChannel {
           text: typeof text === "string" ? text : "",
           settings: isRecord(settings) ? settings : {},
         },
-        this.#defaults.current,
-        this.#voices,
+        this.#settings.defaults,
+        { presets: () => this.#settings.presets, voices: this.#voices },
       );
       this.#queue.enqueue(phrase, "next");
     } catch (error) {
@@ -106,21 +138,58 @@ export class EditorChannel {
     }
   }
 
-  /** Tells every open editor how things stand. */
+  /**
+   * The key was stored or removed: the account is checked afresh by looking
+   * its voices up — or, without a key, is told it has none.
+   */
+  async #checkElevenLabs(): Promise<void> {
+    this.#elevenLabs.keyChanged();
+    await this.publish({ afresh: true });
+  }
+
+  /**
+   * Tells every open editor how things stand. Afresh, it looks every list
+   * up again — which checks the ElevenLabs account too.
+   *
+   * ElevenLabs may take up to its timeout to answer, and the editors must
+   * not wait for it — the Plugin Editor would take a silent ElevenLabs for
+   * a silent plugin. So its voices go out as they last settled, and the
+   * status goes out again once its look-up does; a failed look-up is asked
+   * for afresh only when an editor opens or the key changes.
+   */
   async publish({ afresh = false } = {}): Promise<void> {
-    const voices = afresh ? this.#voices.refresh() : this.#voices.list();
-    const devices = afresh ? this.#devices.refresh() : this.#devices.list();
+    const elevenlabs = this.#voices.elevenlabs;
+    const models = this.#models;
+    const look = <T>(listing: Listing<T>) =>
+      settled(afresh ? listing.refresh() : listing.list());
+    const looking = [elevenlabs, models]
+      .filter((listing) => afresh || listing.settled === undefined)
+      .map(look);
+    const [system, devices] = await Promise.all([
+      look(this.#voices.system),
+      look(this.#devices),
+    ]);
     this.#sender.sendToEditor({
       event: "status",
       status: {
-        ...status(
-          this.#defaults.current,
-          await settled(voices),
-          await settled(devices),
-        ),
+        defaults: this.#settings.defaults,
+        presets: [...this.#settings.presets],
+        providers: [
+          providerOption("system", system),
+          {
+            ...providerOption("elevenlabs", elevenlabs.settled),
+            models: models.settled?.list ?? [],
+          },
+        ],
+        elevenLabs: this.#elevenLabs.status,
+        ...deviceStatus(devices),
         problems: this.#problems.list,
       },
     });
+    if (looking.length > 0) {
+      await Promise.all(looking);
+      await this.publish();
+    }
   }
 }
 
@@ -129,9 +198,7 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 /** The list, or why there is none. */
-async function settled<T>(
-  list: Promise<T[]>,
-): Promise<{ list: T[]; problem?: string }> {
+async function settled<T>(list: Promise<T[]>): Promise<Settled<T>> {
   try {
     return { list: await list };
   } catch (error) {
@@ -142,20 +209,25 @@ async function settled<T>(
   }
 }
 
-function status(
-  defaults: PluginStatus["defaults"],
-  voices: { list: Voice[]; problem?: string },
-  devices: { list: Device[]; problem?: string },
-): Omit<PluginStatus, "problems"> {
-  const id = defaults.voice ?? osDefaultOf(voices.list)?.id;
-  const voice = voices.list.find((candidate) => candidate.id === id);
+/** A Provider with its voices — still being looked up while `undefined`. */
+function providerOption(
+  name: ProviderName,
+  voices: Settled<Voice> | undefined,
+): ProviderOption {
   return {
-    defaults,
-    ...(id !== undefined && {
-      defaultVoice: { id, ...(voice && { name: voiceName(voice) }) },
-    }),
-    voices: voiceOptions(voices.list),
-    ...(voices.problem !== undefined && { voicesProblem: voices.problem }),
+    name,
+    label: PROVIDER_LABELS[name],
+    voices: voiceOptions(voices?.list ?? []),
+    ...(voices === undefined && { loading: true }),
+    ...(voices?.problem !== undefined && { problem: voices.problem }),
+  };
+}
+
+function deviceStatus(devices: {
+  list: Device[];
+  problem?: string;
+}): Pick<PluginStatus, "devices" | "devicesProblem"> {
+  return {
     devices: devices.list.map(({ id, name, isDefault }) => ({
       id,
       name,

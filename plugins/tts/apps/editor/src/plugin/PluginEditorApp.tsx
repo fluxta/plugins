@@ -4,15 +4,10 @@ import {
   Section,
   SelectField,
   usePluginEditor,
+  type StatusTone,
 } from "@fluxta/sdk/ui";
 import { useEffect, useState } from "react";
-import {
-  formatRate,
-  RATES,
-  VOLUME_MAX,
-  type Defaults,
-  type PluginStatus,
-} from "tts-protocol";
+import { VOLUME_MAX, type Defaults, type PluginStatus } from "tts-protocol";
 
 import {
   deviceOf,
@@ -21,10 +16,12 @@ import {
   missingDevice,
   systemDefaultNow,
 } from "../shared/devices";
+import { missingPreset, presetOptions, presetRef } from "../shared/presets";
 import { SavedNumberField } from "../shared/SavedNumberField";
 import { sendToPlugin } from "../shared/sendToPlugin";
 import { useStatus } from "../shared/useStatus";
-import { VoiceField } from "../shared/VoiceField";
+import { ElevenLabs, elevenLabsTone } from "./ElevenLabs";
+import { Presets } from "./Presets";
 import { RecentProblems } from "./RecentProblems";
 
 /**
@@ -61,9 +58,21 @@ export function PluginEditorApp() {
     <PluginEditorLayout
       sections={[
         {
+          id: "presets",
+          label: "Presets",
+          count: status.presets.length,
+          content: <Presets status={status} />,
+        },
+        {
           id: "defaults",
           label: "Defaults",
           content: <DefaultsForm status={status} />,
+        },
+        {
+          id: "elevenlabs",
+          label: "ElevenLabs",
+          ...withTone(elevenLabsTone(status.elevenLabs)),
+          content: <ElevenLabs status={status.elevenLabs} />,
         },
         {
           id: "problems",
@@ -78,14 +87,9 @@ export function PluginEditorApp() {
   );
 }
 
-const RATE_OPTIONS = RATES.map((rate) => ({
-  value: String(rate),
-  label: formatRate(rate),
-}));
-
 function DefaultsForm({ status }: { status: PluginStatus }) {
   const editor = usePluginEditor();
-  const { defaults, defaultVoice, voices, voicesProblem, devices } = status;
+  const { defaults, presets, devices } = status;
   const now = systemDefaultNow(devices);
 
   const save = (changes: Partial<Defaults>) =>
@@ -99,30 +103,22 @@ function DefaultsForm({ status }: { status: PluginStatus }) {
   return (
     <Section
       title="Defaults"
-      description="How every Speak speaks unless it overrides it, under Override defaults."
+      description="How every Speak speaks unless it picks a Preset of its own, or overrides the rest under Override defaults."
     >
-      <VoiceField
-        label="Default Voice"
-        options={voices.map(({ id, label }) => ({ value: id, label }))}
-        value={defaultVoice?.id}
-        onChange={(voice) => save({ voice })}
-        placeholder="No voices"
-        error={voicesProblem}
-        hint="Until you pick one, it is the voice this computer speaks with. Listen waits for the Phrase being spoken, then goes ahead of the rest."
-        // Every field here is saved by the time a click reaches Listen — a
-        // number field as the click leaves it — so the sidecar's Defaults are
-        // the form.
-        listen={{}}
-      />
-
       <SelectField
-        label="Rate"
-        options={RATE_OPTIONS}
-        value={String(defaults.rate)}
-        onChange={(rate) => save({ rate: Number(rate) })}
-        searchable={false}
-        missingLabel={(rate) => formatRate(Number(rate))}
-        hint="1.0× is the voice’s normal pace."
+        label="Default Preset"
+        options={presetOptions(presets)}
+        value={defaults.preset?.id}
+        onChange={(id) => {
+          const preset = presetRef(id, presets);
+          if (preset) {
+            save({ preset });
+          }
+        }}
+        placeholder="This computer’s voice"
+        emptyMessage="No Preset yet — add one under Presets."
+        missingLabel={missingPreset(defaults.preset)}
+        hint="Every Speak left at Default speaks with it. Until you pick one, this computer’s voice speaks at 1.0×."
       />
 
       <SavedNumberField
@@ -156,4 +152,9 @@ function DefaultsForm({ status }: { status: PluginStatus }) {
       />
     </Section>
   );
+}
+
+/** A section's dot, when it has one. */
+function withTone(tone: StatusTone | undefined): { tone?: StatusTone } {
+  return tone ? { tone } : {};
 }

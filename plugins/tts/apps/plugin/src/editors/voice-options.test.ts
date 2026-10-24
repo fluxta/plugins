@@ -4,7 +4,7 @@ import type { Voice } from "../speech/provider";
 import { languageName, voiceName, voiceOptions } from "./voice-options";
 
 describe("voiceOptions", () => {
-  it("names each Voice with its language and quality, sorted by language, then name", () => {
+  it("names each Voice with its language and quality, sorted by language, then name — its name alone for a Preset to keep", () => {
     const voices: Voice[] = [
       { id: "zoe", name: "Zoe", language: "en-US", quality: "premium" },
       { id: "yuri", name: "Yuri", language: "ru-RU", quality: "enhanced" },
@@ -14,11 +14,35 @@ describe("voiceOptions", () => {
     ];
 
     expect(voiceOptions(voices)).toEqual([
-      { id: "daniel", label: "Daniel — English (United Kingdom)" },
-      { id: "ava", label: "Ava — English (United States)" },
-      { id: "zoe", label: "Zoe (Premium) — English (United States)" },
-      { id: "milena", label: "Milena — Russian (Russia)" },
-      { id: "yuri", label: "Yuri (Enhanced) — Russian (Russia)" },
+      {
+        id: "daniel",
+        name: "Daniel",
+        label: "Daniel — English (United Kingdom)",
+      },
+      { id: "ava", name: "Ava", label: "Ava — English (United States)" },
+      {
+        id: "zoe",
+        name: "Zoe (Premium)",
+        label: "Zoe (Premium) — English (United States)",
+      },
+      { id: "milena", name: "Milena", label: "Milena — Russian (Russia)" },
+      {
+        id: "yuri",
+        name: "Yuri (Enhanced)",
+        label: "Yuri (Enhanced) — Russian (Russia)",
+      },
+    ]);
+  });
+
+  it("names a voice without a language of its own by its name alone, sorted by name", () => {
+    expect(
+      voiceOptions([
+        { id: "r", name: "Rachel" },
+        { id: "a", name: "Adam" },
+      ]),
+    ).toEqual([
+      { id: "a", name: "Adam", label: "Adam" },
+      { id: "r", name: "Rachel", label: "Rachel" },
     ]);
   });
 });

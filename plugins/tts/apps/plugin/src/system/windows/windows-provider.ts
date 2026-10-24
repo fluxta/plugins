@@ -1,9 +1,10 @@
+import type { SystemSettings } from "tts-protocol";
+
 import {
   isProviderErrorKind,
   ProviderError,
   type Audio,
   type Provider,
-  type SynthesisOptions,
   type Voice,
 } from "../../speech/provider";
 import { pcm16Wav, wavDuration } from "../../speech/wav";
@@ -21,7 +22,7 @@ export type VoiceStore = "onecore" | "sapi";
  * voices such as RHVoice. The store is part of the Voice's id, and a voice
  * in both is listed once, as OneCore's.
  */
-export class WindowsProvider implements Provider {
+export class WindowsProvider implements Provider<SystemSettings> {
   readonly #engine: Engine;
 
   constructor(
@@ -57,7 +58,7 @@ export class WindowsProvider implements Provider {
   synthesize(
     text: string,
     voiceId: string,
-    { rate }: SynthesisOptions,
+    { rate }: SystemSettings,
     signal: AbortSignal,
   ): Promise<Audio> {
     if (signal.aborted) {

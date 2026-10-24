@@ -1,9 +1,10 @@
+import type { SystemSettings } from "tts-protocol";
+
 import {
   isProviderErrorKind,
   ProviderError,
   type Audio,
   type Provider,
-  type SynthesisOptions,
   type Voice,
 } from "../../speech/provider";
 import { encodeWav } from "../../speech/wav";
@@ -17,7 +18,7 @@ import synthesizer from "./synthesizer.jxa";
  * every Phrase (~0.5 s), reads a leading `-` in the text as an option, and
  * silently speaks as Samantha when it does not know a voice.
  */
-export class MacosProvider implements Provider {
+export class MacosProvider implements Provider<SystemSettings> {
   readonly #engine: Engine;
 
   constructor(engine: Engine = new JxaProcess("synthesizer", synthesizer)) {
@@ -40,7 +41,7 @@ export class MacosProvider implements Provider {
   synthesize(
     text: string,
     voiceId: string,
-    { rate }: SynthesisOptions,
+    { rate }: SystemSettings,
     signal: AbortSignal,
   ): Promise<Audio> {
     if (signal.aborted) {

@@ -11,7 +11,7 @@ import { SpeakAction, type DefaultsSource } from "./speak";
 
 function setup(defaults: Defaults = INITIAL_DEFAULTS) {
   const enqueue = vi.fn();
-  const source = { loaded: Promise.resolve(), current: defaults };
+  const source = { loaded: Promise.resolve(), defaults };
   const speak = new SpeakAction(
     { enqueue } as unknown as SpeechQueue,
     source as DefaultsSource,
@@ -31,13 +31,12 @@ describe("Speak", () => {
     const { enqueue, trigger } = setup();
 
     expect(await trigger({ text: "Hello, chat!" })).toBeUndefined();
-    // The OS's voice, at the normal pace and full volume, on whatever this
+    // No Preset — the OS's voice at 1.0× — full volume, on whatever this
     // computer plays on.
     expect(enqueue).toHaveBeenCalledWith(
       {
         text: "Hello, chat!",
         tags: [],
-        rate: 1,
         volume: 1,
         device: "system-default",
       },
@@ -118,9 +117,10 @@ describe("Speak", () => {
 
 describe("Speak's defaults and overrides", () => {
   const blackHole = { id: "BlackHole2ch_UID", name: "BlackHole 2ch" };
+  const chat = { id: "preset-chat", name: "Chat" };
+  const announcer = { id: "preset-announcer", name: "Announcer" };
   const chosen: Defaults = {
-    voice: "milena",
-    rate: 1.2,
+    preset: chat,
     volume: 80,
     device: blackHole,
     lengthLimit: 200,
@@ -134,8 +134,7 @@ describe("Speak's defaults and overrides", () => {
     expect(enqueue.mock.calls[0][0]).toEqual({
       text: "hi",
       tags: [],
-      voice: "milena",
-      rate: 1.2,
+      preset: chat,
       volume: 0.8,
       device: blackHole,
     });
@@ -146,11 +145,15 @@ describe("Speak's defaults and overrides", () => {
 
     // A streamer-only Phrase, in headphones.
     const headphones = { id: "headphones-uid", name: "AirPods" };
-    await trigger({ text: "hi", voice: "ava", volume: 30, device: headphones });
+    await trigger({
+      text: "hi",
+      preset: announcer,
+      volume: 30,
+      device: headphones,
+    });
 
     expect(enqueue.mock.calls[0][0]).toMatchObject({
-      voice: "ava",
-      rate: 1.2,
+      preset: announcer,
       volume: 0.3,
       device: headphones,
     });
@@ -160,14 +163,14 @@ describe("Speak's defaults and overrides", () => {
     const { enqueue, trigger, source } = setup(chosen);
 
     await trigger({ text: "before" });
-    source.current = { ...chosen, voice: "yuri", rate: 0.8 };
+    source.defaults = { ...chosen, preset: announcer, volume: 50 };
     await trigger({ text: "after" });
 
     expect(
-      enqueue.mock.calls.map(([{ voice, rate }]) => ({ voice, rate })),
+      enqueue.mock.calls.map(([{ preset, volume }]) => ({ preset, volume })),
     ).toEqual([
-      { voice: "milena", rate: 1.2 },
-      { voice: "yuri", rate: 0.8 },
+      { preset: chat, volume: 0.8 },
+      { preset: announcer, volume: 0.5 },
     ]);
   });
 
@@ -200,7 +203,7 @@ describe("Speak's defaults and overrides", () => {
     let load = () => {};
     const source = {
       loaded: new Promise<void>((resolve) => (load = resolve)),
-      current: INITIAL_DEFAULTS,
+      defaults: INITIAL_DEFAULTS,
     };
     const speak = new SpeakAction(
       { enqueue } as unknown as SpeechQueue,
@@ -213,9 +216,10 @@ describe("Speak's defaults and overrides", () => {
     await Promise.resolve();
     expect(enqueue).not.toHaveBeenCalled();
 
-    source.current = { ...INITIAL_DEFAULTS, voice: "milena" };
+    const chat = { id: "preset-chat", name: "Chat" };
+    source.defaults = { ...INITIAL_DEFAULTS, preset: chat };
     load();
     await spoken;
-    expect(enqueue.mock.calls[0][0].voice).toBe("milena");
+    expect(enqueue.mock.calls[0][0].preset).toEqual(chat);
   });
 });

@@ -63,6 +63,26 @@ describe("Voices", () => {
   });
 });
 
+describe("Listing.settled", () => {
+  it("holds the latest look-up to have settled, a failed one with its reason, until another settles", async () => {
+    const lookUp = vi
+      .fn<Provider["voices"]>()
+      .mockRejectedValueOnce(new ProviderError("transient", "It crashed"))
+      .mockResolvedValueOnce([milena]);
+    const voices = new Voices(provider(lookUp));
+    expect(voices.settled).toBeUndefined();
+
+    await voices.list().catch(() => {});
+    expect(voices.settled).toEqual({ list: [], problem: "It crashed" });
+
+    const again = voices.refresh();
+    // Still the one before, while this one is under way.
+    expect(voices.settled).toEqual({ list: [], problem: "It crashed" });
+    await again;
+    expect(voices.settled).toEqual({ list: [milena] });
+  });
+});
+
 describe("osDefaultOf", () => {
   it("takes the voice the Provider marks as the OS's, else the first", () => {
     expect(osDefaultOf([milena, ava])).toBe(ava);

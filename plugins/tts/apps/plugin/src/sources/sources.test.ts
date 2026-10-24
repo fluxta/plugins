@@ -10,19 +10,15 @@ import { createWaitingSource } from "./waiting";
 /** A queue whose Phrases never finish synthesizing: they stay where they are. */
 function setup() {
   const queue = new SpeechQueue({
-    provider: {
-      voices: async () => [],
-      synthesize: () => new Promise(() => {}),
-    },
     player: { devices: async () => [], play: async () => {} },
-    voiceFor: async () => "voice-1",
+    synthesisFor: async () => () => new Promise(() => {}),
     onDropped: () => {},
     onStarted: () => {},
     onFinished: () => {},
   });
   const speak = new SpeakAction(queue, {
     loaded: Promise.resolve(),
-    current: INITIAL_DEFAULTS,
+    defaults: INITIAL_DEFAULTS,
   });
   const trigger = (text: string) =>
     speak.onTrigger(

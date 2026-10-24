@@ -1,4 +1,4 @@
-import type { OutputDevice } from "./defaults";
+import type { OutputDevice, PresetRef } from "./defaults";
 
 /**
  * Where Speak puts its Phrase in the Speech Queue: `in-turn` (the end, the
@@ -21,10 +21,8 @@ export type SpeakSettings = {
   text?: string;
   position?: Position;
   tags?: string[];
-  /** A Voice's id. */
-  voice?: string;
-  /** A multiplier, 0.5–2. */
-  rate?: number;
+  /** The Preset it speaks with, over the Default Preset. */
+  preset?: PresetRef;
   /** 0–100 %. */
   volume?: number;
   device?: OutputDevice;
