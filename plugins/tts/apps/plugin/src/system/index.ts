@@ -1,3 +1,5 @@
+import type { SystemSettings } from "tts-protocol";
+
 import type { Player } from "../speech/player";
 import type { Provider } from "../speech/provider";
 import { MacosPlayer } from "./macos/macos-player";
@@ -11,7 +13,7 @@ import { WindowsProvider } from "./windows/windows-provider";
  * the sidecar runs on. Another OS's Provider never appears here.
  */
 export function systemSpeech(platform: NodeJS.Platform = process.platform): {
-  provider: Provider;
+  provider: Provider<SystemSettings>;
   player: Player;
 } {
   if (platform === "darwin") {

@@ -26,7 +26,7 @@ describe("manifest.json", () => {
     expect(manifest.actions.map(({ type }) => type)).toEqual([
       new SpeakAction(queue, {
         loaded: Promise.resolve(),
-        current: INITIAL_DEFAULTS,
+        defaults: INITIAL_DEFAULTS,
       }).type,
       new StopSpeechAction(queue).type,
     ]);

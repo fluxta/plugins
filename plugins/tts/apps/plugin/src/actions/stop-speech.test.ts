@@ -79,24 +79,20 @@ describe("Speak and Stop Speech together", () => {
     // stopped stays where it is.
     const synthesized: string[] = [];
     const queue = new SpeechQueue({
-      provider: {
-        voices: async () => [],
-        synthesize: (text, _voice, _options, signal) => {
-          synthesized.push(text);
-          return new Promise((_resolve, reject) =>
-            signal.addEventListener("abort", () => reject(signal.reason)),
-          );
-        },
-      },
       player: { devices: async () => [], play: async () => {} },
-      voiceFor: async () => "voice-1",
+      synthesisFor: async () => (text, signal) => {
+        synthesized.push(text);
+        return new Promise((_resolve, reject) =>
+          signal.addEventListener("abort", () => reject(signal.reason)),
+        );
+      },
       onDropped: () => {},
       onStarted: () => {},
       onFinished: () => {},
     });
     const speak = new SpeakAction(queue, {
       loaded: Promise.resolve(),
-      current: INITIAL_DEFAULTS,
+      defaults: INITIAL_DEFAULTS,
     });
     const stop = new StopSpeechAction(queue);
     const say = (text: string, tags: unknown[]) =>

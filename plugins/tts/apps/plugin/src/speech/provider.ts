@@ -5,8 +5,11 @@
 export type Voice = {
   id: string;
   name: string;
-  /** A BCP 47 tag, such as `ru-RU`. */
-  language: string;
+  /**
+   * A BCP 47 tag, such as `ru-RU`. Absent for a voice that speaks whatever
+   * language its text is in — an ElevenLabs voice.
+   */
+  language?: string;
   /** Present only above the engine's standard voices. */
   quality?: "enhanced" | "premium";
   /** The voice the OS itself speaks with when none is chosen. */
@@ -16,20 +19,16 @@ export type Voice = {
 /** A whole Phrase as WAV — 16-bit PCM — in memory. */
 export type Audio = Uint8Array;
 
-export type SynthesisOptions = {
-  /**
-   * A multiplier: 1 is the voice's normal pace. Each Provider maps it onto
-   * its engine's own range and clamps it.
-   */
-  rate: number;
-};
-
 /**
  * A Provider: a source of Voices that turns text into audio. Every Provider
  * returns audio and none speaks by itself — the Player plays it — so a
  * Provider on this computer and one in the cloud plug in the same way.
+ *
+ * `Settings` are its own, kept by a Preset: they differ between Providers in
+ * kind, not just in range. Volume is not among them: it is the Player's, the
+ * same for every Provider.
  */
-export interface Provider {
+export interface Provider<Settings = unknown> {
   voices(): Promise<Voice[]>;
   /**
    * Turns plain text — never markup — into a whole Phrase of audio. A
@@ -40,7 +39,7 @@ export interface Provider {
   synthesize(
     text: string,
     voiceId: string,
-    options: SynthesisOptions,
+    settings: Settings,
     signal: AbortSignal,
   ): Promise<Audio>;
 }
@@ -64,12 +63,22 @@ const PROVIDER_ERROR_KINDS: readonly string[] = [
 
 /** A Provider's failure; `message` is the reason, readable by a person. */
 export class ProviderError extends Error {
+  /**
+   * For a `transient` failure, how long to wait before trying again, in
+   * milliseconds — a cloud service's rate limit. Absent: at once.
+   */
+  readonly retryAfter?: number;
+
   constructor(
     readonly kind: ProviderErrorKind,
     reason: string,
+    { retryAfter }: { retryAfter?: number } = {},
   ) {
     super(reason);
     this.name = "ProviderError";
+    if (retryAfter !== undefined) {
+      this.retryAfter = retryAfter;
+    }
   }
 }
 

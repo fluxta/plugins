@@ -1,8 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
 
 import { PlayerError, type Player } from "./player";
-import { ProviderError, type Audio, type Provider } from "./provider";
-import { describeDrop, dropOf, SpeechQueue, type Phrase } from "./speech-queue";
+import { ProviderError, type Audio } from "./provider";
+import {
+  describeDrop,
+  dropOf,
+  SpeechQueue,
+  type Phrase,
+  type Synthesis,
+} from "./speech-queue";
 
 /** A step the test finishes by hand: a synthesis or a play under way. */
 type Step = {
@@ -36,23 +42,20 @@ function deferredStep(
 }
 
 function phrase(text: string, ...tags: string[]): Phrase {
-  return { text, tags, rate: 1, volume: 1, device: "system-default" };
+  return { text, tags, volume: 1, device: "system-default" };
 }
 
 /**
- * A queue over a Provider and a Player the test drives by hand. With
+ * A queue over a synthesis and a Player the test drives by hand. With
  * `settleOnAbort: false` a play goes on after an abort until the test fails
  * it — a Player slow to stop.
  */
 function setup({ settleOnAbort = true } = {}) {
   const syntheses: Step[] = [];
   const plays: Step[] = [];
-  const provider: Provider = {
-    voices: async () => [],
-    synthesize: async (text, _voice, _options, signal) => {
-      await deferredStep(text, signal, syntheses);
-      return new TextEncoder().encode(text);
-    },
+  const synthesize: Synthesis = async (text, signal) => {
+    await deferredStep(text, signal, syntheses);
+    return new TextEncoder().encode(text);
   };
   const player: Player = {
     devices: async () => [],
@@ -65,16 +68,15 @@ function setup({ settleOnAbort = true } = {}) {
   const dropped: { phrase: Phrase; error: unknown }[] = [];
   /** Phrase Started and Phrase Finished, in the order they were announced. */
   const events: string[] = [];
-  const voiceFor = vi.fn(async () => "voice-1");
+  const synthesisFor = vi.fn(async () => synthesize);
   const queue = new SpeechQueue({
-    provider,
     player,
-    voiceFor,
+    synthesisFor,
     onDropped: (phrase, error) => dropped.push({ phrase, error }),
     onStarted: (phrase) => events.push(`started ${phrase.text}`),
     onFinished: (phrase) => events.push(`finished ${phrase.text}`),
   });
-  return { queue, syntheses, plays, dropped, events, voiceFor };
+  return { queue, syntheses, plays, dropped, events, synthesisFor };
 }
 
 /** Synthesizes the current Phrase and plays it to its end. */
@@ -174,12 +176,15 @@ describe("SpeechQueue", () => {
     expect(syntheses.map(({ text }) => text)).toEqual(["lost", "next"]);
   });
 
-  it("drops a Phrase without a Voice, and anything unexpected, and moves on", async () => {
-    const { queue, syntheses, dropped, voiceFor } = setup();
-    voiceFor.mockRejectedValueOnce(
-      new ProviderError("voice-missing", "This computer has no voices"),
+  it("drops a Phrase without a Voice or a Preset, and anything unexpected, and moves on", async () => {
+    const { queue, syntheses, dropped, synthesisFor } = setup();
+    synthesisFor.mockRejectedValueOnce(
+      new ProviderError(
+        "voice-missing",
+        "No Preset Announcer on this computer",
+      ),
     );
-    voiceFor.mockRejectedValueOnce(new TypeError("a bug"));
+    synthesisFor.mockRejectedValueOnce(new TypeError("a bug"));
 
     queue.enqueue(phrase("first"));
     queue.enqueue(phrase("second"));
@@ -193,34 +198,31 @@ describe("SpeechQueue", () => {
     expect(syntheses.map(({ text }) => text)).toEqual(["third"]);
   });
 
-  it("speaks with the Voice it is given, at the Phrase's rate and volume, on its device", async () => {
-    const synthesize = vi.fn(async () => new Uint8Array());
+  it("speaks with the synthesis its Preset gives, at the Phrase's volume, on its device", async () => {
+    const synthesize = vi.fn<Synthesis>(async () => new Uint8Array());
+    const synthesisFor = vi.fn(async () => synthesize);
     const play = vi.fn(async () => {});
     const queue = new SpeechQueue({
-      provider: { voices: async () => [], synthesize },
       player: { devices: async () => [], play },
-      voiceFor: async () => "com.apple.voice.compact.ru-RU.Milena",
+      synthesisFor,
       onDropped: () => {},
       onStarted: () => {},
       onFinished: () => {},
     });
 
     const headphones = { id: "headphones-uid", name: "AirPods" };
-    queue.enqueue({
+    const phrase: Phrase = {
       text: "Привет",
       tags: [],
-      rate: 1.5,
+      preset: { id: "preset-1", name: "Chat" },
       volume: 0.4,
       device: headphones,
-    });
+    };
+    queue.enqueue(phrase);
     await settle();
 
-    expect(synthesize).toHaveBeenCalledWith(
-      "Привет",
-      "com.apple.voice.compact.ru-RU.Milena",
-      { rate: 1.5 },
-      expect.any(AbortSignal),
-    );
+    expect(synthesisFor).toHaveBeenCalledWith(phrase);
+    expect(synthesize).toHaveBeenCalledWith("Привет", expect.any(AbortSignal));
     expect(play).toHaveBeenCalledWith(
       expect.any(Uint8Array),
       { volume: 0.4, device: headphones, onStarted: expect.any(Function) },
@@ -333,18 +335,14 @@ describe("Phrase Started and Phrase Finished", () => {
     const error = vi.spyOn(console, "error").mockImplementation(() => {});
     const syntheses: Step[] = [];
     const queue = new SpeechQueue({
-      provider: {
-        voices: async () => [],
-        synthesize: async (text, _voice, _options, signal) => {
-          await deferredStep(text, signal, syntheses);
-          return new Uint8Array();
-        },
-      },
       player: {
         devices: async () => [],
         play: async (_audio, { onStarted }) => onStarted?.(),
       },
-      voiceFor: async () => "voice-1",
+      synthesisFor: async () => async (text, signal) => {
+        await deferredStep(text, signal, syntheses);
+        return new Uint8Array();
+      },
       onDropped: () => {},
       onStarted: () => {
         throw new Error("the host went away");
@@ -549,20 +547,20 @@ describe("Stopping", () => {
     expect([events, dropped]).toEqual([[], []]);
   });
 
-  it("never synthesizes a Phrase stopped while its Voice is looked up", async () => {
-    const { queue, syntheses, voiceFor } = setup();
-    let voiceFound = () => {};
-    voiceFor.mockImplementationOnce(
+  it("never synthesizes a Phrase stopped while its Preset is looked up", async () => {
+    const { queue, syntheses, synthesisFor } = setup();
+    let presetFound = () => {};
+    synthesisFor.mockImplementationOnce(
       () =>
         new Promise((resolve) => {
-          voiceFound = () => resolve("voice-1");
+          presetFound = () => resolve(async () => new Uint8Array());
         }),
     );
     queue.enqueue(phrase("stopped"));
     await settle();
 
     queue.stopCurrent();
-    voiceFound();
+    presetFound();
     await settle();
 
     expect(syntheses).toHaveLength(0);
@@ -835,16 +833,53 @@ describe("A failure", () => {
   });
 
   it("that passed leaves the Phrase spoken as if nothing happened", async () => {
-    const { queue, syntheses, plays, dropped, events, voiceFor } = setup();
-    voiceFor.mockRejectedValueOnce(passing());
+    const { queue, syntheses, plays, dropped, events, synthesisFor } = setup();
+    synthesisFor.mockRejectedValueOnce(passing());
     queue.enqueue(phrase("hello"));
     await settle();
 
     await speakCurrent(syntheses, plays, 0);
 
-    expect(voiceFor).toHaveBeenCalledTimes(2);
+    expect(synthesisFor).toHaveBeenCalledTimes(2);
     expect(dropped).toEqual([]);
     expect(events).toEqual(["started hello", "finished hello"]);
+  });
+
+  it("is tried again after the pause its Provider asks for, not before", async () => {
+    const { queue, syntheses, dropped } = setup();
+    queue.enqueue(phrase("hello"));
+    await settle();
+
+    syntheses[0].fail(
+      new ProviderError("transient", "Too many requests", { retryAfter: 40 }),
+    );
+    await settle();
+    // Still current while it waits.
+    expect(syntheses).toHaveLength(1);
+    expect(queue.speaking).toBe(true);
+
+    await new Promise((resolve) => setTimeout(resolve, 50));
+    expect(syntheses.map(({ text }) => text)).toEqual(["hello", "hello"]);
+    expect(dropped).toEqual([]);
+  });
+
+  it("stopped while it waits for its retry, ends with neither Phrase Started nor Phrase Finished, and the queue moves on", async () => {
+    const { queue, syntheses, dropped, events } = setup();
+    queue.enqueue(phrase("hello"));
+    queue.enqueue(phrase("next"));
+    await settle();
+
+    syntheses[0].fail(
+      new ProviderError("transient", "Too many requests", {
+        retryAfter: 60_000,
+      }),
+    );
+    await settle();
+    queue.stopCurrent();
+    await settle();
+
+    expect(syntheses.map(({ text }) => text)).toEqual(["hello", "next"]);
+    expect([events, dropped]).toEqual([[], []]);
   });
 
   it("of a play before its sound starts tries the whole Phrase again", async () => {

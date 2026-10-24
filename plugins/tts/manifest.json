@@ -1,8 +1,8 @@
 {
   "name": "tts",
   "title": "Text to Speech",
-  "description": "Reads chat and deck text aloud with this computer's voices",
-  "version": "0.1.0",
+  "description": "Reads chat and deck text aloud with this computer's voices or ElevenLabs'",
+  "version": "0.2.0",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-tts",

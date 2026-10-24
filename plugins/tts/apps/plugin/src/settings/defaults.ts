@@ -1,13 +1,14 @@
 import {
   INITIAL_DEFAULTS,
-  RATE_MAX,
-  RATE_MIN,
   SYSTEM_DEFAULT,
   VOLUME_MAX,
   type Defaults,
   type OutputDevice,
+  type PresetRef,
   type SpeakSettings,
 } from "tts-protocol";
+
+import { isRecord, nameOf } from "./values";
 
 /**
  * Defaults as saved, or as an editor sent them, read warily: whatever this
@@ -16,10 +17,9 @@ import {
  */
 export function readDefaults(raw: unknown): Defaults {
   const record = isRecord(raw) ? raw : {};
-  const voice = voiceOf(record.voice);
+  const preset = presetRefOf(record.preset);
   return {
-    ...(voice !== undefined && { voice }),
-    rate: rateOf(record.rate) ?? INITIAL_DEFAULTS.rate,
+    ...(preset !== undefined && { preset }),
     volume: volumeOf(record.volume) ?? INITIAL_DEFAULTS.volume,
     device: deviceOf(record.device) ?? INITIAL_DEFAULTS.device,
     lengthLimit:
@@ -31,9 +31,8 @@ export function readDefaults(raw: unknown): Defaults {
 
 /** How one Speak is spoken, its overrides laid over the defaults. */
 export type EffectiveSettings = {
-  /** A Voice's id; absent for the voice the OS speaks with. */
-  voice?: string;
-  rate: number;
+  /** Absent while there is no Default Preset: the OS's voice then. */
+  preset?: PresetRef;
   /** 0–100 %. */
   volume: number;
   device: OutputDevice;
@@ -49,18 +48,21 @@ export function effectiveSettings(
   defaults: Defaults,
   speak: SpeakSettings | null | undefined,
 ): EffectiveSettings {
-  const voice = voiceOf(speak?.voice) ?? defaults.voice;
+  const preset = presetRefOf(speak?.preset) ?? defaults.preset;
   return {
-    ...(voice !== undefined && { voice }),
-    rate: rateOf(speak?.rate) ?? defaults.rate,
+    ...(preset !== undefined && { preset }),
     volume: volumeOf(speak?.volume) ?? defaults.volume,
     device: deviceOf(speak?.device) ?? defaults.device,
     lengthLimit: lengthLimitOf(speak?.lengthLimit) ?? defaults.lengthLimit,
   };
 }
 
-function voiceOf(value: unknown): string | undefined {
-  return typeof value === "string" && value !== "" ? value : undefined;
+/** A Preset by its id — named by its id if it has no name. */
+export function presetRefOf(value: unknown): PresetRef | undefined {
+  if (!isRecord(value) || typeof value.id !== "string" || value.id === "") {
+    return undefined;
+  }
+  return { id: value.id, name: nameOf(value.name) ?? value.id };
 }
 
 /** System default, or a device with an id — named by its id if it has no name. */
@@ -71,16 +73,7 @@ function deviceOf(value: unknown): OutputDevice | undefined {
   if (!isRecord(value) || typeof value.id !== "string" || value.id === "") {
     return undefined;
   }
-  const name =
-    typeof value.name === "string" && value.name !== "" ? value.name : value.id;
-  return { id: value.id, name };
-}
-
-/** Clamped to 0.5×–2×, the range the editors offer. */
-function rateOf(value: unknown): number | undefined {
-  return isNumber(value)
-    ? Math.min(RATE_MAX, Math.max(RATE_MIN, value))
-    : undefined;
+  return { id: value.id, name: nameOf(value.name) ?? value.id };
 }
 
 /** Clamped to 0–100 %: no boost. */
@@ -95,8 +88,4 @@ function lengthLimitOf(value: unknown): number | undefined {
 
 function isNumber(value: unknown): value is number {
   return typeof value === "number" && Number.isFinite(value);
-}
-
-function isRecord(value: unknown): value is Record<string, unknown> {
-  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

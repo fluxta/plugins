@@ -13,7 +13,7 @@ import { tagsOf, textOf } from "./values";
 export interface DefaultsSource {
   /** Settles once the saved defaults have been read. */
   readonly loaded: Promise<void>;
-  readonly current: Defaults;
+  readonly defaults: Defaults;
 }
 
 /**
@@ -37,17 +37,17 @@ export class SpeakAction extends StandaloneAction<SpeakSettings> {
   }: StandaloneTriggerContext<SpeakSettings>): Promise<void> {
     await this.#defaults.loaded;
     // Read now, not when the Phrase's turn comes: the Phrase is spoken as
-    // the defaults stood when the Speak ran.
-    const { voice, rate, volume, device, lengthLimit } = effectiveSettings(
-      this.#defaults.current,
+    // the defaults stood when the Speak ran. Its Preset is read when its
+    // turn comes.
+    const { preset, volume, device, lengthLimit } = effectiveSettings(
+      this.#defaults.defaults,
       settings,
     );
     this.#queue.enqueue(
       {
         text: truncate(textOf(settings?.text), lengthLimit),
         tags: tagsOf(settings?.tags),
-        ...(voice !== undefined && { voice }),
-        rate,
+        ...(preset !== undefined && { preset }),
         volume: volume / 100,
         device,
       },
