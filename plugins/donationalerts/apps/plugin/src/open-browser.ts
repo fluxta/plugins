@@ -26,14 +26,18 @@ export function openInBrowser(url: string): void {
   }
 }
 
-function openCommand(url: string): [string, string[]] {
-  switch (process.platform) {
+export function openCommand(
+  url: string,
+  platform: NodeJS.Platform = process.platform,
+): [string, string[]] {
+  switch (platform) {
     case "darwin":
       return ["open", [url]];
     case "win32":
-      // The empty string is `start`'s title argument; without it a quoted URL
-      // is taken as the window title and nothing opens.
-      return ["cmd", ["/c", "start", "", url]];
+      // Not `cmd /c start`: cmd.exe splits its command line at `&`, which cut
+      // the consent screen's URL after its first query parameter. rundll32
+      // hands the URL to the default browser with no shell in between.
+      return ["rundll32", ["url.dll,FileProtocolHandler", url]];
     default:
       return ["xdg-open", [url]];
   }

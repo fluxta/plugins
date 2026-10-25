@@ -2,7 +2,7 @@
   "name": "donationalerts",
   "title": "DonationAlerts",
   "description": "Donations and goal updates from DonationAlerts as Events",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-donationalerts",
