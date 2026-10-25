@@ -1,0 +1,25 @@
+{
+  "dependencies": {
+    "@fluxta/sdk": "catalog:",
+    "centrifuge": "catalog:",
+    "donationalerts-protocol": "workspace:*",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@types/node": "catalog:",
+    "donationalerts-editor": "workspace:*",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:"
+  },
+  "name": "donationalerts-plugin",
+  "private": true,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "test": "vitest run",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}

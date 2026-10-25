@@ -1,0 +1,104 @@
+{
+  "name": "donationalerts",
+  "title": "DonationAlerts",
+  "description": "Donations and goal updates from DonationAlerts as Events",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/inferst/fluxta-donationalerts",
+  "repository": "https://github.com/inferst/fluxta-donationalerts",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.9.0",
+  "platforms": ["windows", "macos", "linux"],
+  "categories": ["streaming"],
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "icon": "icons/hand-coins.svg",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "settings",
+  "actions": [],
+  "events": [
+    {
+      "type": "donation-received",
+      "name": "Donation Received",
+      "fields": [
+        {
+          "key": "donationId",
+          "name": "Donation ID",
+          "type": "number"
+        },
+        {
+          "key": "username",
+          "name": "Username",
+          "type": "string"
+        },
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        },
+        {
+          "key": "messageType",
+          "name": "Message Type",
+          "type": "string"
+        },
+        {
+          "key": "amount",
+          "name": "Amount",
+          "type": "number"
+        },
+        {
+          "key": "currency",
+          "name": "Currency",
+          "type": "string"
+        },
+        {
+          "key": "isTest",
+          "name": "Is Test",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "goal-updated",
+      "name": "Goal Updated",
+      "fields": [
+        {
+          "key": "goalId",
+          "name": "Goal ID",
+          "type": "number"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "isActive",
+          "name": "Is Active",
+          "type": "boolean"
+        },
+        {
+          "key": "currency",
+          "name": "Currency",
+          "type": "string"
+        },
+        {
+          "key": "startAmount",
+          "name": "Start Amount",
+          "type": "number"
+        },
+        {
+          "key": "raisedAmount",
+          "name": "Raised Amount",
+          "type": "number"
+        },
+        {
+          "key": "goalAmount",
+          "name": "Goal Amount",
+          "type": "number"
+        }
+      ]
+    }
+  ]
+}
