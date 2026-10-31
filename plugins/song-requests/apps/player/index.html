@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Song Requests — Player</title>
+    <style>
+      html,
+      body {
+        margin: 0;
+        height: 100%;
+        overflow: hidden;
+        background: #000;
+        color: #ccc;
+        font:
+          16px/1.4 system-ui,
+          sans-serif;
+      }
+
+      /* The IFrame Player takes this element's place and keeps its id. */
+      #player {
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        border: 0;
+      }
+
+      #note {
+        position: fixed;
+        inset: 0;
+        display: none;
+        place-items: center;
+        text-align: center;
+        padding: 24px;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="player"></div>
+    <div id="note"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

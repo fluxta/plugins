@@ -1,0 +1,33 @@
+{
+  "devDependencies": {
+    "@eslint/js": "catalog:",
+    "@fluxta/cli": "catalog:",
+    "eslint": "catalog:",
+    "eslint-config-prettier": "catalog:",
+    "eslint-plugin-react-hooks": "catalog:",
+    "globals": "catalog:",
+    "prettier": "catalog:",
+    "shx": "catalog:",
+    "turbo": "catalog:",
+    "typescript": "catalog:",
+    "typescript-eslint": "catalog:",
+    "vitest": "catalog:"
+  },
+  "engines": {
+    "node": ">=22.18.0"
+  },
+  "name": "song-requests",
+  "packageManager": "pnpm@11.23.0",
+  "private": true,
+  "scripts": {
+    "build": "shx rm -rf dist && turbo run build --force",
+    "dev": "pnpm --filter song-requests-editor --filter song-requests-player build && turbo run dev",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "lint": "eslint .",
+    "test": "turbo run test",
+    "typecheck": "turbo run typecheck"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}
