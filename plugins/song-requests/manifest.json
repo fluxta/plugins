@@ -1,0 +1,497 @@
+{
+  "name": "song-requests",
+  "title": "Song Requests",
+  "description": "Viewers request songs; they play one at a time from YouTube on a player page in OBS",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/inferst/fluxta-song-requests",
+  "repository": "https://github.com/inferst/fluxta-song-requests",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.9.0",
+  "platforms": ["windows", "macos", "linux"],
+  "categories": ["music", "streaming"],
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "icon": "icons/list-music.svg",
+  "editor": "editor/plugin.html",
+  "editorPlacement": "navigation",
+  "actions": [
+    {
+      "name": "Request Song",
+      "type": "request-song",
+      "icon": "icons/list-plus.svg",
+      "context": "standalone",
+      "editor": "editor/request-song.html",
+      "produces": [
+        {
+          "key": "outcome",
+          "name": "Outcome",
+          "type": "string"
+        },
+        {
+          "key": "reason",
+          "name": "Refusal Reason",
+          "type": "string"
+        },
+        {
+          "key": "songId",
+          "name": "Song ID",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "channel",
+          "name": "Channel",
+          "type": "string"
+        },
+        {
+          "key": "url",
+          "name": "Link",
+          "type": "string"
+        },
+        {
+          "key": "position",
+          "name": "Position",
+          "type": "number"
+        },
+        {
+          "key": "duration",
+          "name": "Duration (Seconds)",
+          "type": "number"
+        },
+        {
+          "key": "eta",
+          "name": "Starts In (Seconds)",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Skip",
+      "type": "skip",
+      "icon": "icons/skip-forward.svg",
+      "context": "standalone",
+      "produces": [
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Playback",
+      "type": "playback",
+      "icon": "icons/circle-play.svg",
+      "context": "standalone",
+      "editor": "editor/playback.html",
+      "produces": [
+        {
+          "key": "isPaused",
+          "name": "Is Paused",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "Volume",
+      "type": "volume",
+      "icon": "icons/volume-2.svg",
+      "context": "standalone",
+      "editor": "editor/volume.html",
+      "produces": [
+        {
+          "key": "volume",
+          "name": "Volume",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Remove Song",
+      "type": "remove-song",
+      "icon": "icons/list-minus.svg",
+      "context": "standalone",
+      "editor": "editor/remove-song.html",
+      "produces": [
+        {
+          "key": "removed",
+          "name": "Removed",
+          "type": "number"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Clear Queue",
+      "type": "clear-queue",
+      "icon": "icons/list-x.svg",
+      "context": "standalone",
+      "produces": [
+        {
+          "key": "removed",
+          "name": "Removed",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "name": "Block Song",
+      "type": "block-song",
+      "icon": "icons/ban.svg",
+      "context": "standalone",
+      "editor": "editor/block-song.html",
+      "produces": [
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "name": "Requests",
+      "type": "requests",
+      "icon": "icons/toggle-right.svg",
+      "context": "standalone",
+      "editor": "editor/requests.html",
+      "produces": [
+        {
+          "key": "isOpen",
+          "name": "Is Open",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "name": "Get Song",
+      "type": "get-song",
+      "icon": "icons/search.svg",
+      "context": "standalone",
+      "editor": "editor/get-song.html",
+      "produces": [
+        {
+          "key": "songId",
+          "name": "Song ID",
+          "type": "string"
+        },
+        {
+          "key": "provider",
+          "name": "Provider",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "channel",
+          "name": "Channel",
+          "type": "string"
+        },
+        {
+          "key": "duration",
+          "name": "Duration (Seconds)",
+          "type": "number"
+        },
+        {
+          "key": "url",
+          "name": "Link",
+          "type": "string"
+        },
+        {
+          "key": "requesterPlatform",
+          "name": "Requester Platform",
+          "type": "string"
+        },
+        {
+          "key": "requesterId",
+          "name": "Requester ID",
+          "type": "string"
+        },
+        {
+          "key": "requesterName",
+          "name": "Requester Name",
+          "type": "string"
+        },
+        {
+          "key": "reference",
+          "name": "Reference",
+          "type": "string"
+        },
+        {
+          "key": "position",
+          "name": "Position",
+          "type": "number"
+        },
+        {
+          "key": "eta",
+          "name": "Starts In (Seconds)",
+          "type": "number"
+        }
+      ]
+    }
+  ],
+  "events": [
+    {
+      "type": "song-started",
+      "name": "Song Started",
+      "fields": [
+        {
+          "key": "songId",
+          "name": "Song ID",
+          "type": "string"
+        },
+        {
+          "key": "provider",
+          "name": "Provider",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "channel",
+          "name": "Channel",
+          "type": "string"
+        },
+        {
+          "key": "duration",
+          "name": "Duration (Seconds)",
+          "type": "number"
+        },
+        {
+          "key": "url",
+          "name": "Link",
+          "type": "string"
+        },
+        {
+          "key": "requesterPlatform",
+          "name": "Requester Platform",
+          "type": "string"
+        },
+        {
+          "key": "requesterId",
+          "name": "Requester ID",
+          "type": "string"
+        },
+        {
+          "key": "requesterName",
+          "name": "Requester Name",
+          "type": "string"
+        },
+        {
+          "key": "reference",
+          "name": "Reference",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "song-ended",
+      "name": "Song Ended",
+      "fields": [
+        {
+          "key": "songId",
+          "name": "Song ID",
+          "type": "string"
+        },
+        {
+          "key": "provider",
+          "name": "Provider",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "channel",
+          "name": "Channel",
+          "type": "string"
+        },
+        {
+          "key": "duration",
+          "name": "Duration (Seconds)",
+          "type": "number"
+        },
+        {
+          "key": "url",
+          "name": "Link",
+          "type": "string"
+        },
+        {
+          "key": "requesterPlatform",
+          "name": "Requester Platform",
+          "type": "string"
+        },
+        {
+          "key": "requesterId",
+          "name": "Requester ID",
+          "type": "string"
+        },
+        {
+          "key": "requesterName",
+          "name": "Requester Name",
+          "type": "string"
+        },
+        {
+          "key": "reference",
+          "name": "Reference",
+          "type": "string"
+        },
+        {
+          "key": "how",
+          "name": "How",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "song-dropped",
+      "name": "Song Dropped",
+      "fields": [
+        {
+          "key": "songId",
+          "name": "Song ID",
+          "type": "string"
+        },
+        {
+          "key": "provider",
+          "name": "Provider",
+          "type": "string"
+        },
+        {
+          "key": "title",
+          "name": "Title",
+          "type": "string"
+        },
+        {
+          "key": "channel",
+          "name": "Channel",
+          "type": "string"
+        },
+        {
+          "key": "duration",
+          "name": "Duration (Seconds)",
+          "type": "number"
+        },
+        {
+          "key": "url",
+          "name": "Link",
+          "type": "string"
+        },
+        {
+          "key": "requesterPlatform",
+          "name": "Requester Platform",
+          "type": "string"
+        },
+        {
+          "key": "requesterId",
+          "name": "Requester ID",
+          "type": "string"
+        },
+        {
+          "key": "requesterName",
+          "name": "Requester Name",
+          "type": "string"
+        },
+        {
+          "key": "reference",
+          "name": "Reference",
+          "type": "string"
+        },
+        {
+          "key": "why",
+          "name": "Why",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "sources": [
+    {
+      "key": "isPlaying",
+      "name": "Is Playing",
+      "type": "boolean",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "isPaused",
+      "name": "Is Paused",
+      "type": "boolean",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "playerConnected",
+      "name": "Player Connected",
+      "type": "boolean",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "currentTitle",
+      "name": "Current Title",
+      "type": "string",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "currentRequester",
+      "name": "Current Requester",
+      "type": "string",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "isFallback",
+      "name": "Is Fallback",
+      "type": "boolean",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "queueLength",
+      "name": "Queue Length",
+      "type": "number",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "queueDuration",
+      "name": "Queue Duration (Seconds)",
+      "type": "number",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "volume",
+      "name": "Volume",
+      "type": "number",
+      "resolve": "query",
+      "context": "standalone"
+    },
+    {
+      "key": "requestsOpen",
+      "name": "Requests Open",
+      "type": "boolean",
+      "resolve": "query",
+      "context": "standalone"
+    }
+  ]
+}
