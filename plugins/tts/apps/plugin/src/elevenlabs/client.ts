@@ -100,30 +100,16 @@ export class ElevenLabsClient {
         include_total_count: "false",
         ...(token !== undefined && { next_page_token: token }),
       });
-      const page = await this.#json(`/v2/voices?${query}`, signal);
-      voices.push(...voicesOf(page));
-      token =
-        isRecord(page) &&
-        page.has_more === true &&
-        typeof page.next_page_token === "string" &&
-        page.next_page_token !== ""
-          ? page.next_page_token
-          : undefined;
+      const page = await this.#json(`/v2/voices?${query}`, signal, voicePageOf);
+      voices.push(...page.voices);
+      token = page.next;
     } while (token !== undefined);
     return voices;
   }
 
   /** The Models that speak text, in ElevenLabs' order. */
   async models(signal?: AbortSignal): Promise<Model[]> {
-    const models = await this.#json("/v1/models", signal);
-    return (Array.isArray(models) ? models : []).flatMap((model): Model[] =>
-      isRecord(model) &&
-      model.can_do_text_to_speech === true &&
-      typeof model.model_id === "string" &&
-      model.model_id !== ""
-        ? [{ id: model.model_id, name: textOf(model.name) ?? model.model_id }]
-        : [],
-    );
+    return this.#json("/v1/models", signal, modelsOf);
   }
 
   /** One voice's settings as set up on the site. */
@@ -131,11 +117,10 @@ export class ElevenLabsClient {
     voiceId: string,
     signal?: AbortSignal,
   ): Promise<VoiceSettings> {
-    return voiceSettingsOf(
-      await this.#json(
-        `/v1/voices/${encodeURIComponent(voiceId)}/settings`,
-        signal,
-      ),
+    return this.#json(
+      `/v1/voices/${encodeURIComponent(voiceId)}/settings`,
+      signal,
+      voiceSettingsOf,
     );
   }
 
@@ -164,16 +149,42 @@ export class ElevenLabsClient {
         }),
       },
       signal,
-      async (response) => new Uint8Array(await response.arrayBuffer()),
+      async (response) => {
+        // The endpoint's OpenAPI advertises audio/mpeg independently of
+        // output_format. Also accept the explicit PCM and binary types.
+        if (
+          !["audio/pcm", "application/octet-stream", "audio/mpeg"].includes(
+            mediaTypeOf(response),
+          )
+        ) {
+          throw unexpectedResponse();
+        }
+        const pcm = new Uint8Array(await response.arrayBuffer());
+        // A whole Phrase must contain whole 16-bit samples. PCM has no
+        // header that could otherwise distinguish it from arbitrary bytes.
+        if (pcm.byteLength < 2 || pcm.byteLength % 2 !== 0) {
+          throw unexpectedResponse();
+        }
+        return pcm;
+      },
     );
   }
 
-  #json(path: string, signal?: AbortSignal): Promise<unknown> {
+  #json<T>(
+    path: string,
+    signal: AbortSignal | undefined,
+    read: (body: unknown) => T,
+  ): Promise<T> {
     return this.#send(
       path,
       { headers: { accept: "application/json" } },
       signal,
-      async (response) => parsed(await response.text()),
+      async (response) => {
+        if (mediaTypeOf(response) !== "application/json") {
+          throw unexpectedResponse();
+        }
+        return read(parsed(await response.text()));
+      },
     );
   }
 
@@ -211,13 +222,16 @@ export class ElevenLabsClient {
       if (signal?.aborted) {
         throw signal.reason;
       }
-      const failure = new ProviderError(
-        "transient",
-        timeout.aborted
-          ? `ElevenLabs did not answer within ${this.#timeoutMs / 1000} s`
-          : `Cannot reach ElevenLabs: ${error instanceof Error ? error.message : String(error)}`,
-        { retryAfter: RETRY_AFTER_MS },
-      );
+      const failure =
+        error instanceof ProviderError
+          ? error
+          : new ProviderError(
+              "transient",
+              timeout.aborted
+                ? `ElevenLabs did not answer within ${this.#timeoutMs / 1000} s`
+                : `Cannot reach ElevenLabs: ${error instanceof Error ? error.message : String(error)}`,
+              { retryAfter: RETRY_AFTER_MS },
+            );
       this.#onOutcome({ connected: false, reason: failure.message }, key);
       throw failure;
     }
@@ -232,6 +246,26 @@ export class ElevenLabsClient {
     );
     throw failure;
   }
+}
+
+/**
+ * A network intermediary can answer HTTP 200 with its own page. Neither
+ * the account nor the Player may treat that as an ElevenLabs answer. Do
+ * not include the body or headers: neither is trusted to keep the key out.
+ */
+function unexpectedResponse(): ProviderError {
+  return new ProviderError(
+    "transient",
+    "ElevenLabs returned an unexpected response",
+    { retryAfter: RETRY_AFTER_MS },
+  );
+}
+
+function mediaTypeOf(response: Response): string {
+  return (response.headers.get("content-type") ?? "")
+    .split(";", 1)[0]
+    .trim()
+    .toLowerCase();
 }
 
 /** ElevenLabs' error codes that mean the Preset's Voice is not there… */
@@ -316,32 +350,84 @@ function detailOf(body: unknown): { code?: string; message?: string } {
  * They speak whatever language their text is in, so none has a language of
  * its own.
  */
-function voicesOf(page: unknown): ElevenLabsVoice[] {
-  const voices =
-    isRecord(page) && Array.isArray(page.voices) ? page.voices : [];
-  return voices.flatMap((voice): ElevenLabsVoice[] => {
+function voicePageOf(page: unknown): {
+  voices: ElevenLabsVoice[];
+  next?: string;
+} {
+  if (
+    !isRecord(page) ||
+    !Array.isArray(page.voices) ||
+    typeof page.has_more !== "boolean" ||
+    (page.has_more && textOf(page.next_page_token) === undefined) ||
+    (page.next_page_token != null && typeof page.next_page_token !== "string")
+  ) {
+    throw unexpectedResponse();
+  }
+  const voices = page.voices.map((voice): ElevenLabsVoice => {
     if (
       !isRecord(voice) ||
       typeof voice.voice_id !== "string" ||
-      voice.voice_id === ""
+      voice.voice_id.trim() === "" ||
+      (voice.name != null && typeof voice.name !== "string")
     ) {
-      return [];
+      throw unexpectedResponse();
     }
-    return [
-      {
-        id: voice.voice_id,
-        name: textOf(voice.name) ?? voice.voice_id,
-        ...(isRecord(voice.settings) && {
-          settings: voiceSettingsOf(voice.settings),
-        }),
-      },
-    ];
+    const id = voice.voice_id;
+    return {
+      id,
+      name: textOf(voice.name) ?? id,
+      ...(voice.settings != null && {
+        settings: voiceSettingsOf(voice.settings),
+      }),
+    };
+  });
+  return {
+    voices,
+    next:
+      page.has_more && typeof page.next_page_token === "string"
+        ? page.next_page_token
+        : undefined,
+  };
+}
+
+function modelsOf(value: unknown): Model[] {
+  if (!Array.isArray(value)) {
+    throw unexpectedResponse();
+  }
+  return value.flatMap((model): Model[] => {
+    if (
+      !isRecord(model) ||
+      typeof model.model_id !== "string" ||
+      model.model_id.trim() === "" ||
+      typeof model.can_do_text_to_speech !== "boolean" ||
+      (model.name != null && typeof model.name !== "string")
+    ) {
+      throw unexpectedResponse();
+    }
+    const id = model.model_id;
+    return model.can_do_text_to_speech
+      ? [{ id, name: textOf(model.name) ?? id }]
+      : [];
   });
 }
 
 /** A voice's settings, each one only when it is what ElevenLabs means. */
 function voiceSettingsOf(value: unknown): VoiceSettings {
-  const settings = isRecord(value) ? value : {};
+  const numeric = ["stability", "similarity_boost", "style", "speed"];
+  if (
+    !isRecord(value) ||
+    ![...numeric, "use_speaker_boost"].some((key) => key in value) ||
+    numeric.some(
+      (key) =>
+        value[key] != null &&
+        (typeof value[key] !== "number" || !Number.isFinite(value[key])),
+    ) ||
+    (value.use_speaker_boost != null &&
+      typeof value.use_speaker_boost !== "boolean")
+  ) {
+    throw unexpectedResponse();
+  }
+  const settings = value;
   const number = (name: string) => {
     const found = settings[name];
     return typeof found === "number" && Number.isFinite(found)

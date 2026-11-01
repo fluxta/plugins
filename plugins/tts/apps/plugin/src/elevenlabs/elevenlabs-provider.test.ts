@@ -2,7 +2,9 @@ import type { ElevenLabsSettings } from "tts-protocol";
 import { describe, expect, it, vi } from "vitest";
 
 import { wavDuration } from "../speech/wav";
-import type { ElevenLabsClient, ElevenLabsVoice } from "./client";
+import { SpeechQueue } from "../speech/speech-queue";
+import { ElevenLabsAccount } from "./account";
+import { ElevenLabsClient, type ElevenLabsVoice } from "./client";
 import { ElevenLabsProvider } from "./elevenlabs-provider";
 
 const rachel: ElevenLabsVoice = {
@@ -120,4 +122,90 @@ describe("ElevenLabsProvider", () => {
     ).rejects.toThrow("stopped");
     expect(client.speech).not.toHaveBeenCalled();
   });
+});
+
+describe("ElevenLabs through the Speech Queue", () => {
+  it.each([
+    ["text/html", "<html>Service blocked</html>"],
+    ["application/json", '{"detail":{"message":"Service blocked"}}'],
+  ])(
+    "drops an HTTP 200 %s response silently and speaks again once access returns",
+    async (contentType, body) => {
+      vi.useFakeTimers();
+      try {
+        let blocked = true;
+        const fetch = vi.fn(async () =>
+          blocked
+            ? new Response(body, { headers: { "content-type": contentType } })
+            : new Response(SECOND, {
+                headers: { "content-type": "application/octet-stream" },
+              }),
+        );
+        const report = vi.fn();
+        const account = new ElevenLabsAccount({ key: () => "key", report });
+        account.keyChanged();
+        const client = new ElevenLabsClient({
+          key: () => "key",
+          fetch,
+          onOutcome: (outcome, key) => account.outcome(outcome, key),
+        });
+        const provider = new ElevenLabsProvider(client);
+        const play = vi.fn(async (_audio, { onStarted }) => onStarted?.());
+        const onDropped = vi.fn();
+        const onStarted = vi.fn();
+        const onFinished = vi.fn();
+        const queue = new SpeechQueue({
+          player: { devices: async () => [], play },
+          synthesisFor: async () => (text, signal) =>
+            provider.synthesize(text, "rachel-id", flash, signal),
+          onDropped,
+          onStarted,
+          onFinished,
+        });
+        const phrase = {
+          text: "Hello",
+          tags: [],
+          volume: 0,
+          device: "system-default" as const,
+        };
+
+        queue.enqueue(phrase);
+        await vi.runAllTimersAsync();
+
+        expect(fetch).toHaveBeenCalledTimes(2);
+        expect(play).not.toHaveBeenCalled();
+        expect(onStarted).not.toHaveBeenCalled();
+        expect(onFinished).not.toHaveBeenCalled();
+        expect(onDropped).toHaveBeenCalledExactlyOnceWith(
+          phrase,
+          expect.objectContaining({
+            kind: "transient",
+            message: "ElevenLabs returned an unexpected response",
+          }),
+        );
+        expect(account.status.state).toBe("not-connected");
+        expect(report).toHaveBeenLastCalledWith([
+          { id: "elevenlabs", title: "ElevenLabs", connected: false },
+        ]);
+        expect(queue.speaking).toBe(false);
+
+        blocked = false;
+        queue.enqueue(phrase);
+        await vi.runAllTimersAsync();
+
+        expect(fetch).toHaveBeenCalledTimes(3);
+        expect(play).toHaveBeenCalledOnce();
+        expect(wavDuration(play.mock.calls[0][0])).toBeCloseTo(1);
+        expect(onStarted).toHaveBeenCalledOnce();
+        expect(onFinished).toHaveBeenCalledOnce();
+        expect(onDropped).toHaveBeenCalledOnce();
+        expect(account.status.state).toBe("connected");
+        expect(report).toHaveBeenLastCalledWith([
+          { id: "elevenlabs", title: "ElevenLabs", connected: true },
+        ]);
+      } finally {
+        vi.useRealTimers();
+      }
+    },
+  );
 });

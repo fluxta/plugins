@@ -33,11 +33,21 @@ function setup(
     }
     const { status = 200, body, headers } = answer ?? {};
     if (body instanceof Uint8Array) {
-      return new Response(body, { status, headers });
+      return new Response(body, {
+        status,
+        headers: { "content-type": "audio/pcm", ...headers },
+      });
     }
     return new Response(
       typeof body === "string" ? body : JSON.stringify(body),
-      { status, headers },
+      {
+        status,
+        headers: {
+          "content-type":
+            typeof body === "string" ? "text/plain" : "application/json",
+          ...headers,
+        },
+      },
     );
   });
   const client = new ElevenLabsClient({
@@ -101,11 +111,11 @@ describe("ElevenLabsClient.voices", () => {
     ]);
   });
 
-  it("names a voice by its id when it has no name, and skips one without an id", async () => {
+  it("names a voice by its id when it has no name", async () => {
     const { client } = setup([
       {
         body: {
-          voices: [{ voice_id: "abc", name: " " }, { name: "No id" }, "Rachel"],
+          voices: [{ voice_id: "abc", name: " " }],
           has_more: false,
         },
       },
@@ -466,6 +476,195 @@ describe("ElevenLabsClient", () => {
     expect([error.kind, error.message]).toEqual([
       "rejected",
       "ElevenLabs: Too long",
+    ]);
+  });
+});
+
+const jsonCalls = [
+  {
+    name: "voices",
+    call: (client: ElevenLabsClient) => client.voices(),
+    valid: { voices: [], has_more: false },
+    invalid: [
+      null,
+      [],
+      {},
+      { detail: { message: "Blocked" } },
+      { voices: "Blocked", has_more: false },
+      { voices: [], has_more: "false" },
+      { voices: [], has_more: true },
+      { voices: [{ name: "No id" }], has_more: false },
+      { voices: ["Rachel"], has_more: false },
+      { voices: [{ voice_id: "x", settings: "Blocked" }], has_more: false },
+    ],
+  },
+  {
+    name: "models",
+    call: (client: ElevenLabsClient) => client.models(),
+    valid: [],
+    invalid: [
+      null,
+      {},
+      { detail: { message: "Blocked" } },
+      ["Blocked"],
+      [{ name: "No id", can_do_text_to_speech: true }],
+      [{ model_id: "x", can_do_text_to_speech: "true" }],
+    ],
+  },
+  {
+    name: "voice settings",
+    call: (client: ElevenLabsClient) => client.voiceSettings("voice"),
+    valid: { stability: 0.5, use_speaker_boost: true },
+    invalid: [
+      null,
+      [],
+      {},
+      { detail: { message: "Blocked" } },
+      { stability: "0.5" },
+      { use_speaker_boost: "true" },
+    ],
+  },
+];
+
+const unexpected = {
+  kind: "transient",
+  message: "ElevenLabs returned an unexpected response",
+  retryAfter: 1000,
+};
+
+function expectDisconnected(outcomes: { outcome: Outcome; key: string }[]) {
+  expect(outcomes).toEqual([
+    {
+      outcome: { connected: false, reason: unexpected.message },
+      key: KEY,
+    },
+  ]);
+}
+
+describe.each(jsonCalls)(
+  "ElevenLabsClient validates $name",
+  ({ call, valid, invalid }) => {
+    it.each([
+      ["text/html", "<html>Blocked</html>"],
+      ["application/json", "<html>Blocked</html>"],
+      ["application/json", '{"voices":'],
+      ["application/json", ""],
+      ["text/plain", JSON.stringify(valid)],
+      ["", JSON.stringify(valid)],
+    ])(
+      "rejects HTTP 200 with %s and an unexpected body",
+      async (contentType, body) => {
+        const { client, outcomes } = setup([
+          { body, headers: { "content-type": contentType } },
+        ]);
+
+        await expect(call(client)).rejects.toMatchObject(unexpected);
+        expectDisconnected(outcomes);
+      },
+    );
+
+    it.each(invalid.map((body) => [body]))(
+      "rejects an unexpected JSON structure: %j",
+      async (body) => {
+        const { client, outcomes } = setup([{ body }]);
+
+        await expect(call(client)).rejects.toMatchObject(unexpected);
+        expectDisconnected(outcomes);
+      },
+    );
+
+    it("accepts a valid response with MIME parameters and additional fields", async () => {
+      const { client, outcomes } = setup([
+        {
+          body: Array.isArray(valid) ? valid : { ...valid, future_field: true },
+          headers: { "content-type": "Application/JSON; charset=utf-8" },
+        },
+      ]);
+
+      await call(client);
+
+      expect(outcomes).toEqual([{ outcome: { connected: true }, key: KEY }]);
+    });
+  },
+);
+
+it("does not reflect an unexpected response's body or headers in the reason", async () => {
+  const { client, outcomes } = setup([
+    {
+      body: { detail: { message: KEY } },
+      headers: { "content-type": `text/html; secret=${KEY}` },
+    },
+  ]);
+
+  await expect(client.voices()).rejects.toMatchObject(unexpected);
+  expectDisconnected(outcomes);
+  expect(JSON.stringify(outcomes)).not.toContain(`secret=${KEY}`);
+});
+
+describe("ElevenLabsClient validates PCM", () => {
+  const say = (client: ElevenLabsClient) =>
+    client.speech("voice", { text: "Hello", modelId: "eleven_flash_v2_5" });
+
+  it.each(["text/html", "application/json", "audio/wav", "audio/ogg", ""])(
+    "rejects HTTP 200 with content type %s before reporting success",
+    async (contentType) => {
+      const { client, outcomes } = setup([
+        {
+          body: new TextEncoder().encode("<html>Blocked</html> "),
+          headers: { "content-type": contentType },
+        },
+      ]);
+
+      await expect(say(client)).rejects.toMatchObject(unexpected);
+      expectDisconnected(outcomes);
+    },
+  );
+
+  it.each([0, 1, 3])("rejects %i bytes of incomplete PCM", async (length) => {
+    const { client, outcomes } = setup([{ body: new Uint8Array(length) }]);
+
+    await expect(say(client)).rejects.toMatchObject(unexpected);
+    expectDisconnected(outcomes);
+  });
+
+  it.each([
+    "audio/pcm",
+    "application/octet-stream",
+    "audio/mpeg",
+    "Audio/PCM; rate=24000",
+  ])("accepts complete PCM returned as %s", async (contentType) => {
+    const pcm = new Uint8Array([1, 0, 2, 0]);
+    const { client, outcomes } = setup([
+      { body: pcm, headers: { "content-type": contentType } },
+    ]);
+
+    expect(await say(client)).toEqual(pcm);
+    expect(outcomes).toEqual([{ outcome: { connected: true }, key: KEY }]);
+  });
+
+  it("does not confirm a response whose body was cut short", async () => {
+    const { client, outcomes } = setup([
+      async () =>
+        new Response(
+          new ReadableStream({
+            start(controller) {
+              controller.enqueue(new Uint8Array([0, 0]));
+              controller.error(new TypeError("terminated"));
+            },
+          }),
+          { headers: { "content-type": "audio/pcm" } },
+        ),
+    ]);
+
+    await expect(say(client)).rejects.toMatchObject({ kind: "transient" });
+    expect(outcomes).toEqual([
+      {
+        outcome: {
+          connected: false,
+          reason: "Cannot reach ElevenLabs: terminated",
+        },
+        key: KEY,
+      },
     ]);
   });
 });

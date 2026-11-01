@@ -427,6 +427,51 @@ describe("EditorChannel", () => {
     expect(voiceLookUps()).toBe(2);
   });
 
+  it("reports an unexpected startup response as disconnected, and refreshes it when an editor opens", async () => {
+    let blocked = true;
+    const fetchElevenLabs = vi.fn<typeof elevenLabsFetch>((input, init) =>
+      blocked
+        ? Promise.resolve(
+            new Response("<html>Service blocked</html>", {
+              headers: { "content-type": "text/html" },
+            }),
+          )
+        : elevenLabsFetch(input, init),
+    );
+    const { channel, settings, account, connections, last } = setup({
+      fetchElevenLabs,
+    });
+    settings.load({ elevenLabs: { key: GOOD_KEY } });
+
+    account.keyChanged();
+    await channel.publish();
+
+    expect(account.status).toEqual({
+      state: "not-connected",
+      reason: "ElevenLabs returned an unexpected response",
+    });
+    expect(last()?.elevenLabs).toEqual(account.status);
+    expect(last()?.providers[1]).toMatchObject({
+      voices: [],
+      models: [],
+      problem: "ElevenLabs returned an unexpected response",
+    });
+    expect(connections).toHaveBeenLastCalledWith([
+      { id: "elevenlabs", title: "ElevenLabs", connected: false },
+    ]);
+    expect(fetchElevenLabs).toHaveBeenCalledTimes(2);
+
+    blocked = false;
+    await channel.handle({ event: "get-status" });
+
+    expect(account.status.state).toBe("connected");
+    expect(last()?.providers[1].voices).toHaveLength(1);
+    expect(last()?.providers[1].problem).toBeUndefined();
+    expect(connections).toHaveBeenLastCalledWith([
+      { id: "elevenlabs", title: "ElevenLabs", connected: true },
+    ]);
+  });
+
   it("tells every editor of a Phrase dropped, at once", async () => {
     const { channel, settings, problems, last } = setup();
     settings.load({});
