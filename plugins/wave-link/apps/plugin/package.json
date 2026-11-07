@@ -1,0 +1,24 @@
+{
+  "dependencies": {
+    "@fluxta/sdk": "catalog:",
+    "wave-link-protocol": "workspace:*",
+    "ws": "catalog:",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "wave-link-editor": "workspace:*",
+    "@types/node": "catalog:",
+    "tsdown": "catalog:",
+    "typescript": "catalog:",
+    "@types/ws": "catalog:"
+  },
+  "name": "wave-link-plugin",
+  "private": true,
+  "scripts": {
+    "build": "tsdown",
+    "dev": "tsdown --watch",
+    "typecheck": "tsc --noEmit"
+  },
+  "type": "module",
+  "version": "0.1.0"
+}
