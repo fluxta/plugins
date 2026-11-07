@@ -1,0 +1,325 @@
+{
+  "name": "wave-link",
+  "title": "Wave Link",
+  "description": "Control Elgato Wave Link channels and mixes from Fluxta.",
+  "version": "0.1.0",
+  "author": "Mikhail Morozov",
+  "license": "MIT",
+  "homepage": "https://github.com/inferst/fluxta-wave-link",
+  "repository": "https://github.com/inferst/fluxta-wave-link",
+  "maintainers": ["inferst"],
+  "minAppVersion": "0.1.0",
+  "platforms": ["windows", "macos"],
+  "categories": ["audio", "streaming"],
+  "apiVersion": 1,
+  "main": "index.mjs",
+  "actions": [
+    {
+      "type": "set-volume",
+      "name": "Set Volume",
+      "context": "standalone",
+      "editor": "editor/set-volume.html",
+      "icon": "icons/audio-lines.svg",
+      "produces": [
+        {
+          "key": "success",
+          "name": "Success",
+          "type": "boolean"
+        },
+        {
+          "key": "error",
+          "name": "Error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "adjust-volume",
+      "name": "Adjust Volume",
+      "context": "standalone",
+      "editor": "editor/adjust-volume.html",
+      "icon": "icons/audio-lines.svg",
+      "produces": [
+        {
+          "key": "success",
+          "name": "Success",
+          "type": "boolean"
+        },
+        {
+          "key": "error",
+          "name": "Error",
+          "type": "string"
+        }
+      ]
+    },
+    {
+      "type": "set-mute",
+      "name": "Set Mute",
+      "context": "standalone",
+      "editor": "editor/set-mute.html",
+      "icon": "icons/audio-lines.svg",
+      "produces": [
+        {
+          "key": "success",
+          "name": "Success",
+          "type": "boolean"
+        },
+        {
+          "key": "error",
+          "name": "Error",
+          "type": "string"
+        }
+      ]
+    }
+  ],
+  "editor": "editor/index.html",
+  "editorPlacement": "settings",
+  "icon": "icons/audio-lines.svg",
+  "sources": [
+    {
+      "key": "channelVolume",
+      "name": "Channel Volume (%)",
+      "type": "number",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "editor": "select",
+          "options": "channels"
+        }
+      ]
+    },
+    {
+      "key": "channelMuted",
+      "name": "Channel Muted",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "editor": "select",
+          "options": "channels"
+        }
+      ]
+    },
+    {
+      "key": "channelMixVolume",
+      "name": "Channel in Mix Volume (%)",
+      "type": "number",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "editor": "select",
+          "options": "channels"
+        },
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "editor": "select",
+          "options": "mixes"
+        }
+      ]
+    },
+    {
+      "key": "channelMixMuted",
+      "name": "Channel in Mix Muted",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "editor": "select",
+          "options": "channels"
+        },
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "editor": "select",
+          "options": "mixes"
+        }
+      ]
+    },
+    {
+      "key": "mixVolume",
+      "name": "Mix Volume (%)",
+      "type": "number",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "editor": "select",
+          "options": "mixes"
+        }
+      ]
+    },
+    {
+      "key": "mixMuted",
+      "name": "Mix Muted",
+      "type": "boolean",
+      "resolve": "query",
+      "params": [
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "editor": "select",
+          "options": "mixes"
+        }
+      ]
+    },
+    {
+      "key": "connected",
+      "name": "Wave Link Connected",
+      "type": "boolean",
+      "resolve": "query"
+    },
+    {
+      "key": "connectionStatus",
+      "name": "Connection Status",
+      "type": "string",
+      "resolve": "query",
+      "operand": {
+        "editor": "select",
+        "options": "connectionStatuses"
+      }
+    }
+  ],
+  "events": [
+    {
+      "type": "volume-changed",
+      "name": "Volume Changed",
+      "fields": [
+        {
+          "key": "targetKind",
+          "name": "Target",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "targetKinds"
+          }
+        },
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "channels"
+          }
+        },
+        {
+          "key": "channelName",
+          "name": "Channel Name",
+          "type": "string"
+        },
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "mixes"
+          }
+        },
+        {
+          "key": "mixName",
+          "name": "Mix Name",
+          "type": "string"
+        },
+        {
+          "key": "volumePercent",
+          "name": "Volume (%)",
+          "type": "number"
+        },
+        {
+          "key": "previousVolumePercent",
+          "name": "Previous Volume (%)",
+          "type": "number"
+        }
+      ]
+    },
+    {
+      "type": "mute-changed",
+      "name": "Mute Changed",
+      "fields": [
+        {
+          "key": "targetKind",
+          "name": "Target",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "targetKinds"
+          }
+        },
+        {
+          "key": "channelId",
+          "name": "Channel",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "channels"
+          }
+        },
+        {
+          "key": "channelName",
+          "name": "Channel Name",
+          "type": "string"
+        },
+        {
+          "key": "mixId",
+          "name": "Mix",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "mixes"
+          }
+        },
+        {
+          "key": "mixName",
+          "name": "Mix Name",
+          "type": "string"
+        },
+        {
+          "key": "muted",
+          "name": "Muted",
+          "type": "boolean"
+        },
+        {
+          "key": "previousMuted",
+          "name": "Previously Muted",
+          "type": "boolean"
+        }
+      ]
+    },
+    {
+      "type": "connection-status-changed",
+      "name": "Connection Status Changed",
+      "fields": [
+        {
+          "key": "status",
+          "name": "Status",
+          "type": "string",
+          "operand": {
+            "editor": "select",
+            "options": "connectionStatuses"
+          }
+        },
+        {
+          "key": "connected",
+          "name": "Connected",
+          "type": "boolean"
+        },
+        {
+          "key": "message",
+          "name": "Message",
+          "type": "string"
+        }
+      ]
+    }
+  ]
+}
