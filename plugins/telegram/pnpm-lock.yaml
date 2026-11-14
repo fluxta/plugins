@@ -13,8 +13,8 @@ catalogs:
       specifier: ^0.8.0
       version: 0.8.1
     '@fluxta/sdk':
-      specifier: ^0.7.0
-      version: 0.7.0
+      specifier: ^0.10.0
+      version: 0.10.0
     '@tailwindcss/vite':
       specifier: ^4.1.18
       version: 4.3.3
@@ -121,7 +121,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.7.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 0.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       react:
         specifier: 'catalog:'
         version: 19.3.0
@@ -161,7 +161,7 @@ importers:
     dependencies:
       '@fluxta/sdk':
         specifier: 'catalog:'
-        version: 0.7.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
+        version: 0.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
       telegram-protocol:
         specifier: workspace:*
         version: link:../../packages/protocol
@@ -486,8 +486,8 @@ packages:
     engines: {node: '>=22.0.0'}
     hasBin: true
 
-  '@fluxta/sdk@0.7.0':
-    resolution: {integrity: sha512-oUelLi0lVWPKmO7Aw0yvxf4h+pOGTO5ZbPbeUmMl7F6JeZDoNRZZfyx3XaPpR3n7YFGqrTDhjJIxh6z64ZktRg==}
+  '@fluxta/sdk@0.10.0':
+    resolution: {integrity: sha512-+Sb/vfIDcRSve4sPieYWzczIMy1aGMpLVOFYJKSYM7lRufRhCUwQE0uWvSOLkuhJy23yi4SoV3Do1vYamD7lOQ==}
     peerDependencies:
       react: 19.x
       react-dom: 19.x
@@ -2871,7 +2871,7 @@ snapshots:
       - bare-buffer
       - react-native-b4a
 
-  '@fluxta/sdk@0.7.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
+  '@fluxta/sdk@0.10.0(react-dom@19.3.0(react@19.3.0))(react@19.3.0)':
     dependencies:
       nanoid: 5.1.16
       use-sync-external-store: 1.6.0(react@19.3.0)
