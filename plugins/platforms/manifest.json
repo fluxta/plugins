@@ -228,7 +228,7 @@
   "maintainers": [
     "inferst"
   ],
-  "minAppVersion": "0.1.0",
+  "minAppVersion": "0.11.0",
   "name": "platforms",
   "platforms": [
     "windows",
@@ -237,7 +237,7 @@
   ],
   "repository": "https://github.com/inferst/fluxta-platforms",
   "title": "Platforms",
-  "version": "0.3.2",
+  "version": "0.3.3",
   "events": [
     {
       "type": "twitch-chat-message",
