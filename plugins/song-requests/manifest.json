@@ -2,7 +2,7 @@
   "name": "song-requests",
   "title": "Song Requests",
   "description": "Viewers request songs; they play one at a time from YouTube on a player page in OBS",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-song-requests",
@@ -10,7 +10,7 @@
   "maintainers": [
     "inferst"
   ],
-  "minAppVersion": "0.9.0",
+  "minAppVersion": "0.11.0",
   "platforms": [
     "windows",
     "macos",
