@@ -26,5 +26,6 @@ catalog:
   zod: "^4.4.3"
 
 minimumReleaseAgeExclude:
+  - '@fluxta/sdk@0.10.0'
   - '@fluxta/cli@0.5.0'
   - '@fluxta/sdk@0.6.1'
