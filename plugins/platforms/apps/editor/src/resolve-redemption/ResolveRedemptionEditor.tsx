@@ -1,4 +1,4 @@
-import { referenceTo, type RunVariableDescriptor } from "@fluxta/sdk/api";
+import { templateFieldReference } from "../shared/template-field-reference";
 import {
   EditorPage,
   SelectField,
@@ -21,9 +21,11 @@ const RESOLUTION_OPTIONS = RESOLUTIONS.map((choice) => ({
 
 export function ResolveRedemptionEditor() {
   const editor = useActionEditor();
-  const { values, set, update, loaded } = useActionSettings<
-    Required<ResolveRedemptionSettings>
-  >({ redemptionId: "", rewardId: "", resolution: "fulfill" });
+  const { values, set, update, loaded } = useActionSettings<Required<ResolveRedemptionSettings>>({
+    redemptionId: "",
+    rewardId: "",
+    resolution: "fulfill",
+  });
 
   // Read through a ref rather than closed over: the effect below only
   // re-runs once settings finish loading, but the prefill it registers must
@@ -39,15 +41,20 @@ export function ResolveRedemptionEditor() {
      * runs on every push, because the list arrives after the first render and
      * changes again whenever the surrounding program does.
      */
-    const prefill = (variables: RunVariableDescriptor[]) => {
+    const prefill = () => {
+      if (!loaded) {
+        return;
+      }
+
+      const sources = editor.getTemplateSources();
       const patch: Partial<ResolveRedemptionSettings> = {};
 
       if (!latest.current.redemptionId) {
-        patch.redemptionId = reference(variables, "redemptionId");
+        patch.redemptionId = templateFieldReference(sources, "redemptionId");
       }
 
       if (!latest.current.rewardId) {
-        patch.rewardId = reference(variables, "rewardId");
+        patch.rewardId = templateFieldReference(sources, "rewardId");
       }
 
       if (Object.keys(patch).length > 0) {
@@ -55,12 +62,12 @@ export function ResolveRedemptionEditor() {
       }
     };
 
-    const stop = editor.onRunVariablesChange(prefill);
+    const stop = editor.onTemplateSourcesChange(prefill);
 
     // Waits for the saved settings to land first, so this only fills what the
     // author actually left empty rather than racing the load.
     if (loaded) {
-      prefill(editor.getRunVariables());
+      prefill();
     }
 
     return stop;
@@ -93,10 +100,4 @@ export function ResolveRedemptionEditor() {
       />
     </EditorPage>
   );
-}
-
-/** The reference an author would have picked for an Event Field, if it is offered. */
-function reference(variables: RunVariableDescriptor[], key: string): string {
-  const match = variables.find((variable) => variable.address.endsWith(`.${key}`));
-  return match ? referenceTo(match) : "";
 }

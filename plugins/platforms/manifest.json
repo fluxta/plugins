@@ -237,7 +237,7 @@
   ],
   "repository": "https://github.com/inferst/fluxta-platforms",
   "title": "Platforms",
-  "version": "0.3.1",
+  "version": "0.3.2",
   "events": [
     {
       "type": "twitch-chat-message",

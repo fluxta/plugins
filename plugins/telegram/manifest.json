@@ -2,15 +2,24 @@
   "name": "telegram",
   "title": "Telegram",
   "description": "Post and edit messages in Telegram channels and chats",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-telegram",
   "repository": "https://github.com/inferst/fluxta-telegram",
-  "maintainers": ["inferst"],
+  "maintainers": [
+    "inferst"
+  ],
   "minAppVersion": "0.9.0",
-  "platforms": ["windows", "macos", "linux"],
-  "categories": ["streaming", "utilities"],
+  "platforms": [
+    "windows",
+    "macos",
+    "linux"
+  ],
+  "categories": [
+    "streaming",
+    "utilities"
+  ],
   "apiVersion": 1,
   "main": "index.mjs",
   "icon": "icons/send.svg",

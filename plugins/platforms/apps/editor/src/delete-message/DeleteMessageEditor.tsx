@@ -1,4 +1,4 @@
-import { referenceTo, type RunVariableDescriptor } from "@fluxta/sdk/api";
+import { templateFieldReference } from "../shared/template-field-reference";
 import { EditorPage, TemplateField, useActionEditor, useActionSettings } from "@fluxta/sdk/ui";
 import { useEffect, useRef } from "react";
 import type { DeleteMessageSettings } from "platforms-protocol";
@@ -23,24 +23,29 @@ export function DeleteMessageEditor() {
      * runs on every push, because the list arrives after the first render
      * and changes again whenever the surrounding program does.
      */
-    const prefill = (variables: RunVariableDescriptor[]) => {
+    const prefill = () => {
+      if (!loaded) {
+        return;
+      }
+
+      const sources = editor.getTemplateSources();
       if (latest.current) {
         return;
       }
 
-      const match = variables.find((variable) => variable.address.endsWith(".messageId"));
+      const reference = templateFieldReference(sources, "messageId");
 
-      if (match) {
-        set("messageId")(referenceTo(match));
+      if (reference) {
+        set("messageId")(reference);
       }
     };
 
-    const stop = editor.onRunVariablesChange(prefill);
+    const stop = editor.onTemplateSourcesChange(prefill);
 
     // Waits for the saved settings to land first, so this only fills what the
     // author actually left empty rather than racing the load.
     if (loaded) {
-      prefill(editor.getRunVariables());
+      prefill();
     }
 
     return stop;

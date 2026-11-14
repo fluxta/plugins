@@ -7,7 +7,7 @@ allowBuilds:
 
 catalog:
   "@fluxta/cli": "^0.5.0"
-  "@fluxta/sdk": "^0.6.1"
+  "@fluxta/sdk": "^0.10.0"
   "@tailwindcss/vite": "^4.1.18"
   "@types/node": "^22.18.12"
   "@types/react": "^19.2.8"
@@ -26,5 +26,6 @@ catalog:
   zod: "^4.4.3"
 
 minimumReleaseAgeExclude:
+  - '@fluxta/sdk@0.10.0'
   - '@fluxta/cli@0.5.0'
   - '@fluxta/sdk@0.6.1'

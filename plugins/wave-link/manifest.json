@@ -2,15 +2,23 @@
   "name": "wave-link",
   "title": "Wave Link",
   "description": "Control Elgato Wave Link channels and mixes from Fluxta.",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-wave-link",
   "repository": "https://github.com/inferst/fluxta-wave-link",
-  "maintainers": ["inferst"],
+  "maintainers": [
+    "inferst"
+  ],
   "minAppVersion": "0.1.0",
-  "platforms": ["windows", "macos"],
-  "categories": ["audio", "streaming"],
+  "platforms": [
+    "windows",
+    "macos"
+  ],
+  "categories": [
+    "audio",
+    "streaming"
+  ],
   "apiVersion": 1,
   "main": "index.mjs",
   "actions": [

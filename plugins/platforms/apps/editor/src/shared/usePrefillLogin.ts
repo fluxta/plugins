@@ -1,4 +1,4 @@
-import { referenceTo, type RunVariableDescriptor } from "@fluxta/sdk/api";
+import { templateFieldReference } from "./template-field-reference";
 import { useActionEditor } from "@fluxta/sdk/ui";
 import { useEffect, useRef } from "react";
 
@@ -28,27 +28,32 @@ export function usePrefillLogin(
   latest.current = login;
 
   useEffect(() => {
-    const prefill = (variables: RunVariableDescriptor[]) => {
+    const prefill = () => {
+      if (!loaded) {
+        return;
+      }
+
+      const sources = editor.getTemplateSources();
       if (latest.current) {
         return;
       }
 
       for (const field of LOGIN_FIELDS) {
-        const match = variables.find((variable) => variable.address.endsWith(`.${field}`));
+        const reference = templateFieldReference(sources, field);
 
-        if (match) {
-          setLogin(referenceTo(match));
+        if (reference) {
+          setLogin(reference);
           return;
         }
       }
     };
 
-    const stop = editor.onRunVariablesChange(prefill);
+    const stop = editor.onTemplateSourcesChange(prefill);
 
     // Waits for the saved settings to land first, so this only fills what the
     // author actually left empty rather than racing the load.
     if (loaded) {
-      prefill(editor.getRunVariables());
+      prefill();
     }
 
     return stop;

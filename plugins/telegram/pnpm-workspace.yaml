@@ -8,7 +8,7 @@ allowBuilds:
 catalog:
   "@eslint/js": "^10.0.1"
   "@fluxta/cli": "^0.8.0"
-  "@fluxta/sdk": "^0.7.0"
+  "@fluxta/sdk": "^0.10.0"
   "@tailwindcss/vite": "^4.1.18"
   "@types/node": "^22.18.12"
   "@types/react": "^19.2.8"
@@ -29,3 +29,6 @@ catalog:
   typescript-eslint: "^8.56.1"
   vitest: "^4.1.11"
   zod: "^4.4.3"
+
+minimumReleaseAgeExclude:
+  - '@fluxta/sdk@0.10.0'
