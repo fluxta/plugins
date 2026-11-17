@@ -63,8 +63,42 @@ export interface RealtimeClient {
 export function createCentrifugeClient(
   onPrivateSubscribe: PrivateSubscribe,
 ): RealtimeClient {
+  class RealtimeWebSocket extends globalThis.WebSocket {
+    override get onmessage(): WebSocket["onmessage"] {
+      return super.onmessage;
+    }
+
+    override set onmessage(listener: WebSocket["onmessage"]) {
+      super.onmessage =
+        listener === null
+          ? null
+          : (event) => {
+              try {
+                listener.call(this, event);
+              } catch (error) {
+                if (!(error instanceof SyntaxError)) throw error;
+
+                // centrifuge-js 2.x lets JSON decoding errors escape its
+                // message handler; Node's EventTarget then kills the sidecar.
+                // Stop this transport before closing it so queued messages
+                // cannot reach the decoder while the close is in flight.
+                this.onmessage = null;
+                const data: unknown = event.data;
+                const length = typeof data === "string" ? data.length : 0;
+                // JSON.parse errors can quote tokens or Donation contents.
+                console.warn(
+                  `An invalid realtime message was skipped (type: ${typeof data}, length: ${length}); reconnecting`,
+                );
+                // An application close code is allowed by Node's WebSocket;
+                // centrifuge-js handles onclose with its normal reconnect.
+                this.close(4000, "Invalid realtime message");
+              }
+            };
+    }
+  }
+
   return new Centrifuge(CENTRIFUGO_URL, {
-    websocket: globalThis.WebSocket,
+    websocket: RealtimeWebSocket,
     // centrifuge-js waits min × 2^(step + 1), less up to half at random:
     // 1 s growing to 60 s, the curve of `retryDelay`.
     minRetry: 500,

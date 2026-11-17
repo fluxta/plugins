@@ -34,6 +34,3 @@ catalog:
   typescript-eslint: "^8.56.1"
   vitest: "^4.1.11"
   zod: "^4.4.3"
-
-minimumReleaseAgeExclude:
-  - '@fluxta/sdk@0.10.0'
