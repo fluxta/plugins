@@ -148,7 +148,12 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        }
       ]
     },
     {
@@ -157,7 +162,12 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        }
       ]
     },
     {
@@ -166,7 +176,12 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        }
       ]
     },
     {
@@ -175,9 +190,17 @@
       "type": "string",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        }
       ],
-      "operand": { "editor": "select", "options": "scenes" }
+      "operand": {
+        "editor": "select",
+        "options": "scenes"
+      }
     },
     {
       "key": "isSourceVisible",
@@ -185,9 +208,24 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" },
-        { "key": "sceneName", "name": "Scene", "editor": "select", "options": "scenes" },
-        { "key": "sourceName", "name": "Source", "editor": "select", "options": "scene-sources" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        },
+        {
+          "key": "sceneName",
+          "name": "Scene",
+          "editor": "select",
+          "options": "scenes"
+        },
+        {
+          "key": "sourceName",
+          "name": "Source",
+          "editor": "select",
+          "options": "scene-sources"
+        }
       ]
     },
     {
@@ -196,8 +234,18 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" },
-        { "key": "inputName", "name": "Input", "editor": "select", "options": "inputs" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        },
+        {
+          "key": "inputName",
+          "name": "Input",
+          "editor": "select",
+          "options": "inputs"
+        }
       ]
     },
     {
@@ -206,8 +254,18 @@
       "type": "number",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" },
-        { "key": "inputName", "name": "Input", "editor": "select", "options": "inputs" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        },
+        {
+          "key": "inputName",
+          "name": "Input",
+          "editor": "select",
+          "options": "inputs"
+        }
       ]
     },
     {
@@ -216,15 +274,32 @@
       "type": "boolean",
       "resolve": "query",
       "params": [
-        { "key": "connection", "name": "Connection", "editor": "select", "options": "connections" },
-        { "key": "sourceName", "name": "Source", "editor": "select", "options": "inputs" },
-        { "key": "filterName", "name": "Filter", "editor": "select", "options": "filters" }
+        {
+          "key": "connection",
+          "name": "Connection",
+          "editor": "select",
+          "options": "connections"
+        },
+        {
+          "key": "sourceName",
+          "name": "Source",
+          "editor": "select",
+          "options": "inputs"
+        },
+        {
+          "key": "filterName",
+          "name": "Filter",
+          "editor": "select",
+          "options": "filters"
+        }
       ]
     }
   ],
   "apiVersion": 1,
   "author": "Mikhail Morozov",
-  "categories": ["streaming"],
+  "categories": [
+    "streaming"
+  ],
   "description": "Control OBS Studio",
   "editor": "editor/plugin.html",
   "editorPlacement": "settings",
@@ -232,13 +307,19 @@
   "icon": "icons/video.svg",
   "license": "MIT",
   "main": "index.mjs",
-  "maintainers": ["inferst"],
-  "minAppVersion": "0.1.0",
+  "maintainers": [
+    "inferst"
+  ],
+  "minAppVersion": "0.11.0",
   "name": "obs",
-  "platforms": ["windows", "macos", "linux"],
+  "platforms": [
+    "windows",
+    "macos",
+    "linux"
+  ],
   "repository": "https://github.com/inferst/fluxta-obs",
   "title": "OBS",
-  "version": "0.4.4",
+  "version": "0.4.6",
   "events": [
     {
       "type": "scene-changed",
@@ -248,13 +329,19 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "sceneName",
           "name": "Scene Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "scenes" }
+          "operand": {
+            "editor": "select",
+            "options": "scenes"
+          }
         }
       ]
     },
@@ -266,9 +353,16 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
-        { "key": "isStreaming", "name": "Is Streaming", "type": "boolean" }
+        {
+          "key": "isStreaming",
+          "name": "Is Streaming",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -279,10 +373,21 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
-        { "key": "isRecording", "name": "Is Recording", "type": "boolean" },
-        { "key": "isRecordingPaused", "name": "Is Recording Paused", "type": "boolean" }
+        {
+          "key": "isRecording",
+          "name": "Is Recording",
+          "type": "boolean"
+        },
+        {
+          "key": "isRecordingPaused",
+          "name": "Is Recording Paused",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -293,21 +398,34 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "sceneName",
           "name": "Scene Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "scenes" }
+          "operand": {
+            "editor": "select",
+            "options": "scenes"
+          }
         },
         {
           "key": "sourceName",
           "name": "Source Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "scene-sources" }
+          "operand": {
+            "editor": "select",
+            "options": "scene-sources"
+          }
         },
-        { "key": "visible", "name": "Visible", "type": "boolean" }
+        {
+          "key": "visible",
+          "name": "Visible",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -318,15 +436,25 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "inputName",
           "name": "Input Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "inputs" }
+          "operand": {
+            "editor": "select",
+            "options": "inputs"
+          }
         },
-        { "key": "muted", "name": "Muted", "type": "boolean" }
+        {
+          "key": "muted",
+          "name": "Muted",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -337,21 +465,34 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "sourceName",
           "name": "Source Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "inputs" }
+          "operand": {
+            "editor": "select",
+            "options": "inputs"
+          }
         },
         {
           "key": "filterName",
           "name": "Filter Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "filters" }
+          "operand": {
+            "editor": "select",
+            "options": "filters"
+          }
         },
-        { "key": "enabled", "name": "Enabled", "type": "boolean" }
+        {
+          "key": "enabled",
+          "name": "Enabled",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -362,21 +503,34 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "sceneName",
           "name": "Scene Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "scenes" }
+          "operand": {
+            "editor": "select",
+            "options": "scenes"
+          }
         },
         {
           "key": "filterName",
           "name": "Filter Name",
           "type": "string",
-          "operand": { "editor": "select", "options": "scene-filters" }
+          "operand": {
+            "editor": "select",
+            "options": "scene-filters"
+          }
         },
-        { "key": "enabled", "name": "Enabled", "type": "boolean" }
+        {
+          "key": "enabled",
+          "name": "Enabled",
+          "type": "boolean"
+        }
       ]
     },
     {
@@ -387,13 +541,19 @@
           "key": "connection",
           "name": "Connection",
           "type": "string",
-          "operand": { "editor": "select", "options": "connections" }
+          "operand": {
+            "editor": "select",
+            "options": "connections"
+          }
         },
         {
           "key": "status",
           "name": "Status",
           "type": "string",
-          "operand": { "editor": "select", "options": "connection-status" }
+          "operand": {
+            "editor": "select",
+            "options": "connection-status"
+          }
         },
         {
           "key": "message",

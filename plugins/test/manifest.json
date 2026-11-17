@@ -2,7 +2,7 @@
   "name": "test",
   "title": "Test",
   "description": "Test",
-  "version": "0.2.2",
+  "version": "0.2.4",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "",
@@ -10,7 +10,7 @@
   "maintainers": [
     "inferst"
   ],
-  "minAppVersion": "0.1.0",
+  "minAppVersion": "0.11.0",
   "platforms": [
     "windows",
     "macos",

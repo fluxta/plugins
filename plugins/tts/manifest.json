@@ -2,15 +2,23 @@
   "name": "tts",
   "title": "Text to Speech",
   "description": "Reads chat and deck text aloud with this computer's voices or ElevenLabs'",
-  "version": "0.2.1",
+  "version": "0.2.3",
   "author": "Mikhail Morozov",
   "license": "MIT",
   "homepage": "https://github.com/inferst/fluxta-tts",
   "repository": "https://github.com/inferst/fluxta-tts",
-  "maintainers": ["inferst"],
-  "minAppVersion": "0.9.0",
-  "platforms": ["windows", "macos"],
-  "categories": ["streaming", "audio"],
+  "maintainers": [
+    "inferst"
+  ],
+  "minAppVersion": "0.11.0",
+  "platforms": [
+    "windows",
+    "macos"
+  ],
+  "categories": [
+    "streaming",
+    "audio"
+  ],
   "apiVersion": 1,
   "main": "index.mjs",
   "icon": "icons/speech.svg",
